@@ -23,15 +23,17 @@ class RepBuilder:
     def open_book(self, sqlite_file):
         with piecash.open_book(sqlite_file) as gnucash_book:
 
+            # Read data tables in dataframes
+
             # Accounts
 
             # Get from piecash
             self.root_account_guid = gnucash_book.root_account.guid
             t_accounts = gnucash_book.session.query(piecash.Account).all()
             # fields accounts
-            fields = ["guid", "name", "type",
-                      "commodity_guid", "commodity_scu", "non_std_scu",
-                      "parent_guid", "code", "description"]
+            fields = ["guid", "name", "type", "placeholder",
+                      "commodity_guid", "commodity_scu",
+                      "parent_guid", "description", "hidden"]
             self.df_accounts = self.object_to_dataframe(t_accounts, fields)
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
@@ -52,7 +54,7 @@ class RepBuilder:
             t_transactions = gnucash_book.session.query(piecash.Transaction).all()
             # fields transactions
             fields = ["guid", "currency_guid", "num",
-                      "post_date", "enter_date", "description"]
+                      "post_date", "description"]
             self.df_transactions = self.object_to_dataframe(t_transactions, fields)
 
             # Splits
@@ -62,7 +64,7 @@ class RepBuilder:
             # Some fields not correspond to real names in DB
             fields = ["guid", "transaction_guid", "account_guid",
                       "memo", "action", "reconcile_state",
-                      "reconcile_date", "value",
+                      "value",
                       "quantity", "lot_guid"]
             self.df_splits = self.object_to_dataframe(t_splits, fields)
 
@@ -75,25 +77,53 @@ class RepBuilder:
                       "date", "source", "type", "value"]
             self.df_prices = self.object_to_dataframe(t_prices, fields)
 
-            self.join_splits_tr()
+            self._base_operation()
 
-    def join_splits_tr(self):
+    def _base_operation(self):
+        """
+        Some base operation on dataframes after get data
+        :return:
+        """
+        # Get fullname of accounts
+        self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
+
         # merge splits and accounts
         df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
                                           right_index=True)
-        # merge splits with accounts with transactions
+        # merge splits and accounts with transactions
         self.df_m_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
                                         right_index=True)
 
+    def _get_fullname_account(self, account_guid):
+        """
+        Get fullname account by guid. Return semicolon path Expenses:Food:...
+        :param account_guid:
+        :return:
+        """
+        if account_guid == self.root_account_guid:
+            return 'root'
+        fullname = self.df_accounts.ix[account_guid]['name']
+        parent_guid = self.df_accounts.ix[account_guid]['parent_guid']
+        if parent_guid in self.df_accounts.index:
+            if parent_guid == self.root_account_guid:
+                return fullname
+            else:
+                return self._get_fullname_account(parent_guid) + ':' + fullname
+        else:
+            return 'error'
+
     @staticmethod
     def object_to_dataframe(pieobject, fields):
-
+        """
+        Преобразовывае объект piecash в DataFrame с заданными полями
+        :param pieobject:
+        :param fields:
+        :return:
+        """
         # build dataframe
         fields_getter = [attrgetter(fld) for fld in fields]
         df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter]
                                              for sp in pieobject], columns=fields)
-
-        # self.df_accounts = pandas.DataFrame(accounts)
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
