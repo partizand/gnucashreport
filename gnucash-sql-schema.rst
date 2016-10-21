@@ -68,7 +68,8 @@ quote_source
 Invariant
 
         a currency commodity has namespace==’CURRENCY’
-        only currencies referenced by accounts or commodities are stored in the table ‘commodities’ (the complete list of currencies is available within the GnuCash application)
+        only currencies referenced by accounts or commodities are stored in the table ‘commodities’
+        (the complete list of currencies is available within the GnuCash application)
         a stock commodity has namespace!=’CURRENCY’
 
 Account
