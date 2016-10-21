@@ -12,6 +12,8 @@ class RepBuilder:
     df_commodities = None
     df_splits = None
     df_prices = None
+    # Merged splits and transactions
+    df_m_splits = None
 
     root_account_guid = None
 
@@ -72,6 +74,16 @@ class RepBuilder:
             fields = ["guid", "commodity_guid", "currency_guid",
                       "date", "source", "type", "value"]
             self.df_prices = self.object_to_dataframe(t_prices, fields)
+
+            self.join_splits_tr()
+
+    def join_splits_tr(self):
+        # merge splits and accounts
+        df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
+                                          right_index=True)
+        # merge splits with accounts with transactions
+        self.df_m_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
+                                        right_index=True)
 
     @staticmethod
     def object_to_dataframe(pieobject, fields):
