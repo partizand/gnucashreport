@@ -13,13 +13,19 @@ class RepBuilder:
     df_splits = None
     df_prices = None
     # Merged splits and transactions
-    df_m_splits = None
+    # df_m_splits = None
 
     root_account_guid = None
 
     def __init__(self):
         pass
 
+    def get_split(self, account_name):
+        return self.df_splits[(self.df_splits['fullname'] == account_name)]
+        # return self.df_splits.loc['fullname' == account_name]
+
+    def get_balance(self, account_name):
+        return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
     def open_book(self, sqlite_file):
         with piecash.open_book(sqlite_file) as gnucash_book:
 
@@ -37,6 +43,8 @@ class RepBuilder:
             self.df_accounts = self.object_to_dataframe(t_accounts, fields)
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
+            # Get fullname of accounts
+            self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
 
             # commodities
 
@@ -77,22 +85,26 @@ class RepBuilder:
                       "date", "source", "type", "value"]
             self.df_prices = self.object_to_dataframe(t_prices, fields)
 
-            self._base_operation()
+            # merge splits and accounts
+            df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
+                                         right_index=True)
+            df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
+            # merge splits and accounts with transactions
+            self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
+                                            right_index=True)
 
-    def _base_operation(self):
-        """
-        Some base operation on dataframes after get data
-        :return:
-        """
-        # Get fullname of accounts
-        self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
 
-        # merge splits and accounts
-        df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
-                                          right_index=True)
-        # merge splits and accounts with transactions
-        self.df_m_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
-                                        right_index=True)
+
+            # self._base_operation()
+
+    # def _base_operation(self):
+    #     """
+    #     Some base operation on dataframes after get data
+    #     :return:
+    #     """
+
+
+
 
     def _get_fullname_account(self, account_guid):
         """
