@@ -24,8 +24,27 @@ class RepBuilder:
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
         # return self.df_splits.loc['fullname' == account_name]
 
+    def group_by_period(self, from_date, to_date, period='M', account_type='EXPENSE'):
+        """
+        Получить сводный DataFrame по счетам типа type за период
+        :param from_date:
+        :param period:
+        :param type:
+        :return:
+        """
+        # select period and account type
+        # print(self.df_splits.head())
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+                                & (self.df_splits['post_date'] <= to_date)
+                                & (self.df_splits['account_type'] == account_type)]
+        sel_df.set_index('post_date', inplace=True)
+        ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
+
+        return ndf
+
     def get_balance(self, account_name):
         return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
+
     def open_book(self, sqlite_file):
         with piecash.open_book(sqlite_file) as gnucash_book:
 
