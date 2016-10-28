@@ -1,16 +1,6 @@
 import pandas
 import numpy
-import datetime
 
-# id     date        value   account
-# 0  01.01.2016       10     Активы
-# 1  02.01.2016       100     Активы
-# 1  02.01.2016       100     Активы
-
-def f(frame):
-    frame.sort('date',inplace=True)
-    frame['start'] = frame.date.iloc[0]
-    return frame
 
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
@@ -30,14 +20,29 @@ line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущ
          {'date': '01.02.2016', 'value': 57, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
          ]
 
+prices = [
+    {'date': '01.01.2016', 'value': 60, 'mnemonic': 'EUR'},
+    {'date': '29.01.2016', 'value': 65, 'mnemonic': 'EUR'},
+    {'date': '31.01.2016', 'value': 67, 'mnemonic': 'EUR'},
+    {'date': '31.01.2016', 'value': 30, 'mnemonic': 'USD'},
+    {'date': '01.02.2016', 'value': 68, 'mnemonic': 'EUR'},
+    {'date': '29.02.2016', 'value': 65, 'mnemonic': 'EUR'},
+    {'date': '28.02.2016', 'value': 60, 'mnemonic': 'EUR'},
+    {'date': '28.04.2016', 'value': 70, 'mnemonic': 'EUR'},
+
+
+]
+
 #guid = list(range(10, (len(line1)+1)*10, 10))
 #index = list(map(chr, range(97, 97+len(line1))))
 #index = list(range(10))
 
 # Исходный DataFrame
 df = pandas.DataFrame(line1)
+pr = pandas.DataFrame(prices)
 # Дата в datetime формат
 df['date']=pandas.to_datetime(df['date'], format='%d.%m.%Y')
+pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 # guid
 #df['guid']=guid
 # Разбить полное имя счета на колонки
@@ -46,35 +51,17 @@ df['date']=pandas.to_datetime(df['date'], format='%d.%m.%Y')
 # cols=cols.tolist()
 # df = pandas.concat([df, s], axis=1)
 # df.set_index(cols, append=True, inplace=True)
+#mems= df.loc[df['date'] > '20160101', ['date', 'value']]
+#print(mems)
+#print(pr)
 
-#print(df)
+# Группировка по месяцу
+pr.set_index(['date'], inplace=True)
+# ndf = pr.resample('M').last()
+ndf = pr.groupby([pandas.TimeGrouper('M'), 'mnemonic']).value.last().reset_index()
+print(ndf)
 
-# Выбрать за период
-# dt = datetime.datetime(2016,3,1)
-# ndf = df[(df['date'] > dt) and (df['guid'] == 30)]
-# print(ndf)
-# exit(0)
-
-# Доступ по индексу
-# s = pandas.Series(index)
-# df['id']= s #.set_index(index, inplace=True)
-# df.set_index('id',inplace=True)
-# row=df.ix['l']['account']
-# print(row)
-#
-# exit(0)
-
-# Перебрать построчно
-# for index, row in df.iterrows():
-#     print(row['date'], row['account'], row['value'])
-#
-# exit(0)
-
-# Групировка по сумме
-#df_group = df.groupby([0,1]).sum() #.sum()
-#print(df_group.head())
-#exit(0)
-
+exit(0)
 
 # Группировка по месяцу
 df.set_index('date', inplace=True)

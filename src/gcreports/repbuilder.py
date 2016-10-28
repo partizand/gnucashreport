@@ -25,7 +25,7 @@ class RepBuilder:
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
         # return self.df_splits.loc['fullname' == account_name]
 
-    def group_by_period(self, from_date, to_date, period='M', account_type='EXPENSE', glevel=2):
+    def group_accounts_by_period(self, from_date, to_date, period='M', account_type='EXPENSE', glevel=2):
         """
         Получить сводный DataFrame по счетам типа type за период
         :param from_date:
@@ -40,8 +40,7 @@ class RepBuilder:
 
         # Группировка по месяцу
         sel_df.set_index('post_date', inplace=True)
-        #df.set_index('date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper('M'), 'fullname']).value.sum().reset_index()
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname']).value.sum().reset_index()
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -72,6 +71,16 @@ class RepBuilder:
 
         return pivot_t
 
+    def group_prices_by_period(self,from_date, to_date, period='M'):
+        # select period and account type
+        sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
+                                & (self.df_prices['date'] <= to_date)]
+
+        # Группировка по месяцу
+        sel_df = sel_df.set_index('date')
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
+        return sel_df
+
     def get_balance(self, account_name):
         return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
 
@@ -79,6 +88,16 @@ class RepBuilder:
         with piecash.open_book(sqlite_file) as gnucash_book:
 
             # Read data tables in dataframes
+
+            # commodities
+
+            # preload list of commodities
+            t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
+                piecash.Commodity.namespace != "template").all()
+            fields = ["guid", "namespace", "mnemonic",
+                      "fullname", "cusip", "fraction",
+                      "quote_flag", "quote_source", "quote_tz"]
+            self.df_commodities = self.object_to_dataframe(t_commodities, fields)
 
             # Accounts
 
@@ -94,16 +113,11 @@ class RepBuilder:
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
             # Get fullname of accounts
             self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
+            # Add commodity mnemonic to accounts
+            mems = self.df_commodities['mnemonic'].to_frame()
+            self.df_accounts=pandas.merge(self.df_accounts,mems, left_on='commodity_guid', right_index=True)
 
-            # commodities
 
-            # preload list of commodities
-            t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
-                 piecash.Commodity.namespace != "template").all()
-            fields = ["guid", "namespace", "mnemonic",
-                      "fullname", "cusip", "fraction",
-                      "quote_flag", "quote_source", "quote_tz"]
-            self.df_commodities = self.object_to_dataframe(t_commodities, fields)
 
             # Transactions
 
@@ -113,12 +127,7 @@ class RepBuilder:
             fields = ["guid", "currency_guid", "num",
                       "post_date", "description"]
             self.df_transactions = self.object_to_dataframe(t_transactions, fields)
-            #df['date'] = pandas.to_datetime(df['date'], format='%d.%m.%Y')
 
-            #self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(lambda x: x.date())  #pandas.to_datetime(self.df_transactions['post_date'])
-            #dt = self.df_transactions['date'][0]
-            #print(dt)
-            #print(type(dt))
             # Splits
 
             # load all splits
@@ -138,6 +147,8 @@ class RepBuilder:
             fields = ["guid", "commodity_guid", "currency_guid",
                       "date", "source", "type", "value"]
             self.df_prices = self.object_to_dataframe(t_prices, fields)
+            # Add commodity mnemonic to prices
+            self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
 
             # merge splits and accounts
             df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
