@@ -41,8 +41,12 @@ df['date']=pandas.to_datetime(df['date'], format='%d.%m.%Y')
 # guid
 #df['guid']=guid
 # Разбить полное имя счета на колонки
-s = df['account'].str.split(':', expand=True)
-df = pandas.concat([df, s], axis=1)
+# s = df['account'].str.split(':', expand=True)
+# cols = s.columns
+# cols=cols.tolist()
+# df = pandas.concat([df, s], axis=1)
+# df.set_index(cols, append=True, inplace=True)
+
 #print(df)
 
 # Выбрать за период
@@ -73,14 +77,29 @@ df = pandas.concat([df, s], axis=1)
 
 
 # Группировка по месяцу
-
 df.set_index('date', inplace=True)
-ndf = df.groupby([pandas.TimeGrouper('M'), 0,1]).value.sum().reset_index()
-#ndf = df.groupby(['account']).sum()
-# #ndf = df.resample('M') #['account', 'value'].sum()
-# ndf = df.resample('M').agg({'value': numpy.sum, 'guid': })
+ndf = df.groupby([pandas.TimeGrouper('M'), 'account', 'guid']).value.sum().reset_index()
+# Добавление MultiIndex по дате и названиям счетов
+s = ndf['account'].str.split(':', expand=True)
+cols = s.columns
+cols=cols.tolist()
+cols = ['date'] + cols
+ndf = pandas.concat([ndf, s], axis=1)
+ndf.set_index(cols, inplace=True)
 print(ndf)
+
+# Группировка по нужному уровню
+ndf = ndf.groupby(level=[0,2]).sum().reset_index()
+print(ndf)
+
+# Переворот в сводную
+pivot_t = pandas.pivot_table(ndf, index=1, values='value', columns='date',aggfunc=numpy.sum, fill_value=0)
+
+print(pivot_t)
+print(pivot_t.index)
 exit(0)
+
+
 s = ndf[ndf['date']=='20160131']
 print(s)
 s = ndf[ndf['guid']=='40'][ndf['date'] == '20160131']

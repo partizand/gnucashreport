@@ -12,8 +12,6 @@ eggs
 .pydevproject
 *.sublime*
 .idea
-statement.csv
-*.ofx
-*.qif
 *.*-
-report.txt
+*.xlsx
+.~*

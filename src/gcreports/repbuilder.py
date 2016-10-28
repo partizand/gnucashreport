@@ -1,6 +1,7 @@
 import piecash
 import pandas
 from operator import attrgetter
+import datetime
 
 
 class RepBuilder:
@@ -24,7 +25,7 @@ class RepBuilder:
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
         # return self.df_splits.loc['fullname' == account_name]
 
-    def group_by_period(self, from_date, to_date, period='M', account_type='EXPENSE'):
+    def group_by_period(self, from_date, to_date, period='M', account_type='EXPENSE', glevel=2):
         """
         Получить сводный DataFrame по счетам типа type за период
         :param from_date:
@@ -33,14 +34,43 @@ class RepBuilder:
         :return:
         """
         # select period and account type
-        # print(self.df_splits.head())
         sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
                                 & (self.df_splits['post_date'] <= to_date)
                                 & (self.df_splits['account_type'] == account_type)]
-        sel_df.set_index('post_date', inplace=True)
-        ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
 
-        return ndf
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        #df.set_index('date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper('M'), 'fullname']).value.sum().reset_index()
+
+        # Добавление MultiIndex по дате и названиям счетов
+        s = sel_df['fullname'].str.split(':', expand=True)
+        cols = s.columns
+        cols = cols.tolist()
+        cols = ['post_date'] + cols
+        sel_df = pandas.concat([sel_df, s], axis=1)
+        sel_df.set_index(cols, inplace=True)
+        #print(sel_df.head())
+
+        # Группировка по нужному уровню
+        # levels = list(range(0,glevel))
+        sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
+        #print(sel_df)
+
+        # Timestap to date
+        sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
+
+        # inverse income
+        if account_type == 'INCOME':
+            sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
+
+        # Переворот в сводную
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel-1), values='value', columns='post_date',aggfunc='sum', fill_value=0)
+
+
+        #ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
+
+        return pivot_t
 
     def get_balance(self, account_name):
         return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
@@ -83,7 +113,12 @@ class RepBuilder:
             fields = ["guid", "currency_guid", "num",
                       "post_date", "description"]
             self.df_transactions = self.object_to_dataframe(t_transactions, fields)
+            #df['date'] = pandas.to_datetime(df['date'], format='%d.%m.%Y')
 
+            #self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(lambda x: x.date())  #pandas.to_datetime(self.df_transactions['post_date'])
+            #dt = self.df_transactions['date'][0]
+            #print(dt)
+            #print(type(dt))
             # Splits
 
             # load all splits
