@@ -1,3 +1,5 @@
+import os
+
 import piecash
 import pandas
 from operator import attrgetter
@@ -6,20 +8,55 @@ import datetime
 
 class RepBuilder:
     """
-    DataFrame implementation of GnuCash database tables
+    DataFrame implementation of GnuCash database tables for buil reports
     """
-    df_accounts = None
-    df_transactions = None
-    df_commodities = None
-    df_splits = None
-    df_prices = None
+
+    # Имя файла excel по умолчанию для сохранения/чтения данных DataFrame таблиц
+    excel_filename="U:/tables/tables.xlsx"
+
     # Merged splits and transactions
     # df_m_splits = None
 
     root_account_guid = None
 
     def __init__(self):
-        pass
+        self.df_accounts = pandas.DataFrame()
+        self.df_transactions = pandas.DataFrame()
+        self.df_commodities = pandas.DataFrame()
+        self.df_splits = pandas.DataFrame()
+        self.df_prices = pandas.DataFrame()
+
+    def to_excel(self, filename=None):
+        """
+        Запись таблиц DataFrame в фалй Excel. Для отладки
+        :param filename:
+        :return:
+        """
+        if filename is None:
+            filename = self.excel_filename
+
+        writer = pandas.ExcelWriter(self.excel_filename)
+        self.df_accounts.to_excel(writer,"accounts")
+        self.df_transactions.to_excel(writer, "transactions")
+        self.df_commodities.to_excel(writer,"commodities")
+        self.df_splits.to_excel(writer,"splits")
+        self.df_prices.to_excel(writer,"prices")
+
+        writer.save()
+
+    def read_from_excel(self, filename=None):
+        """
+        Чтение данных из Excel, вместо чтения из файла gnucash
+        :param filename:
+        :return:
+        """
+        if filename is None:
+            filename = self.excel_filename
+        self.df_prices = pandas.read_excel(filename,"prices")
+
+    # def _table_to_csv(self, df):
+    #     filename = os.path.join(self.path_to_tables, df.nam getattr(df,"name"))
+    #     df.to_csv(filename)
 
     def get_split(self, account_name):
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
