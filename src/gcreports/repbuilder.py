@@ -1,5 +1,6 @@
 import os
 
+import openpyxl
 import piecash
 import pandas
 from operator import attrgetter
@@ -52,11 +53,16 @@ class RepBuilder:
         """
         if filename is None:
             filename = self.excel_filename
-        self.df_prices = pandas.read_excel(filename,"prices")
 
-    # def _table_to_csv(self, df):
-    #     filename = os.path.join(self.path_to_tables, df.nam getattr(df,"name"))
-    #     df.to_csv(filename)
+        xls = pandas.ExcelFile(filename)
+
+        self.df_accounts = xls.parse('accounts')
+        self.df_transactions = xls.parse('transactions')
+        self.df_commodities = xls.parse('commodities')
+        self.df_splits = xls.parse('splits')
+        self.df_prices = xls.parse('prices')
+
+        xls.close()
 
     def get_split(self, account_name):
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
