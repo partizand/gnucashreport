@@ -12,8 +12,11 @@ class RepBuilder:
     DataFrame implementation of GnuCash database tables for buil reports
     """
 
+    dir_excel = "U:/tables"
     # Имя файла excel по умолчанию для сохранения/чтения данных DataFrame таблиц
-    excel_filename="U:/tables/tables.xlsx"
+    excel_filename="tables.xlsx"
+
+    book_name=None
 
     # Merged splits and transactions
     # df_m_splits = None
@@ -21,6 +24,7 @@ class RepBuilder:
     root_account_guid = None
 
     def __init__(self):
+        self.excel_filename=os.path.join(self.dir_excel,self.excel_filename)
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
         self.df_commodities = pandas.DataFrame()
@@ -54,6 +58,8 @@ class RepBuilder:
         if filename is None:
             filename = self.excel_filename
 
+        self.book_name=os.path.basename(filename)
+
         xls = pandas.ExcelFile(filename)
 
         self.df_accounts = xls.parse('accounts')
@@ -83,7 +89,10 @@ class RepBuilder:
 
         # Группировка по месяцу
         sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname']).value.sum().reset_index()
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).value.sum().reset_index()
+
+        # Тестовая запись промежуточных итогов
+        self.dataframe_to_excel(sel_df, "grouped_acc1")
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -93,6 +102,9 @@ class RepBuilder:
         sel_df = pandas.concat([sel_df, s], axis=1)
         sel_df.set_index(cols, inplace=True)
         #print(sel_df.head())
+
+
+
 
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
@@ -114,20 +126,70 @@ class RepBuilder:
 
         return pivot_t
 
+    def dataframe_to_excel(self, dataframe, filename):
+        """
+        Записывает dataFrame в excel. Указывать только имя файла без расширения!
+        :param dataframe:
+        :param filename: Указывать только имя файла без расширения
+        :return:
+        """
+        filename = os.path.join(self.dir_excel, filename+".xlsx")
+        dataframe.to_excel(filename)
+
     def group_prices_by_period(self,from_date, to_date, period='M'):
-        # select period and account type
+        """
+        Получение курса/цен активов за период
+        Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
+        :param from_date:
+        :param to_date:
+        :param period:
+        :return:
+        """
+
+        # Индекс по периоду
+        idx = pandas.date_range(from_date, to_date, freq=period)
+        # Список mnemonic
+        mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
+
+        # Отбор строк по заданному периоду
         sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
                                 & (self.df_prices['date'] <= to_date)]
 
-        # Группировка по месяцу
-        sel_df = sel_df.set_index('date')
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
-        return sel_df
+        sel_df['date'] = pandas.to_datetime(sel_df['date'])
+        print(sel_df['date'])
+        return
+        # цикл по всем mnemonic
+        group_prices = None
+        for mnemonic in mnem_list:
+
+            # select period and account type
+            sel_mnem = sel_df[(sel_df['mnemonic'] == mnemonic)]
+
+            # Группировка по месяцу
+
+            sel_mnem = sel_mnem.set_index('date')
+            # sel_mnem['date'] = pandas.to_datetime(sel_mnem['date'])
+            # print(sel_mnem)
+
+            #sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
+            sel_mnem = sel_mnem.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index() # to_frame() #.reset_index()
+            # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
+            sel_mnem.set_index(['date'], inplace=True)
+            print(sel_mnem)
+            sel_mnem = sel_mnem.reindex(idx, method='nearest')
+            if group_prices is None:
+                group_prices = sel_mnem
+            else:
+                group_prices = group_prices.append(sel_mnem)
+
+        print(group_prices)
+        return group_prices
 
     def get_balance(self, account_name):
         return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
 
     def open_book(self, sqlite_file):
+        self.book_name = os.path.basename(sqlite_file)
         with piecash.open_book(sqlite_file) as gnucash_book:
 
             # Read data tables in dataframes

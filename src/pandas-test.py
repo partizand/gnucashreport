@@ -27,7 +27,7 @@ prices = [
     {'date': '31.01.2016', 'value': 30, 'mnemonic': 'USD'},
     {'date': '01.02.2016', 'value': 68, 'mnemonic': 'EUR'},
     {'date': '29.02.2016', 'value': 65, 'mnemonic': 'EUR'},
-    {'date': '28.02.2016', 'value': 60, 'mnemonic': 'EUR'},
+    {'date': '28.02.2016', 'value': 63, 'mnemonic': 'EUR'},
     {'date': '28.04.2016', 'value': 70, 'mnemonic': 'EUR'},
 
 
@@ -56,10 +56,37 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 #print(pr)
 
 # Группировка по месяцу
-pr.set_index(['date'], inplace=True)
-# ndf = pr.resample('M').last()
-ndf = pr.groupby([pandas.TimeGrouper('M'), 'mnemonic']).value.last().reset_index()
-print(ndf)
+# Индекс по периоду
+idx = pandas.date_range("2016-01-01", "2016-12-31", freq="M")
+
+# Попытка создать мультииндекс
+# iterables = [idx, ['EUR', 'USD']]
+# midx = pandas.MultiIndex.from_product(iterables, names=['date', 'mnemonic'])
+# print(midx)
+
+# Список mnemonic
+mnem_list = pr['mnemonic'].drop_duplicates().tolist()
+print(mnem_list)
+
+# цикл по всем
+group_prices = None
+for mnemonic in mnem_list:
+
+    # Берем только евро
+    pr_eur=pr[pr['mnemonic'] == mnemonic]
+    pr_eur.set_index(['date'], inplace=True)
+    # print(pr)
+    # ndf = pr.resample('M').last()
+    # ndf = pr.groupby([pandas.TimeGrouper('M'), 'mnemonic']).value.last() #.reset_index()
+    ndf = pr_eur.groupby([pandas.TimeGrouper('M'), 'mnemonic']).value.last().reset_index() #.set_index(['date'], inplace=True)
+    ndf.set_index(['date'], inplace=True)
+    ndf = ndf.reindex(idx, method='nearest')
+    if group_prices is None:
+        group_prices=ndf
+    else:
+        group_prices = group_prices.append(ndf)
+    # print(ndf)
+print(group_prices)
 
 exit(0)
 
