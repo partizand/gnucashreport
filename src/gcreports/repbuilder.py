@@ -6,6 +6,8 @@ import pandas
 from operator import attrgetter
 import datetime
 
+from decimal import Decimal
+
 
 class RepBuilder:
     """
@@ -92,7 +94,28 @@ class RepBuilder:
         sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).value.sum().reset_index()
 
         # Тестовая запись промежуточных итогов
-        self.dataframe_to_excel(sel_df, "grouped_acc1")
+        # self.dataframe_to_excel(sel_df, "grouped_acc1")
+
+        # Тут нужно добавить пересчет в нужную валюту
+
+        # Получаем список всех нужных mnemonic
+        mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+        # Получаем их сгруппированные цены
+        group_prices=self.group_prices_by_period(from_date, to_date, period, mnem_list)
+
+        # Добавление колонки курс
+        sel_df = sel_df.merge(group_prices, left_on=['post_date', 'mnemonic'], right_on=['date', 'mnemonic'],
+                                how='left')
+        # Заполнить пустые поля еденицей
+        sel_df['course'] = sel_df['course'].fillna(Decimal(1))
+        # Пересчет в валюту представления
+        sel_df['value'] = sel_df['value'] * sel_df['course']
+        sel_df.drop('course', axis=1, inplace=True) # Удаление колонки курс
+        # Теперь в колонке value реальная сумма в рублях
+
+        # Конец пересчета в нужную валюту
+
+
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -159,8 +182,6 @@ class RepBuilder:
         sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
                                 & (self.df_prices['date'] <= to_date)]
 
-        # Курс рубля
-        df_rub = pandas.Series(1, idx).to_frame()
         # цикл по всем mnemonic
         group_prices = None
         for mnemonic in mnem_list:
@@ -183,6 +204,10 @@ class RepBuilder:
                     group_prices = group_prices.append(sel_mnem)
 
         # print(group_prices)
+        # Сброс индекса и переименование полей (?)
+        group_prices = group_prices.reset_index()
+        group_prices.rename(columns={'index': 'date'}, inplace=True)
+        group_prices.rename(columns={'value': 'course'}, inplace=True)
         return group_prices
 
     def get_balance(self, account_name):

@@ -22,12 +22,12 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
 # print(eur)
 #
 
-pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
-rep.dataframe_to_excel(pr, "prices")
+# pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
+# rep.dataframe_to_excel(pr, "prices")
 # print(pr.head())
 
 
-# df = rep.group_accounts_by_period(from_date=from_date, to_date=to_date, account_type='EXPENSE')
-# rep.dataframe_to_excel(df,"itog-expense")
+df = rep.group_accounts_by_period(from_date=from_date, to_date=to_date, account_type='EXPENSE')
+rep.dataframe_to_excel(df,"itog-expense1")
 
 #print(df)
