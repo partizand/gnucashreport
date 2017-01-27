@@ -59,7 +59,6 @@ class RepBuilder:
             filename = self.excel_filename
 
         self.book_name=os.path.basename(filename)
-
         xls = pandas.ExcelFile(filename)
 
         self.df_accounts = xls.parse('accounts')
@@ -70,6 +69,7 @@ class RepBuilder:
 
         xls.close()
 
+
     def get_split(self, account_name):
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
         # return self.df_splits.loc['fullname' == account_name]
@@ -79,7 +79,7 @@ class RepBuilder:
         Получить сводный DataFrame по счетам типа type за период
         :param from_date:
         :param period:
-        :param type:
+        :param account_type:
         :return:
         """
         # select period and account type
@@ -136,53 +136,53 @@ class RepBuilder:
         filename = os.path.join(self.dir_excel, filename+".xlsx")
         dataframe.to_excel(filename)
 
-    def group_prices_by_period(self,from_date, to_date, period='M'):
+    def group_prices_by_period(self, from_date, to_date, period='M', mnemonics=None):
         """
         Получение курса/цен активов за период
         Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
         :param from_date:
         :param to_date:
         :param period:
+        :param mnemonics: Список названий или None для всех
         :return:
         """
 
-        # Индекс по периоду
-        idx = pandas.date_range(from_date, to_date, freq=period)
+        # Индекс по периоду c учетом timezone
+        idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
         # Список mnemonic
-        mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
+        if mnemonics is None:
+            mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
+        else:
+            mnem_list = mnemonics
 
-        # Отбор строк по заданному периоду
+            # Отбор строк по заданному периоду
         sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
                                 & (self.df_prices['date'] <= to_date)]
 
-        sel_df['date'] = pandas.to_datetime(sel_df['date'])
-        print(sel_df['date'])
-        return
+        # Курс рубля
+        df_rub = pandas.Series(1, idx).to_frame()
         # цикл по всем mnemonic
         group_prices = None
         for mnemonic in mnem_list:
 
             # select period and account type
             sel_mnem = sel_df[(sel_df['mnemonic'] == mnemonic)]
+            if not sel_mnem.empty:
 
-            # Группировка по месяцу
+                # Группировка по месяцу
 
-            sel_mnem = sel_mnem.set_index('date')
-            # sel_mnem['date'] = pandas.to_datetime(sel_mnem['date'])
-            # print(sel_mnem)
+                sel_mnem = sel_mnem.set_index('date')
 
-            #sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
-            sel_mnem = sel_mnem.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index() # to_frame() #.reset_index()
-            # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
-            sel_mnem.set_index(['date'], inplace=True)
-            print(sel_mnem)
-            sel_mnem = sel_mnem.reindex(idx, method='nearest')
-            if group_prices is None:
-                group_prices = sel_mnem
-            else:
-                group_prices = group_prices.append(sel_mnem)
+                sel_mnem = sel_mnem.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
+                # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
+                sel_mnem.set_index(['date'], inplace=True)
+                sel_mnem = sel_mnem.reindex(idx, method='nearest')
+                if group_prices is None:
+                    group_prices = sel_mnem
+                else:
+                    group_prices = group_prices.append(sel_mnem)
 
-        print(group_prices)
+        # print(group_prices)
         return group_prices
 
     def get_balance(self, account_name):
@@ -252,6 +252,7 @@ class RepBuilder:
             fields = ["guid", "commodity_guid", "currency_guid",
                       "date", "source", "type", "value"]
             self.df_prices = self.object_to_dataframe(t_prices, fields)
+            # print(self.df_prices['date'].dtype.tz)
             # Add commodity mnemonic to prices
             self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
 
