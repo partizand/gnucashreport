@@ -79,11 +79,40 @@ class RepBuilder:
     def group_accounts_by_period(self, from_date, to_date, period='M', account_type='EXPENSE', glevel=2):
         """
         Получить сводный DataFrame по счетам типа type за период
+        Возвращает сводную таблицу по тратам/доходам, сгруппированную по счетам за заданный период
+        (например ежемесячные траты за год)
+        Не верно распознаются даты на границе периода, некоторые проводки не попадают в нужный период
+        Найденая проводка:
+        Тип income, 31.12.2016,
+        Выплата процентов с 01.12.2016 по 31.12.2016 дог.№40817810222084001251 по ставке-3%,пакет CLASSIC,на мин.ост.-21039.34 (база расчета:R1-3%,S3-0.00 R3-0%,S6-0.00 R6-0%,S12-0.00 R12-0%)руб
+        проценты по вкладам, Активы:Резервы:ВТБ накопителный счет
+        53,46
+        guid transaction '27fc26cbe621dd97e7b706b7d18a8bb2'
+        guid splits:
+        e051e2b8a674c1ec70ce705c6195987b
+        53fb9d1f518281fca314b5d796d4eca5
+        Не попадает в свод за декабрь
+
         :param from_date:
         :param period:
         :param account_type:
         :return:
         """
+
+        # Поиск проблемной проводки
+        df = self.df_splits[(self.df_splits['transaction_guid'] == '27fc26cbe621dd97e7b706b7d18a8bb2')]
+        # df = self.df_splits.loc['e051e2b8a674c1ec70ce705c6195987b']
+        # df = self.df_splits[(self.df_splits['account_type'] == 'INCOME')]
+        # df['value']= pandas.to_numeric(df['value'])
+        # self.df_splits['value']= self.df_splits['value'].astype(Decimal)
+        # self.df_splits['value'] = (self.df_splits['value']).map(Decimal)
+        # self.df_splits['value'] = pandas.to_numeric(self.df_splits['value'])
+        # print(self.df_splits['value'].dtype)
+        # print(df.index)
+
+        print(df)
+        return
+
         # select period and account type
         sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
                                 & (self.df_splits['post_date'] <= to_date)
