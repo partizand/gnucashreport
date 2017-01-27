@@ -5,6 +5,7 @@ import piecash
 import pandas
 from operator import attrgetter
 import datetime
+import numpy as np
 
 from decimal import Decimal
 
@@ -100,22 +101,25 @@ class RepBuilder:
         """
 
         # Поиск проблемной проводки
-        df = self.df_splits[(self.df_splits['transaction_guid'] == '27fc26cbe621dd97e7b706b7d18a8bb2')]
-        # df = self.df_splits.loc['e051e2b8a674c1ec70ce705c6195987b']
-        # df = self.df_splits[(self.df_splits['account_type'] == 'INCOME')]
-        # df['value']= pandas.to_numeric(df['value'])
-        # self.df_splits['value']= self.df_splits['value'].astype(Decimal)
-        # self.df_splits['value'] = (self.df_splits['value']).map(Decimal)
-        # self.df_splits['value'] = pandas.to_numeric(self.df_splits['value'])
-        # print(self.df_splits['value'].dtype)
-        # print(df.index)
+        # Убрать время из даты
+        # self.df_splits['only_date'] = self.df_splits['post_date'].dt.date
+        # self.df_splits['only_date'] = pandas.to_datetime(self.df_splits['only_date'])
+        # df = self.df_splits[(self.df_splits['transaction_guid'] == '27fc26cbe621dd97e7b706b7d18a8bb2')]
+        # print(df['only_date'].dtype)
+        # print(df)
+        # print(self.df_splits['post_date'].dtype)
 
-        print(df)
-        return
+        # print()
+        # return
 
         # select period and account type
-        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-                                & (self.df_splits['post_date'] <= to_date)
+        # Здесь можно еще добавить часы вмсето добавления колонки
+        self.df_splits['only_date']=self.df_splits['post_date'].dt.normalize()
+        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+        #                         & (self.df_splits['post_date'] <= to_date)
+        #                         & (self.df_splits['account_type'] == account_type)]
+        sel_df = self.df_splits[(self.df_splits['only_date'] >= from_date)
+                                & (self.df_splits['only_date'] <= to_date)
                                 & (self.df_splits['account_type'] == account_type)]
 
         # Группировка по месяцу
@@ -137,8 +141,9 @@ class RepBuilder:
                                 how='left')
         # Заполнить пустые поля еденицей
         sel_df['course'] = sel_df['course'].fillna(Decimal(1))
+
         # Пересчет в валюту представления
-        sel_df['value'] = sel_df['value'] * sel_df['course']
+        sel_df['value'] = (sel_df['value'] * sel_df['course']).apply( lambda x:round(x,2))
         sel_df.drop('course', axis=1, inplace=True) # Удаление колонки курс
         # Теперь в колонке value реальная сумма в рублях
 
@@ -317,6 +322,9 @@ class RepBuilder:
             # merge splits and accounts with transactions
             self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
                                             right_index=True)
+            # Убрать время из даты проводки
+            # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
+            # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
 
 

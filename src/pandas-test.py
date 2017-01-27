@@ -22,14 +22,14 @@ line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущ
          ]
 
 prices = [
-    {'date': '01.01.2016', 'value': 60, 'mnemonic': 'EUR'},
-    {'date': '29.01.2016', 'value': 65, 'mnemonic': 'EUR'},
-    {'date': '31.01.2016', 'value': 67, 'mnemonic': 'EUR'},
-    {'date': '31.01.2016', 'value': 30, 'mnemonic': 'USD'},
-    {'date': '01.02.2016', 'value': 68, 'mnemonic': 'EUR'},
-    {'date': '29.02.2016', 'value': 65, 'mnemonic': 'EUR'},
-    {'date': '28.02.2016', 'value': 63, 'mnemonic': 'EUR'},
-    {'date': '28.04.2016', 'value': 70, 'mnemonic': 'EUR'},
+    {'date': '01.01.2016', 'value': '60', 'mnemonic': 'EUR'},
+    {'date': '29.01.2016', 'value': '65', 'mnemonic': 'EUR'},
+    {'date': '31.01.2016', 'value': '67', 'mnemonic': 'EUR'},
+    {'date': '31.01.2016', 'value': '30', 'mnemonic': 'USD'},
+    {'date': '01.02.2016', 'value': '68', 'mnemonic': 'EUR'},
+    {'date': '29.02.2016', 'value': '65', 'mnemonic': 'EUR'},
+    {'date': '28.02.2016', 'value': '63', 'mnemonic': 'EUR'},
+    {'date': '28.04.2016', 'value': '70', 'mnemonic': 'EUR'},
 
 
 ]
@@ -59,6 +59,13 @@ pr = pandas.DataFrame(prices)
 # Дата в datetime формат
 df['date']=pandas.to_datetime(df['date'], format='%d.%m.%Y')
 pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
+
+pr['value']=pandas.to_numeric(pr['value'])
+pr['value']=pr['value'].astype('str')
+
+print(pr['value'].dtype)
+
+exit()
 
 
 # Загрузка сводной таблицы из excel

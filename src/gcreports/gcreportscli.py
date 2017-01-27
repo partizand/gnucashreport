@@ -5,7 +5,9 @@ import gcreports.repbuilder as repbuilder
 
 
 rep = repbuilder.RepBuilder()
+# from_date = datetime.datetime(2016,1,1,0,0,0,0)
 from_date = datetime.date(2016,1,1)
+# to_date = datetime.datetime(2016,12,31,23,59,59,0)
 to_date = datetime.date(2016,12,31)
 # start_time = time.time()
 rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
@@ -29,6 +31,6 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
 
 # df = rep.group_accounts_by_period(from_date=from_date, to_date=to_date, account_type='EXPENSE')
 df = rep.group_accounts_by_period(from_date=from_date, to_date=to_date, account_type='INCOME')
-# rep.dataframe_to_excel(df,"itog-income1")
+rep.dataframe_to_excel(df,"itog-income2")
 
 #print(df)
