@@ -2,6 +2,7 @@ import os
 
 import piecash
 import pandas
+import numpy
 from operator import attrgetter
 from datetime import datetime, date, time
 
@@ -21,6 +22,21 @@ class RepBuilder:
     df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type='INCOME')
     rep.dataframe_to_excel(df, "itog-income2")
     """
+
+    # GnuCash account types
+    CASH = 'CASH'
+    BANK = 'BANK'
+    ASSETS = 'ASSETS'
+    STOCK = 'STOCK'
+    MUTUAL = 'MUTUAL'
+    INCOME = 'INCOME'
+    EXPENSE = 'EXPENSE'
+    EQUITY = 'EQUITY'
+    LIABILITY = 'LIABILITY'
+    ROOT = 'ROOT'
+    # GNUCash all account assets types
+    ALL_ASSET_TYPES = [CASH, BANK, ASSETS, STOCK, MUTUAL]
+
 
     df_accounts = pandas.DataFrame()
 
@@ -126,21 +142,84 @@ class RepBuilder:
             # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
             # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
-    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type='EXPENSE', glevel=2):
+    def assets_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
+
+
+
+
+        # Отбор проводок по типам счетов
+        # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.dtype(Decimal))
+        # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.float)
+        sel_df = self.df_splits[(self.df_splits['account_type']).isin(account_types)].copy()
+
+        # a = sel_df['quantity'][0]
+        # print(type(a))
+
+        # Почему-то cumsum не работает с Decimal, но работает с float
+        # преобразовываем во float
+        # sel_df['quantity'] = sel_df['quantity'].astype(numpy.float)
+        # sel_df['quantity'] = sel_df['quantity'].astype(numpy.dtype(Decimal))
+        # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.float)
+        # df['value'] = df['value'].astype(numpy.dtype(Decimal))
+
+        # Добавление колонки нарастающий итог по счетам
+        # Будет ли нарастающий итог по порядку возрастания дат????
+        sel_df['cumsum2'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+
+        # Берем нужный интервал
+        start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
+
+        sel_df = sel_df[(self.df_splits['post_date'] >= start_datetime) & (self.df_splits['post_date'] <= finish_datetime)]
+
+        # Добавление MultiIndex по дате и названиям счетов
+        s = sel_df['fullname'].str.split(':', expand=True)
+        cols = s.columns
+        cols = cols.tolist()
+        cols = ['post_date'] + cols
+        sel_df = pandas.concat([sel_df, s], axis=1)
+        sel_df.set_index(cols, inplace=True)
+
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).cumsum2.last().reset_index()
+
+        # print(sel_df)
+
+        # Группировка по нужному уровню
+        # levels = list(range(0,glevel))
+        sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
+
+        # Переворот в сводную
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='cumsum2', columns='post_date', aggfunc='last',
+                                     fill_value=0)
+
+        # Проверка на счете Газпрома
+        # acc = 'Активы:Долгосрочные активы:Ценные бумаги:Промсвязь ИИС:Газпром а.о.'
+        # acc = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Югра Рентный Фонд'
+        # sel_df = sel_df[(sel_df['fullname'] == acc)]
+
+
+        # sel_df = sel_df.groupby(['fullname', 'post_date', 'mnemonic']).quantity.sum() #.groupby(level=[0]).cumsum() #.reset_index()
+        # Возвращаем назад decimal
+        # sel_df = sel_df.apply(lambda x: Decimal(repr(x)))
+        # sel_df = sel_df.groupby(level=[0]).cumsum()
+
+        # print(sel_df.columns.values)
+        # a = sel_df[0]
+        # print(type(a))
+
+        # sel_df = sel_df.groupby(level=[0]).cumsum()
+
+        # self.df_splits.loc[self.df_splits['fullname'] == account_name, 'quantity'].sum()
+
+        # sel_df['CumValue']=sel_df['quantity'].cumsum()
+
+        print(pivot_t)
+
+    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=2):
         """
         Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
         Например, ежемесячные траты за год. Возвращает DataFrame
-        Не верно распознаются даты на границе периода, некоторые проводки не попадают в нужный период
-        Найденая проводка:
-        Тип income, 31.12.2016,
-        Выплата процентов с 01.12.2016 по 31.12.2016 дог.№40817810222084001251 по ставке-3%,пакет CLASSIC,на мин.ост.-21039.34 (база расчета:R1-3%,S3-0.00 R3-0%,S6-0.00 R6-0%,S12-0.00 R12-0%)руб
-        проценты по вкладам, Активы:Резервы:ВТБ накопителный счет
-        53,46
-        guid transaction '27fc26cbe621dd97e7b706b7d18a8bb2'
-        guid splits:
-        e051e2b8a674c1ec70ce705c6195987b
-        53fb9d1f518281fca314b5d796d4eca5
-        Не попадает в свод за декабрь
 
         :param from_date: Start date
         :param to_date: Finish date
@@ -150,30 +229,16 @@ class RepBuilder:
         :return: pivot DataFrame
         """
 
-        # Поиск проблемной проводки
-        # Убрать время из даты
-        # self.df_splits['only_date'] = self.df_splits['post_date'].dt.date
-        # self.df_splits['only_date'] = pandas.to_datetime(self.df_splits['only_date'])
-        # df = self.df_splits[(self.df_splits['transaction_guid'] == '27fc26cbe621dd97e7b706b7d18a8bb2')]
-        # print(df['only_date'].dtype)
-        # print(df)
-        # print(self.df_splits['post_date'].dtype)
-
-        # print()
-        # return
-
         # select period and account type
         # Здесь можно еще добавить часы вмсето добавления колонки
         # Добавление к дате времени в нужном поясе
-        # start_date = datetime(from_date, tz=self.df_splits['post_date'].dtype.tz)
-        start_time = time(0, 0, 0, 0, tzinfo=self.df_splits['post_date'].dtype.tz)
-        finish_time = time(23, 59, 59, 999999, tzinfo=self.df_splits['post_date'].dtype.tz)
-        start_datetime = datetime.combine(from_date, start_time)
-        finish_datetime = datetime.combine(to_date, finish_time)
+        # start_time = time(0, 0, 0, 0, tzinfo=self.df_splits['post_date'].dtype.tz)
+        # finish_time = time(23, 59, 59, 999999, tzinfo=self.df_splits['post_date'].dtype.tz)
+        # start_datetime = datetime.combine(from_date, start_time)
+        # finish_datetime = datetime.combine(to_date, finish_time)
 
-        # start_datetime = datetime.combine(start_date.date, time.min)
-        # end_date = datetime.date(to_date, tz=self.df_splits['post_date'].dtype.tz)
-        # end_time = datetime.combine(end_date, time.max)
+        start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
+
         # Фильтрация по времени
         sel_df = self.df_splits[(self.df_splits['post_date'] >= start_datetime)
                                 & (self.df_splits['post_date'] <= finish_datetime)
@@ -239,6 +304,20 @@ class RepBuilder:
         # ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
 
         return pivot_t
+
+    def get_startfinish_date(self, start_date: date, finish_date: date, tzinfo=None):
+        """
+        Добавляет к датам начала и конца периода время, для правильной фильрации
+        :param start_date:
+        :param finish_date:
+        :param tzinfo:
+        :return: [start_datetime, finish_datetime]
+        """
+        start_time = time(0, 0, 0, 0, tzinfo=tzinfo)
+        finish_time = time(23, 59, 59, 999999, tzinfo=tzinfo)
+        start_datetime = datetime.combine(start_date, start_time)
+        finish_datetime = datetime.combine(finish_date, finish_time)
+        return [start_datetime, finish_datetime]
 
     def dataframe_to_excel(self, dataframe, filename):
         """

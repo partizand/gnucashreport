@@ -1,7 +1,7 @@
 import pandas
 import numpy
 import pytz
-
+from decimal import Decimal
 
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
@@ -60,10 +60,35 @@ pr = pandas.DataFrame(prices)
 df['date']=pandas.to_datetime(df['date'], format='%d.%m.%Y')
 pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 
-pr['value']=pandas.to_numeric(pr['value'])
-pr['value']=pr['value'].astype('str')
+# df.rename(columns={'value': 'quant'}, inplace=True)
+# df['value'] = df['value'].astype(numpy.dtype(Decimal))
+df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
+# df['value'] = df['value'].astype(numpy.float64)
 
-print(pr['value'].dtype)
+
+# df['value'] = df['value'].map(lambda x:float64)
+
+# a=df['value'][6]
+# print(a)
+# print(type(a))
+# print(df['value'].dtype)
+# exit()
+# fil = df[df['value'].isin([100, 57])]
+
+df['cumsum'] = df.groupby(['account'])['value'].transform(pandas.Series.cumsum)
+
+print(df)
+exit()
+
+# sel_df = df.groupby(['account', 'date', 'guid']).value.sum().groupby(level=[0]).cumsum() #.reset_index()
+# sel_df = sel_df.apply(lambda x:Decimal(repr(x)))
+
+# df['cumvalue']=df['value'].cumsum()
+# a = sel_df[5]
+# print(a)
+# print(type(a))
+
+print(sel_df)
 
 exit()
 
