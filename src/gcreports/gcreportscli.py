@@ -10,7 +10,7 @@ rep = repbuilder.RepBuilder()
 from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
 # start_time = time.time()
-rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
+rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # print("Loading from sqlite --- %s seconds ---" % (time.time() - start_time))
 # rep.to_excel()
 
@@ -28,10 +28,14 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
 # rep.dataframe_to_excel(pr, "prices")
 # print(pr.head())
 
+# acc = 'Активы:Текущие активы:Карта ВТБ'
+# acc = 'Активы:Долгосрочные активы:Ценные бумаги:Промсвязь ИИС:Газпром а.о.'
+# acc = 'Активы:Долгосрочные активы:Ценные бумаги:Промсвязь ИИС:МТС'
+acc = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Югра Рентный Фонд'
+balance = rep.get_balance_stock(acc)
+print(balance)
 
-# df = rep.group_accounts_by_period(from_date=from_date, to_date=to_date, account_type='EXPENSE')
 # df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type='INCOME')
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type='INCOME')
-rep.dataframe_to_excel(df, "itog-income2")
+# rep.dataframe_to_excel(df, "itog-income2")
 
 #print(df)

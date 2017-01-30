@@ -1,11 +1,9 @@
 import os
 
-import openpyxl
 import piecash
 import pandas
 from operator import attrgetter
 from datetime import datetime, date, time
-import numpy as np
 
 from decimal import Decimal
 
@@ -26,9 +24,9 @@ class RepBuilder:
 
     dir_excel = "U:/tables"
     # Имя файла excel по умолчанию для сохранения/чтения данных DataFrame таблиц
-    excel_filename="tables.xlsx"
+    excel_filename = "tables.xlsx"
 
-    book_name=None
+    book_name = None
 
     # Merged splits and transactions
     # df_m_splits = None
@@ -36,7 +34,7 @@ class RepBuilder:
     root_account_guid = None
 
     def __init__(self):
-        self.excel_filename=os.path.join(self.dir_excel,self.excel_filename)
+        self.excel_filename = os.path.join(self.dir_excel, self.excel_filename)
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
         self.df_commodities = pandas.DataFrame()
@@ -52,12 +50,12 @@ class RepBuilder:
         if filename is None:
             filename = self.excel_filename
 
-        writer = pandas.ExcelWriter(self.excel_filename)
-        self.df_accounts.to_excel(writer,"accounts")
+        writer = pandas.ExcelWriter(filename)
+        self.df_accounts.to_excel(writer, "accounts")
         self.df_transactions.to_excel(writer, "transactions")
-        self.df_commodities.to_excel(writer,"commodities")
-        self.df_splits.to_excel(writer,"splits")
-        self.df_prices.to_excel(writer,"prices")
+        self.df_commodities.to_excel(writer, "commodities")
+        self.df_splits.to_excel(writer, "splits")
+        self.df_prices.to_excel(writer, "prices")
 
         writer.save()
 
@@ -70,7 +68,7 @@ class RepBuilder:
         if filename is None:
             filename = self.excel_filename
 
-        self.book_name=os.path.basename(filename)
+        self.book_name = os.path.basename(filename)
         xls = pandas.ExcelFile(filename)
 
         self.df_accounts = xls.parse('accounts')
@@ -80,7 +78,6 @@ class RepBuilder:
         self.df_prices = xls.parse('prices')
 
         xls.close()
-
 
     def get_split(self, account_name):
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
@@ -156,22 +153,20 @@ class RepBuilder:
         # Получаем список всех нужных mnemonic
         mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
-        group_prices=self.group_prices_by_period(from_date, to_date, period, mnem_list)
+        group_prices = self.group_prices_by_period(from_date, to_date, period, mnem_list)
 
         # Добавление колонки курс
         sel_df = sel_df.merge(group_prices, left_on=['post_date', 'mnemonic'], right_on=['date', 'mnemonic'],
-                                how='left')
+                              how='left')
         # Заполнить пустые поля еденицей
         sel_df['course'] = sel_df['course'].fillna(Decimal(1))
 
         # Пересчет в валюту представления
-        sel_df['value'] = (sel_df['value'] * sel_df['course']).apply( lambda x:round(x,2))
-        sel_df.drop('course', axis=1, inplace=True) # Удаление колонки курс
+        sel_df['value'] = (sel_df['value'] * sel_df['course']).apply(lambda x: round(x, 2))
+        sel_df.drop('course', axis=1, inplace=True)  # Удаление колонки курс
         # Теперь в колонке value реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
-
-
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -180,7 +175,7 @@ class RepBuilder:
         cols = ['post_date'] + cols
         sel_df = pandas.concat([sel_df, s], axis=1)
         sel_df.set_index(cols, inplace=True)
-        #print(sel_df.head())
+        # print(sel_df.head())
 
 
 
@@ -188,7 +183,7 @@ class RepBuilder:
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
         sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
-        #print(sel_df)
+        # print(sel_df)
 
         # Timestap to date
         sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
@@ -198,10 +193,10 @@ class RepBuilder:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel-1), values='value', columns='post_date', aggfunc='sum', fill_value=0)
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value', columns='post_date', aggfunc='sum',
+                                     fill_value=0)
 
-
-        #ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
+        # ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
 
         return pivot_t
 
@@ -212,7 +207,7 @@ class RepBuilder:
         :param filename: Указывать только имя файла без расширения
         :return:
         """
-        filename = os.path.join(self.dir_excel, filename+".xlsx")
+        filename = os.path.join(self.dir_excel, filename + ".xlsx")
         dataframe.to_excel(filename)
 
     def group_prices_by_period(self, from_date, to_date, period='M', mnemonics=None):
@@ -269,10 +264,20 @@ class RepBuilder:
     def get_balance(self, account_name):
         return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
 
-    def open_book(self, sqlite_file):
-        self.book_name = os.path.basename(sqlite_file)
-        with piecash.open_book(sqlite_file) as gnucash_book:
+    def get_balance_stock(self, account_name):
+        return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'quantity'].sum()
 
+    def
+
+    def open_book(self, sqlite_file, open_if_lock=False):
+        """
+        Open gnucash sqlite file
+        :param sqlite_file:
+        :return:
+        """
+
+        self.book_name = os.path.basename(sqlite_file)
+        with piecash.open_book(sqlite_file, open_if_lock=open_if_lock) as gnucash_book:
             # Read data tables in dataframes
 
             # commodities
@@ -301,9 +306,7 @@ class RepBuilder:
             self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
             # Add commodity mnemonic to accounts
             mems = self.df_commodities['mnemonic'].to_frame()
-            self.df_accounts=pandas.merge(self.df_accounts,mems, left_on='commodity_guid', right_index=True)
-
-
+            self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
 
             # Transactions
 
@@ -343,23 +346,10 @@ class RepBuilder:
             df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
             # merge splits and accounts with transactions
             self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
-                                            right_index=True)
+                                          right_index=True)
             # Убрать время из даты проводки
             # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
             # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
-
-
-
-            # self._base_operation()
-
-    # def _base_operation(self):
-    #     """
-    #     Some base operation on dataframes after get data
-    #     :return:
-    #     """
-
-
-
 
     def _get_fullname_account(self, account_guid):
         """
@@ -390,9 +380,6 @@ class RepBuilder:
         # build dataframe
         fields_getter = [attrgetter(fld) for fld in fields]
         df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter]
-                                             for sp in pieobject], columns=fields)
+                                   for sp in pieobject], columns=fields)
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
-
-
-
