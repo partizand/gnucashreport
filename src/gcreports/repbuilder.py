@@ -22,6 +22,8 @@ class RepBuilder:
     rep.dataframe_to_excel(df, "itog-income2")
     """
 
+    df_accounts = pandas.DataFrame()
+
     dir_excel = "U:/tables"
     # Имя файла excel по умолчанию для сохранения/чтения данных DataFrame таблиц
     excel_filename = "tables.xlsx"
@@ -41,47 +43,88 @@ class RepBuilder:
         self.df_splits = pandas.DataFrame()
         self.df_prices = pandas.DataFrame()
 
-    def to_excel(self, filename=None):
+    def open_book(self, sqlite_file, open_if_lock=False):
         """
-        Запись таблиц DataFrame в фалй Excel. Для отладки
-        :param filename:
+        Open gnucash sqlite file
+        :param sqlite_file:
+        :param open_if_lock:
         :return:
         """
-        if filename is None:
-            filename = self.excel_filename
 
-        writer = pandas.ExcelWriter(filename)
-        self.df_accounts.to_excel(writer, "accounts")
-        self.df_transactions.to_excel(writer, "transactions")
-        self.df_commodities.to_excel(writer, "commodities")
-        self.df_splits.to_excel(writer, "splits")
-        self.df_prices.to_excel(writer, "prices")
+        self.book_name = os.path.basename(sqlite_file)
+        with piecash.open_book(sqlite_file, open_if_lock=open_if_lock) as gnucash_book:
+            # Read data tables in dataframes
 
-        writer.save()
+            # commodities
 
-    def read_from_excel(self, filename=None):
-        """
-        Чтение данных из Excel, вместо чтения из файла gnucash
-        :param filename:
-        :return:
-        """
-        if filename is None:
-            filename = self.excel_filename
+            # preload list of commodities
+            t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
+                piecash.Commodity.namespace != "template").all()
+            fields = ["guid", "namespace", "mnemonic",
+                      "fullname", "cusip", "fraction",
+                      "quote_flag", "quote_source", "quote_tz"]
+            self.df_commodities = self.object_to_dataframe(t_commodities, fields)
 
-        self.book_name = os.path.basename(filename)
-        xls = pandas.ExcelFile(filename)
+            # Accounts
 
-        self.df_accounts = xls.parse('accounts')
-        self.df_transactions = xls.parse('transactions')
-        self.df_commodities = xls.parse('commodities')
-        self.df_splits = xls.parse('splits')
-        self.df_prices = xls.parse('prices')
+            # Get from piecash
+            self.root_account_guid = gnucash_book.root_account.guid
+            t_accounts = gnucash_book.session.query(piecash.Account).all()
+            # fields accounts
+            fields = ["guid", "name", "type", "placeholder",
+                      "commodity_guid", "commodity_scu",
+                      "parent_guid", "description", "hidden"]
+            self.df_accounts = self.object_to_dataframe(t_accounts, fields)
+            # rename to real base name of field from piecash name
+            self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
+            # Get fullname of accounts
+            self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
+            # Add commodity mnemonic to accounts
+            mems = self.df_commodities['mnemonic'].to_frame()
+            self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
 
-        xls.close()
+            # Transactions
 
-    def get_split(self, account_name):
-        return self.df_splits[(self.df_splits['fullname'] == account_name)]
-        # return self.df_splits.loc['fullname' == account_name]
+            # Get from piecash
+            t_transactions = gnucash_book.session.query(piecash.Transaction).all()
+            # fields transactions
+            fields = ["guid", "currency_guid", "num",
+                      "post_date", "description"]
+            self.df_transactions = self.object_to_dataframe(t_transactions, fields)
+
+            # Splits
+
+            # load all splits
+            t_splits = gnucash_book.session.query(piecash.Split).all()
+            # Some fields not correspond to real names in DB
+            fields = ["guid", "transaction_guid", "account_guid",
+                      "memo", "action", "reconcile_state",
+                      "value",
+                      "quantity", "lot_guid"]
+            self.df_splits = self.object_to_dataframe(t_splits, fields)
+
+            # Prices
+
+            # Get from piecash
+            t_prices = gnucash_book.session.query(piecash.Price).all()
+            # Some fields not correspond to real names in DB
+            fields = ["guid", "commodity_guid", "currency_guid",
+                      "date", "source", "type", "value"]
+            self.df_prices = self.object_to_dataframe(t_prices, fields)
+            # print(self.df_prices['date'].dtype.tz)
+            # Add commodity mnemonic to prices
+            self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
+
+            # merge splits and accounts
+            df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
+                                         right_index=True)
+            df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
+            # merge splits and accounts with transactions
+            self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
+                                          right_index=True)
+            # Убрать время из даты проводки
+            # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
+            # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
     def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type='EXPENSE', glevel=2):
         """
@@ -177,9 +220,6 @@ class RepBuilder:
         sel_df.set_index(cols, inplace=True)
         # print(sel_df.head())
 
-
-
-
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
         sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
@@ -267,90 +307,6 @@ class RepBuilder:
     def get_balance_stock(self, account_name):
         return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'quantity'].sum()
 
-    def
-
-    def open_book(self, sqlite_file, open_if_lock=False):
-        """
-        Open gnucash sqlite file
-        :param sqlite_file:
-        :return:
-        """
-
-        self.book_name = os.path.basename(sqlite_file)
-        with piecash.open_book(sqlite_file, open_if_lock=open_if_lock) as gnucash_book:
-            # Read data tables in dataframes
-
-            # commodities
-
-            # preload list of commodities
-            t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
-                piecash.Commodity.namespace != "template").all()
-            fields = ["guid", "namespace", "mnemonic",
-                      "fullname", "cusip", "fraction",
-                      "quote_flag", "quote_source", "quote_tz"]
-            self.df_commodities = self.object_to_dataframe(t_commodities, fields)
-
-            # Accounts
-
-            # Get from piecash
-            self.root_account_guid = gnucash_book.root_account.guid
-            t_accounts = gnucash_book.session.query(piecash.Account).all()
-            # fields accounts
-            fields = ["guid", "name", "type", "placeholder",
-                      "commodity_guid", "commodity_scu",
-                      "parent_guid", "description", "hidden"]
-            self.df_accounts = self.object_to_dataframe(t_accounts, fields)
-            # rename to real base name of field from piecash name
-            self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
-            # Get fullname of accounts
-            self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
-            # Add commodity mnemonic to accounts
-            mems = self.df_commodities['mnemonic'].to_frame()
-            self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
-
-            # Transactions
-
-            # Get from piecash
-            t_transactions = gnucash_book.session.query(piecash.Transaction).all()
-            # fields transactions
-            fields = ["guid", "currency_guid", "num",
-                      "post_date", "description"]
-            self.df_transactions = self.object_to_dataframe(t_transactions, fields)
-
-            # Splits
-
-            # load all splits
-            t_splits = gnucash_book.session.query(piecash.Split).all()
-            # Some fields not correspond to real names in DB
-            fields = ["guid", "transaction_guid", "account_guid",
-                      "memo", "action", "reconcile_state",
-                      "value",
-                      "quantity", "lot_guid"]
-            self.df_splits = self.object_to_dataframe(t_splits, fields)
-
-            # Prices
-
-            # Get from piecash
-            t_prices = gnucash_book.session.query(piecash.Price).all()
-            # Some fields not correspond to real names in DB
-            fields = ["guid", "commodity_guid", "currency_guid",
-                      "date", "source", "type", "value"]
-            self.df_prices = self.object_to_dataframe(t_prices, fields)
-            # print(self.df_prices['date'].dtype.tz)
-            # Add commodity mnemonic to prices
-            self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
-
-            # merge splits and accounts
-            df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
-                                         right_index=True)
-            df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
-            # merge splits and accounts with transactions
-            self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
-                                          right_index=True)
-            # Убрать время из даты проводки
-            # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
-            # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
-
     def _get_fullname_account(self, account_guid):
         """
         Get fullname account by guid. Return semicolon path Expenses:Food:...
@@ -383,3 +339,45 @@ class RepBuilder:
                                    for sp in pieobject], columns=fields)
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
+
+    def to_excel(self, filename=None):
+        """
+        Запись таблиц DataFrame в фалй Excel. Для отладки
+        :param filename:
+        :return:
+        """
+        if filename is None:
+            filename = self.excel_filename
+
+        writer = pandas.ExcelWriter(filename)
+        self.df_accounts.to_excel(writer, "accounts")
+        self.df_transactions.to_excel(writer, "transactions")
+        self.df_commodities.to_excel(writer, "commodities")
+        self.df_splits.to_excel(writer, "splits")
+        self.df_prices.to_excel(writer, "prices")
+
+        writer.save()
+
+    def read_from_excel(self, filename=None):
+        """
+        Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
+        :param filename:
+        :return:
+        """
+        if filename is None:
+            filename = self.excel_filename
+
+        self.book_name = os.path.basename(filename)
+        xls = pandas.ExcelFile(filename)
+
+        self.df_accounts = xls.parse('accounts')
+        self.df_transactions = xls.parse('transactions')
+        self.df_commodities = xls.parse('commodities')
+        self.df_splits = xls.parse('splits')
+        self.df_prices = xls.parse('prices')
+
+        xls.close()
+
+    def get_split(self, account_name):
+        return self.df_splits[(self.df_splits['fullname'] == account_name)]
+        # return self.df_splits.loc['fullname' == account_name]
