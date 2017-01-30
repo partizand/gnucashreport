@@ -4,7 +4,7 @@ import openpyxl
 import piecash
 import pandas
 from operator import attrgetter
-import datetime
+from datetime import datetime, date, time
 import numpy as np
 
 from decimal import Decimal
@@ -13,6 +13,15 @@ from decimal import Decimal
 class RepBuilder:
     """
     DataFrame implementation of GnuCash database tables for buil reports
+
+    Exaple use:
+
+    from_date = datetime.date(2016, 1, 1)
+    to_date = datetime.date(2016, 12, 31)
+    rep = repbuilder.RepBuilder()
+    rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
+    df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type='INCOME')
+    rep.dataframe_to_excel(df, "itog-income2")
     """
 
     dir_excel = "U:/tables"
@@ -77,11 +86,10 @@ class RepBuilder:
         return self.df_splits[(self.df_splits['fullname'] == account_name)]
         # return self.df_splits.loc['fullname' == account_name]
 
-    def group_accounts_by_period(self, from_date, to_date, period='M', account_type='EXPENSE', glevel=2):
+    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type='EXPENSE', glevel=2):
         """
-        Получить сводный DataFrame по счетам типа type за период
-        Возвращает сводную таблицу по тратам/доходам, сгруппированную по счетам за заданный период
-        (например ежемесячные траты за год)
+        Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
+        Например, ежемесячные траты за год. Возвращает DataFrame
         Не верно распознаются даты на границе периода, некоторые проводки не попадают в нужный период
         Найденая проводка:
         Тип income, 31.12.2016,
@@ -94,10 +102,12 @@ class RepBuilder:
         53fb9d1f518281fca314b5d796d4eca5
         Не попадает в свод за декабрь
 
-        :param from_date:
-        :param period:
-        :param account_type:
-        :return:
+        :param from_date: Start date
+        :param to_date: Finish date
+        :param period: "M" for month, "D" for day...
+        :param account_type: INCOME or EXPENSE
+        :param glevel: group level
+        :return: pivot DataFrame
         """
 
         # Поиск проблемной проводки
@@ -114,13 +124,25 @@ class RepBuilder:
 
         # select period and account type
         # Здесь можно еще добавить часы вмсето добавления колонки
-        self.df_splits['only_date']=self.df_splits['post_date'].dt.normalize()
-        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-        #                         & (self.df_splits['post_date'] <= to_date)
-        #                         & (self.df_splits['account_type'] == account_type)]
-        sel_df = self.df_splits[(self.df_splits['only_date'] >= from_date)
-                                & (self.df_splits['only_date'] <= to_date)
+        # Добавление к дате времени в нужном поясе
+        # start_date = datetime(from_date, tz=self.df_splits['post_date'].dtype.tz)
+        start_time = time(0, 0, 0, 0, tzinfo=self.df_splits['post_date'].dtype.tz)
+        finish_time = time(23, 59, 59, 999999, tzinfo=self.df_splits['post_date'].dtype.tz)
+        start_datetime = datetime.combine(from_date, start_time)
+        finish_datetime = datetime.combine(to_date, finish_time)
+
+        # start_datetime = datetime.combine(start_date.date, time.min)
+        # end_date = datetime.date(to_date, tz=self.df_splits['post_date'].dtype.tz)
+        # end_time = datetime.combine(end_date, time.max)
+        # Фильтрация по времени
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= start_datetime)
+                                & (self.df_splits['post_date'] <= finish_datetime)
                                 & (self.df_splits['account_type'] == account_type)]
+        # Добавление колонки только дата и поиск по ней
+        # self.df_splits['only_date'] = self.df_splits['post_date'].dt.normalize()
+        # sel_df = self.df_splits[(self.df_splits['only_date'] >= from_date)
+        #                         & (self.df_splits['only_date'] <= to_date)
+        #                         & (self.df_splits['account_type'] == account_type)]
 
         # Группировка по месяцу
         sel_df.set_index('post_date', inplace=True)
@@ -176,7 +198,7 @@ class RepBuilder:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel-1), values='value', columns='post_date',aggfunc='sum', fill_value=0)
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel-1), values='value', columns='post_date', aggfunc='sum', fill_value=0)
 
 
         #ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
