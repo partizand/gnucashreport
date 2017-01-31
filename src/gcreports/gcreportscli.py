@@ -37,9 +37,10 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # balance = rep.get_balance_stock(acc)
 # print(balance)
 
-df = rep.assets_by_period(from_date=from_date, to_date=to_date)
+df = rep.balance_by_period(from_date=from_date, to_date=to_date)
+# rep.dataframe_to_excel(df, 'asset-balance')
 
-# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=repbuilder.RepBuilder.INCOME)
-# rep.dataframe_to_excel(df, "itog-income2")
+# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=repbuilder.RepBuilder.EXPENSE)
+# rep.dataframe_to_excel(df, "itog-expense2")
 
 #print(df)

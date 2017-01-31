@@ -107,6 +107,8 @@ class RepBuilder:
             fields = ["guid", "currency_guid", "num",
                       "post_date", "description"]
             self.df_transactions = self.object_to_dataframe(t_transactions, fields)
+            # Convert datetme to date (skip time)
+            self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
 
             # Splits
 
@@ -130,6 +132,8 @@ class RepBuilder:
             # print(self.df_prices['date'].dtype.tz)
             # Add commodity mnemonic to prices
             self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
+            # Convert datetme to date (skip time)
+            self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
 
             # merge splits and accounts
             df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
@@ -142,10 +146,7 @@ class RepBuilder:
             # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
             # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
-    def assets_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
-
-
-
+    def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
 
         # Отбор проводок по типам счетов
         # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.dtype(Decimal))
@@ -163,13 +164,76 @@ class RepBuilder:
         # df['value'] = df['value'].astype(numpy.dtype(Decimal))
 
         # Добавление колонки нарастающий итог по счетам
-        # Будет ли нарастающий итог по порядку возрастания дат????
-        sel_df['cumsum2'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
+        sel_df.sort_values(by='post_date', inplace=True)
+        sel_df['balance'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+
+        # Для каждого актива берем баланс на конец каждого периода
+
+        # Индекс по периоду
+        idx = pandas.date_range(from_date, to_date, freq=period)
+
+        # цикл по всем fullname
+        fullname_list = sel_df['fullname'].drop_duplicates().tolist()
+        group_splits = None
+        for fullname in fullname_list:
+
+            # select period and account type
+            sel_fullname = sel_df[(sel_df['fullname'] == fullname)]
+            if not sel_fullname.empty:
+
+                # Группировка по месяцу
+
+                sel_fullname = sel_fullname.set_index('post_date')
+
+                sel_fullname = sel_fullname.groupby([pandas.TimeGrouper(period), 'fullname']).value.last().reset_index()
+                # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
+                sel_fullname.set_index(['post_date'], inplace=True)
+                sel_fullname = sel_fullname.reindex(idx, method='nearest')
+                if group_splits is None:
+                    group_splits = sel_fullname
+                else:
+                    group_splits = group_splits.append(sel_fullname)
+
+        # print(group_prices)
+        # Сброс индекса и переименование полей (?)
+        group_splits = group_splits.reset_index()
+
+        self.dataframe_to_excel(group_splits, 'group_splits')
+        return
+
 
         # Берем нужный интервал
-        start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
+        # start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
+        sel_df = sel_df[(self.df_splits['post_date'] >= from_date) & (self.df_splits['post_date'] <= to_date)]
 
-        sel_df = sel_df[(self.df_splits['post_date'] >= start_datetime) & (self.df_splits['post_date'] <= finish_datetime)]
+
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).balance.last().reset_index()
+        # Здесь нет счетов по которым не было оборотов
+        self.dataframe_to_excel(sel_df, 'bal-month')
+
+        # Тут нужно добавить пересчет в нужную валюту
+
+        # Получаем список всех нужных mnemonic
+        mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+        # Получаем их сгруппированные цены
+        group_prices = self.group_prices_by_period(from_date, to_date, period, mnem_list)
+
+        # Добавление колонки курс
+        sel_df = sel_df.merge(group_prices, left_on=['post_date', 'mnemonic'], right_on=['date', 'mnemonic'],
+                              how='left')
+        # Заполнить пустые поля еденицей
+        sel_df['course'] = sel_df['course'].fillna(Decimal(1))
+
+        # Пересчет в валюту представления
+        sel_df['value'] = (sel_df['balance'] * sel_df['course']).apply(lambda x: round(x, 2))
+        # sel_df.drop('course', axis=1, inplace=True)  # Удаление колонки курс
+        # Теперь в колонке value реальная сумма в рублях
+        self.dataframe_to_excel(sel_df, 'after-course')
+
+        # Конец пересчета в нужную валюту
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -179,9 +243,7 @@ class RepBuilder:
         sel_df = pandas.concat([sel_df, s], axis=1)
         sel_df.set_index(cols, inplace=True)
 
-        # Группировка по месяцу
-        sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).cumsum2.last().reset_index()
+
 
         # print(sel_df)
 
@@ -190,7 +252,7 @@ class RepBuilder:
         sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='cumsum2', columns='post_date', aggfunc='last',
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value', columns='post_date', aggfunc='sum',
                                      fill_value=0)
 
         # Проверка на счете Газпрома
@@ -214,7 +276,8 @@ class RepBuilder:
 
         # sel_df['CumValue']=sel_df['quantity'].cumsum()
 
-        print(pivot_t)
+        # print(pivot_t)
+        return pivot_t
 
     def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=2):
         """
@@ -237,12 +300,26 @@ class RepBuilder:
         # start_datetime = datetime.combine(from_date, start_time)
         # finish_datetime = datetime.combine(to_date, finish_time)
 
-        start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
+        # Timestap to date
+        # self.df_splits['post_date'] = self.df_splits['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
+        # self.df_splits['post_date'] = self.df_splits['post_date'].date #apply(lambda x: x.date())
+        # x.astype('M8[m]')
+
+        # print(self.df_splits)
+        # print(self.df_splits.dtypes)
+        # return
+
+        # start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
 
         # Фильтрация по времени
-        sel_df = self.df_splits[(self.df_splits['post_date'] >= start_datetime)
-                                & (self.df_splits['post_date'] <= finish_datetime)
+        # sel_df = self.df_splits[(self.df_splits['post_date'] >= start_datetime)
+        #                         & (self.df_splits['post_date'] <= finish_datetime)
+        #                         & (self.df_splits['account_type'] == account_type)]
+
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+                                & (self.df_splits['post_date'] <= to_date)
                                 & (self.df_splits['account_type'] == account_type)]
+
         # Добавление колонки только дата и поиск по ней
         # self.df_splits['only_date'] = self.df_splits['post_date'].dt.normalize()
         # sel_df = self.df_splits[(self.df_splits['only_date'] >= from_date)
@@ -291,7 +368,7 @@ class RepBuilder:
         # print(sel_df)
 
         # Timestap to date
-        sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
+        # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
 
         # inverse income
         if account_type == 'INCOME':
@@ -341,14 +418,16 @@ class RepBuilder:
         """
 
         # Индекс по периоду c учетом timezone
-        idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
+        # idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
+        idx = pandas.date_range(from_date, to_date, freq=period)
         # Список mnemonic
         if mnemonics is None:
             mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
         else:
             mnem_list = mnemonics
 
-            # Отбор строк по заданному периоду
+        # Отбор строк по заданному периоду
+        # TODO: Тут если котировка начинается перед интервалом, она не попадет в расчет
         sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
                                 & (self.df_prices['date'] <= to_date)]
 

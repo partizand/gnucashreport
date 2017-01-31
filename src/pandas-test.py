@@ -75,9 +75,13 @@ df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # exit()
 # fil = df[df['value'].isin([100, 57])]
 
-df['cumsum'] = df.groupby(['account'])['value'].transform(pandas.Series.cumsum)
+# Индекс по периоду
+idx = pandas.date_range("2016-01-01", "2016-12-31", freq="M")
+print(idx)
 
-print(df)
+# df['cumsum'] = df.groupby(['account'])['value'].transform(pandas.Series.cumsum)
+
+# print(df)
 exit()
 
 # sel_df = df.groupby(['account', 'date', 'guid']).value.sum().groupby(level=[0]).cumsum() #.reset_index()
