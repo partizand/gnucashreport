@@ -339,6 +339,7 @@ class RepBuilder:
         mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
         group_prices = self.group_prices_by_period(from_date, to_date, period, mnem_list)
+        # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
         sel_df = sel_df.merge(group_prices, left_on=['post_date', 'mnemonic'], right_on=['date', 'mnemonic'],
@@ -417,49 +418,104 @@ class RepBuilder:
         :return:
         """
 
-        # Индекс по периоду c учетом timezone
-        # idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
+        # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
-        # Список mnemonic
+
 
 
         # Отбор строк по заданному периоду
-        # TODO: Тут если котировка начинается перед интервалом, она не попадет в расчет
-        sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
-                                & (self.df_prices['date'] <= to_date)]
+        sel_df = self.df_prices[(self.df_prices['date'] <= to_date)]
 
+        # Список mnemonic
         if mnemonics is None:
-            mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+            mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
         else:
             mnem_list = mnemonics
+
+        # здесь подразумевается, что есть только одна цена за день
+        sel_df = pandas.DataFrame(sel_df, columns=['date', 'mnemonic', 'value'])
+        # Поэтому отсекаем повторы
+        sel_df = sel_df.drop_duplicates(subset=['date', 'mnemonic'], keep='last')
+        sel_df.set_index(['mnemonic', 'date'], inplace=True)
 
         # цикл по всем mnemonic
         group_prices = None
         for mnemonic in mnem_list:
 
-            # select period and account type
-            sel_mnem = sel_df[(sel_df['mnemonic'] == mnemonic)]
+            # DataFrame с датами и значениями
+            sel_mnem = sel_df.ix['mnemonic' == mnemonic]
             if not sel_mnem.empty:
 
-                # Группировка по месяцу
+                sel_mnem = sel_mnem.resample(period).ffill()
 
-                sel_mnem = sel_mnem.set_index('date')
-
-                sel_mnem = sel_mnem.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
-                # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
-                sel_mnem.set_index(['date'], inplace=True)
                 sel_mnem = sel_mnem.reindex(idx, method='nearest')
+                sel_mnem.index.name = 'date'
+                sel_mnem['mnemonic'] = mnemonic
+                sel_mnem.set_index('mnemonic', append=True, inplace=True)
+
                 if group_prices is None:
                     group_prices = sel_mnem
                 else:
                     group_prices = group_prices.append(sel_mnem)
 
-        # print(group_prices)
-        # Сброс индекса и переименование полей (?)
-        group_prices = group_prices.reset_index()
-        group_prices.rename(columns={'index': 'date'}, inplace=True)
-        group_prices.rename(columns={'value': 'course'}, inplace=True)
         return group_prices
+
+    # def group_prices_by_period(self, from_date, to_date, period='M', mnemonics=None):
+    #     """
+    #     Получение курса/цен активов за период
+    #     Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
+    #     :param from_date:
+    #     :param to_date:
+    #     :param period:
+    #     :param mnemonics: Список названий или None для всех
+    #     :return:
+    #     """
+    #
+    #     # Индекс по периоду c учетом timezone
+    #     # idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
+    #     idx = pandas.date_range(from_date, to_date, freq=period)
+    #     # Список mnemonic
+    #
+    #
+    #     # Отбор строк по заданному периоду
+    #     # TODO: Тут если котировка начинается перед интервалом, она не попадет в расчет
+    #     sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
+    #                             & (self.df_prices['date'] <= to_date)]
+    #
+    #     # sel_df = self.df_prices[(self.df_prices['date'] <= to_date)]
+    #
+    #     if mnemonics is None:
+    #         mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+    #     else:
+    #         mnem_list = mnemonics
+    #
+    #     # цикл по всем mnemonic
+    #     group_prices = None
+    #     for mnemonic in mnem_list:
+    #
+    #         # select period and account type
+    #         sel_mnem = sel_df[(sel_df['mnemonic'] == mnemonic)]
+    #         if not sel_mnem.empty:
+    #
+    #             # Группировка по месяцу
+    #
+    #             sel_mnem = sel_mnem.set_index('date')
+    #
+    #             sel_mnem = sel_mnem.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
+    #             # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
+    #             sel_mnem.set_index(['date'], inplace=True)
+    #             sel_mnem = sel_mnem.reindex(idx, method='nearest')
+    #             if group_prices is None:
+    #                 group_prices = sel_mnem
+    #             else:
+    #                 group_prices = group_prices.append(sel_mnem)
+    #
+    #     # print(group_prices)
+    #     # Сброс индекса и переименование полей (?)
+    #     group_prices = group_prices.reset_index()
+    #     group_prices.rename(columns={'index': 'date'}, inplace=True)
+    #     group_prices.rename(columns={'value': 'course'}, inplace=True)
+    #     return group_prices
 
     def get_balance(self, account_name, on_date=None):
         """

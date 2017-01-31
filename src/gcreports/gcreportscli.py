@@ -26,7 +26,7 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # print(eur)
 #
 
-# pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
+# pr = rep.group_prices_by_period2(from_date=from_date, to_date=to_date)
 # rep.dataframe_to_excel(pr, "prices")
 # print(pr.head())
 
@@ -40,10 +40,10 @@ acc = 'Активы:Текущие активы:Карта ВТБ'
 # df = rep.balance_by_period(from_date=from_date, to_date=to_date)
 # rep.dataframe_to_excel(df, 'asset-balance')
 
-a = rep.get_balance(acc)
-print(a)
+# a = rep.get_balance(acc)
+# print(a)
 
-# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=repbuilder.RepBuilder.EXPENSE)
-# rep.dataframe_to_excel(df, "itog-expense2")
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=repbuilder.RepBuilder.EXPENSE)
+rep.dataframe_to_excel(df, "itog-expense2")
 
 #print(df)
