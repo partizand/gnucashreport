@@ -421,15 +421,17 @@ class RepBuilder:
         # idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
         idx = pandas.date_range(from_date, to_date, freq=period)
         # Список mnemonic
-        if mnemonics is None:
-            mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
-        else:
-            mnem_list = mnemonics
+
 
         # Отбор строк по заданному периоду
         # TODO: Тут если котировка начинается перед интервалом, она не попадет в расчет
         sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
                                 & (self.df_prices['date'] <= to_date)]
+
+        if mnemonics is None:
+            mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+        else:
+            mnem_list = mnemonics
 
         # цикл по всем mnemonic
         group_prices = None
@@ -459,11 +461,18 @@ class RepBuilder:
         group_prices.rename(columns={'value': 'course'}, inplace=True)
         return group_prices
 
-    def get_balance(self, account_name):
-        return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'value'].sum()
-
-    def get_balance_stock(self, account_name):
-        return self.df_splits.loc[self.df_splits['fullname'] == account_name, 'quantity'].sum()
+    def get_balance(self, account_name, on_date=None):
+        """
+        Возвращает баланс счета на заданную дату
+        :param account_name: Полное имя счета
+        :param on_date: Дата на которую считается баланс или None для окончательного баланса
+        :return: Баланс в еденицах счета
+        """
+        sel_df = self.df_splits[(self.df_splits['fullname'] == account_name)]
+        if not on_date is None:
+            sel_df = sel_df[sel_df['post_date'] <= on_date]
+        balance = sel_df['quantity'].sum()
+        return balance
 
     def _get_fullname_account(self, account_guid):
         """

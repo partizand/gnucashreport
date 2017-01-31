@@ -3,6 +3,8 @@ import numpy
 import pytz
 from decimal import Decimal
 
+from gcreports.repbuilder import RepBuilder
+
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
@@ -53,6 +55,8 @@ def read_from_excel(filename, sheet):
 #index = list(map(chr, range(97, 97+len(line1))))
 #index = list(range(10))
 
+rep = RepBuilder()
+
 # Исходный DataFrame
 df = pandas.DataFrame(line1)
 pr = pandas.DataFrame(prices)
@@ -65,6 +69,15 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
+
+# Загрузка балансов из excel
+filename = "U:/tables/balances.xlsx"
+df_bal = read_from_excel(filename, "Sheet1")
+# print(df_bal)
+df_bal.set_index(['post_date','fullname'], inplace=True)
+# df_bal = df_bal.resample('D').ffill()
+rep.dataframe_to_excel(df_bal, 'df_bal')
+exit()
 
 # df['value'] = df['value'].map(lambda x:float64)
 
