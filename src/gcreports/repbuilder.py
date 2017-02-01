@@ -26,7 +26,7 @@ class RepBuilder:
     # GnuCash account types
     CASH = 'CASH'
     BANK = 'BANK'
-    ASSETS = 'ASSETS'
+    ASSET = 'ASSET'
     STOCK = 'STOCK'
     MUTUAL = 'MUTUAL'
     INCOME = 'INCOME'
@@ -35,7 +35,7 @@ class RepBuilder:
     LIABILITY = 'LIABILITY'
     ROOT = 'ROOT'
     # GNUCash all account assets types
-    ALL_ASSET_TYPES = [CASH, BANK, ASSETS, STOCK, MUTUAL]
+    ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
 
 
     df_accounts = pandas.DataFrame()
@@ -149,139 +149,130 @@ class RepBuilder:
 
     def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
 
-        # Отбор проводок по типам счетов
-        # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.dtype(Decimal))
-        # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.float)
-        sel_df = self.df_splits[(self.df_splits['account_type']).isin(account_types)].copy()
 
-        # a = sel_df['quantity'][0]
-        # print(type(a))
 
-        # Почему-то cumsum не работает с Decimal, но работает с float
-        # преобразовываем во float
-        # sel_df['quantity'] = sel_df['quantity'].astype(numpy.float)
-        # sel_df['quantity'] = sel_df['quantity'].astype(numpy.dtype(Decimal))
-        # self.df_splits['quantity'] = self.df_splits['quantity'].astype(numpy.float)
-        # df['value'] = df['value'].astype(numpy.dtype(Decimal))
+        # Отбираем нужные колонки (почти все и нужны)
+        sel_df = pandas.DataFrame(self.df_splits,
+                                  columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
+                                           'quantity', 'name', 'hidden', 'mnemonic'])
+        # Отбираем нужные типы счетов
+        sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
+
+        # Список всех account_guid
+        account_guids = sel_df['account_guid'].drop_duplicates().tolist()
 
         # Добавление колонки нарастающий итог по счетам
         # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
         sel_df.sort_values(by='post_date', inplace=True)
         sel_df['balance'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
 
-        # Для каждого актива берем баланс на конец каждого периода
+        # здесь подразумевается, что есть только одна цена за день
+        # Поэтому отсекаем повторы
+        sel_df.set_index(['account_guid', 'post_date'], inplace=True)
+        # отсечение повторов по индексу
+        # self.dataframe_to_excel(sel_df, 'sel_df1')
+        # return
+        sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
+
+        # print(sel_df)
+        # return
 
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
 
-        # цикл по всем fullname
-        fullname_list = sel_df['fullname'].drop_duplicates().tolist()
-        group_splits = None
-        for fullname in fullname_list:
+        # цикл по всем commodity_guid
+        group_acc = pandas.DataFrame()
+        for account_guid in account_guids:
 
-            # select period and account type
-            sel_fullname = sel_df[(sel_df['fullname'] == fullname)]
-            if not sel_fullname.empty:
+            # DataFrame с датами и значениями
+            df_acc = sel_df.loc[account_guid]
+            if not df_acc.empty:
+                df_acc = df_acc.resample(period).ffill()
 
-                # Группировка по месяцу
+                df_acc = df_acc.reindex(idx, method='nearest')
+                df_acc.index.name = 'post_date'
+                df_acc['account_guid'] = account_guid
+                df_acc.set_index('account_guid', append=True, inplace=True)
+                # Меняем местами индексы
+                df_acc = df_acc.swaplevel()
 
-                sel_fullname = sel_fullname.set_index('post_date')
-
-                sel_fullname = sel_fullname.groupby([pandas.TimeGrouper(period), 'fullname']).value.last().reset_index()
-                # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
-                sel_fullname.set_index(['post_date'], inplace=True)
-                sel_fullname = sel_fullname.reindex(idx, method='nearest')
-                if group_splits is None:
-                    group_splits = sel_fullname
-                else:
-                    group_splits = group_splits.append(sel_fullname)
-
-        # print(group_prices)
-        # Сброс индекса и переименование полей (?)
-        group_splits = group_splits.reset_index()
-
-        self.dataframe_to_excel(group_splits, 'group_splits')
-        return
-
-
-        # Берем нужный интервал
-        # start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
-        sel_df = sel_df[(self.df_splits['post_date'] >= from_date) & (self.df_splits['post_date'] <= to_date)]
-
-
-        # Группировка по месяцу
-        sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).balance.last().reset_index()
-        # Здесь нет счетов по которым не было оборотов
-        self.dataframe_to_excel(sel_df, 'bal-month')
+                # if group_prices.empty:
+                #     group_prices = sel_mnem
+                # else:
+                group_acc = group_acc.append(df_acc)
 
         # Тут нужно добавить пересчет в нужную валюту
 
-        # Получаем список всех нужных mnemonic
-        mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+        # Получаем список всех нужных commodity_guid
+        commodity_guids = group_acc['commodity_guid'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
-        group_prices = self.group_prices_by_period(from_date, to_date, period, mnem_list)
+        group_prices = self.group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
+        # group_prices = group_prices.reset_index()
 
+        # Сбрасываем один уровень индекса (post_date)
+        group_acc = group_acc.reset_index()
+        # group_acc = group_acc.reset_index(level=1)
+        # print(group_prices)
+        # return
         # Добавление колонки курс
-        sel_df = sel_df.merge(group_prices, left_on=['post_date', 'mnemonic'], right_on=['date', 'mnemonic'],
+        group_acc = group_acc.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                               how='left')
+
+        # Теперь в колонке rate курс ценной бумаги в рублях
+        group_acc.rename(columns={'value': 'rate'}, inplace=True)
         # Заполнить пустые поля еденицей
-        sel_df['course'] = sel_df['course'].fillna(Decimal(1))
+        group_acc['rate'] = group_acc['rate'].fillna(Decimal(1))
 
         # Пересчет в валюту представления
-        sel_df['value'] = (sel_df['balance'] * sel_df['course']).apply(lambda x: round(x, 2))
-        # sel_df.drop('course', axis=1, inplace=True)  # Удаление колонки курс
-        # Теперь в колонке value реальная сумма в рублях
-        self.dataframe_to_excel(sel_df, 'after-course')
+        group_acc['balance_currency'] = (group_acc['balance'] * group_acc['rate']).apply(lambda x: round(x, 2))
+        # Теперь в колонке balance_currency реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
+        # self.dataframe_to_excel(group_acc, 'group_acc')
+        # print(group_acc)
+
+        # Отбираем нужные колонки (почти все и нужны)
+        group_acc = pandas.DataFrame(group_acc,
+                                  columns=['account_guid', 'post_date', 'fullname',
+                                           'balance_currency', 'rate', 'balance', 'quantity'])
+        # self.dataframe_to_excel(group_acc, 'group_acc')
 
         # Добавление MultiIndex по дате и названиям счетов
-        s = sel_df['fullname'].str.split(':', expand=True)
+        s = group_acc['fullname'].str.split(':', expand=True)
         cols = s.columns
         cols = cols.tolist()
         cols = ['post_date'] + cols
-        sel_df = pandas.concat([sel_df, s], axis=1)
-        sel_df.set_index(cols, inplace=True)
+        group_acc = pandas.concat([group_acc, s], axis=1)
+        group_acc.set_index(cols, inplace=True)
 
-
-
-        # print(sel_df)
+        # print(sel_df.head())
 
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
-        sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
+        group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
+
+        # print(group_acc)
+        # return
+        # print(sel_df)
+
+        # Timestap to date
+        # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
+
+        # inverse income
+        # if account_type == 'INCOME':
+        #     sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value', columns='post_date', aggfunc='sum',
+        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='sum',
                                      fill_value=0)
 
-        # Проверка на счете Газпрома
-        # acc = 'Активы:Долгосрочные активы:Ценные бумаги:Промсвязь ИИС:Газпром а.о.'
-        # acc = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Югра Рентный Фонд'
-        # sel_df = sel_df[(sel_df['fullname'] == acc)]
+        self.dataframe_to_excel(pivot_t, 'pivot_t')
 
-
-        # sel_df = sel_df.groupby(['fullname', 'post_date', 'mnemonic']).quantity.sum() #.groupby(level=[0]).cumsum() #.reset_index()
-        # Возвращаем назад decimal
-        # sel_df = sel_df.apply(lambda x: Decimal(repr(x)))
-        # sel_df = sel_df.groupby(level=[0]).cumsum()
-
-        # print(sel_df.columns.values)
-        # a = sel_df[0]
-        # print(type(a))
-
-        # sel_df = sel_df.groupby(level=[0]).cumsum()
-
-        # self.df_splits.loc[self.df_splits['fullname'] == account_name, 'quantity'].sum()
-
-        # sel_df['CumValue']=sel_df['quantity'].cumsum()
-
-        # print(pivot_t)
         return pivot_t
 
     def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=2):
         """
+        Сломана из-за prices
         Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
         Например, ежемесячные траты за год. Возвращает DataFrame
 
@@ -416,8 +407,8 @@ class RepBuilder:
         :param from_date:
         :param to_date:
         :param period:
-        :param mnemonics: Список названий или None для всех
-        :return:
+        :param guids: Список commodities_guids или None для всех
+        :return: DataFrame with grouped prices
         """
 
         all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
@@ -464,12 +455,6 @@ class RepBuilder:
                 # else:
                 group_prices = group_prices.append(sel_mnem)
 
-        # Тут бы нужно умножить value на курс валюты
-
-        # Тут нужно добавить пересчет в нужную валюту
-
-        # Получаем список всех нужных mnemonic
-
         # Список guid всех нужных валют
         currency_guids = set(group_prices['currency_guid'].drop_duplicates().tolist()) & all_commodities_guids
         # print(currency_guids)
@@ -478,63 +463,6 @@ class RepBuilder:
             pass
 
         return group_prices
-
-    # def group_prices_by_period(self, from_date, to_date, period='M', mnemonics=None):
-    #     """
-    #     Получение курса/цен активов за период
-    #     Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
-    #     :param from_date:
-    #     :param to_date:
-    #     :param period:
-    #     :param mnemonics: Список названий или None для всех
-    #     :return:
-    #     """
-    #
-    #     # Индекс по периоду c учетом timezone
-    #     # idx = pandas.date_range(from_date, to_date, freq=period, tz=self.df_prices['date'].dtype.tz)
-    #     idx = pandas.date_range(from_date, to_date, freq=period)
-    #     # Список mnemonic
-    #
-    #
-    #     # Отбор строк по заданному периоду
-    #     # TODO: Тут если котировка начинается перед интервалом, она не попадет в расчет
-    #     sel_df = self.df_prices[(self.df_prices['date'] >= from_date)
-    #                             & (self.df_prices['date'] <= to_date)]
-    #
-    #     # sel_df = self.df_prices[(self.df_prices['date'] <= to_date)]
-    #
-    #     if mnemonics is None:
-    #         mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
-    #     else:
-    #         mnem_list = mnemonics
-    #
-    #     # цикл по всем mnemonic
-    #     group_prices = None
-    #     for mnemonic in mnem_list:
-    #
-    #         # select period and account type
-    #         sel_mnem = sel_df[(sel_df['mnemonic'] == mnemonic)]
-    #         if not sel_mnem.empty:
-    #
-    #             # Группировка по месяцу
-    #
-    #             sel_mnem = sel_mnem.set_index('date')
-    #
-    #             sel_mnem = sel_mnem.groupby([pandas.TimeGrouper(period), 'mnemonic']).value.last().reset_index()
-    #             # Эти две строки добавляет недостающие периоды и устанавливает в них ближайшее значение
-    #             sel_mnem.set_index(['date'], inplace=True)
-    #             sel_mnem = sel_mnem.reindex(idx, method='nearest')
-    #             if group_prices is None:
-    #                 group_prices = sel_mnem
-    #             else:
-    #                 group_prices = group_prices.append(sel_mnem)
-    #
-    #     # print(group_prices)
-    #     # Сброс индекса и переименование полей (?)
-    #     group_prices = group_prices.reset_index()
-    #     group_prices.rename(columns={'index': 'date'}, inplace=True)
-    #     group_prices.rename(columns={'value': 'course'}, inplace=True)
-    #     return group_prices
 
     def get_balance(self, account_name, on_date=None):
         """

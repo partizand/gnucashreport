@@ -28,13 +28,13 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # eur = rep.df_prices.loc[rep.df_prices['mnemonic'] == 'EUR', ['date', 'value']]
 # print(eur)
 #
-filename='U:/test_data/prices.pkl'
-pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
+# filename='U:/test_data/prices.pkl'
+# pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
 # pr.to_pickle(filename)
 # pr = pr.reset_index()
 # rep.dataframe_to_excel(pr, filename)
 
-pr_etalon = pandas.read_pickle(filename)
+# pr_etalon = pandas.read_pickle(filename)
 
 # pr_etalon = RepBuilder.read_dataframe_from_excel(filename)
 # pr_etalon.set_index(['commodity_guid', 'date'], inplace=True)
@@ -44,7 +44,7 @@ pr_etalon = pandas.read_pickle(filename)
 # pr = pandas.DataFrame()
 # print(pr_etalon.columns)
 # print(pr_etalon.index)
-assert_frame_equal(pr, pr_etalon, check_like=True) #, check_names=False)
+# assert_frame_equal(pr, pr_etalon, check_like=True) #, check_names=False)
 # a = pr_etalon == pr
 # print(a)
 
@@ -58,7 +58,7 @@ assert_frame_equal(pr, pr_etalon, check_like=True) #, check_names=False)
 # balance = rep.get_balance_stock(acc)
 # print(balance)
 
-# df = rep.balance_by_period(from_date=from_date, to_date=to_date)
+df = rep.balance_by_period(from_date=from_date, to_date=to_date)
 # rep.dataframe_to_excel(df, 'asset-balance')
 
 # a = rep.get_balance(acc)
