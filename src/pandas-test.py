@@ -70,6 +70,14 @@ df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
 
+list1 = ['a','b','c','d']
+list2 = ['b', 'c', 'd','f']
+l1=set(list1)
+l2 = set(list2)
+l3= set(list1) & set(list2)
+print(l3)
+exit()
+
 # Загрузка балансов из excel
 filename = "U:/tables/balances.xlsx"
 df_bal = read_from_excel(filename, "Sheet1")

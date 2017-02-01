@@ -405,7 +405,8 @@ class RepBuilder:
         :param filename: Указывать только имя файла без расширения
         :return:
         """
-        filename = os.path.join(self.dir_excel, filename + ".xlsx")
+        if not filename.endswith('.xlsx'):
+            filename = os.path.join(self.dir_excel, filename + ".xlsx")
         dataframe.to_excel(filename)
 
     def group_prices_by_period(self, from_date, to_date, period='M', guids=None):
@@ -419,7 +420,7 @@ class RepBuilder:
         :return:
         """
 
-        all_commodities_guids = self.df_prices['commodity_guid'].drop_duplicates().tolist()
+        all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
 
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
@@ -431,7 +432,7 @@ class RepBuilder:
         if guids is None:
             guids_list = all_commodities_guids
         else:
-            guids_list = guids in all_commodities_guids
+            guids_list = set(guids) & all_commodities_guids
 
         # здесь подразумевается, что есть только одна цена за день
         sel_df = pandas.DataFrame(self.df_prices, columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
@@ -441,7 +442,7 @@ class RepBuilder:
         sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
 
         # цикл по всем commodity_guid
-        group_prices = None
+        group_prices = pandas.DataFrame()
         for commodity_guid in guids_list:
 
             # DataFrame с датами и значениями
@@ -449,18 +450,32 @@ class RepBuilder:
             if not sel_mnem.empty:
 
                 sel_mnem = sel_mnem.resample(period).ffill()
+                # sel_mnem = sel_mnem.resample(period).bfill()
 
                 sel_mnem = sel_mnem.reindex(idx, method='nearest')
                 sel_mnem.index.name = 'date'
                 sel_mnem['commodity_guid'] = commodity_guid
                 sel_mnem.set_index('commodity_guid', append=True, inplace=True)
+                # Меняем местами индексы
+                sel_mnem = sel_mnem.swaplevel()
 
-                if group_prices is None:
-                    group_prices = sel_mnem
-                else:
-                    group_prices = group_prices.append(sel_mnem)
+                # if group_prices.empty:
+                #     group_prices = sel_mnem
+                # else:
+                group_prices = group_prices.append(sel_mnem)
 
         # Тут бы нужно умножить value на курс валюты
+
+        # Тут нужно добавить пересчет в нужную валюту
+
+        # Получаем список всех нужных mnemonic
+
+        # Список guid всех нужных валют
+        currency_guids = set(group_prices['currency_guid'].drop_duplicates().tolist()) & all_commodities_guids
+        # print(currency_guids)
+        if currency_guids:
+            # TODO: Здесь нужен пересчет в валюту представления
+            pass
 
         return group_prices
 
@@ -584,6 +599,19 @@ class RepBuilder:
         self.df_prices.to_excel(writer, "prices")
 
         writer.save()
+
+    @staticmethod
+    def read_dataframe_from_excel(filename, sheet='Sheet1'):
+        """
+        Чтение dataframe из Excel
+        :param filename:
+        :param sheet:
+        :return: DataFrame
+        """
+        xls = pandas.ExcelFile(filename)
+        df = xls.parse(sheet)
+        xls.close()
+        return df
 
     def read_from_excel(self, filename=None):
         """
