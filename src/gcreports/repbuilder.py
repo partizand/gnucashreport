@@ -131,7 +131,8 @@ class RepBuilder:
             self.df_prices = self.object_to_dataframe(t_prices, fields)
             # print(self.df_prices['date'].dtype.tz)
             # Add commodity mnemonic to prices
-            self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
+            # self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
+            self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on='commodity_guid', right_index=True)
             # Convert datetme to date (skip time)
             self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
 
@@ -407,7 +408,7 @@ class RepBuilder:
         filename = os.path.join(self.dir_excel, filename + ".xlsx")
         dataframe.to_excel(filename)
 
-    def group_prices_by_period(self, from_date, to_date, period='M', mnemonics=None):
+    def group_prices_by_period(self, from_date, to_date, period='M', guids=None):
         """
         Получение курса/цен активов за период
         Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
@@ -418,45 +419,48 @@ class RepBuilder:
         :return:
         """
 
+        all_commodities_guids = self.df_prices['commodity_guid'].drop_duplicates().tolist()
+
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
 
-
-
         # Отбор строк по заданному периоду
-        sel_df = self.df_prices[(self.df_prices['date'] <= to_date)]
+        # sel_df = self.df_prices[(self.df_prices['date'] <= to_date)]
 
-        # Список mnemonic
-        if mnemonics is None:
-            mnem_list = self.df_prices['mnemonic'].drop_duplicates().tolist()
+        # Список commodities guids
+        if guids is None:
+            guids_list = all_commodities_guids
         else:
-            mnem_list = mnemonics
+            guids_list = guids in all_commodities_guids
 
         # здесь подразумевается, что есть только одна цена за день
-        sel_df = pandas.DataFrame(sel_df, columns=['date', 'mnemonic', 'value'])
+        sel_df = pandas.DataFrame(self.df_prices, columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
         # Поэтому отсекаем повторы
-        sel_df = sel_df.drop_duplicates(subset=['date', 'mnemonic'], keep='last')
-        sel_df.set_index(['mnemonic', 'date'], inplace=True)
+        sel_df.set_index(['commodity_guid', 'date'], inplace=True)
+        # отсечение повторов по индексу
+        sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
 
-        # цикл по всем mnemonic
+        # цикл по всем commodity_guid
         group_prices = None
-        for mnemonic in mnem_list:
+        for commodity_guid in guids_list:
 
             # DataFrame с датами и значениями
-            sel_mnem = sel_df.ix['mnemonic' == mnemonic]
+            sel_mnem = sel_df.loc[commodity_guid]
             if not sel_mnem.empty:
 
                 sel_mnem = sel_mnem.resample(period).ffill()
 
                 sel_mnem = sel_mnem.reindex(idx, method='nearest')
                 sel_mnem.index.name = 'date'
-                sel_mnem['mnemonic'] = mnemonic
-                sel_mnem.set_index('mnemonic', append=True, inplace=True)
+                sel_mnem['commodity_guid'] = commodity_guid
+                sel_mnem.set_index('commodity_guid', append=True, inplace=True)
 
                 if group_prices is None:
                     group_prices = sel_mnem
                 else:
                     group_prices = group_prices.append(sel_mnem)
+
+        # Тут бы нужно умножить value на курс валюты
 
         return group_prices
 
