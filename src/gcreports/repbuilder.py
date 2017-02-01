@@ -243,13 +243,16 @@ class RepBuilder:
         cols = cols.tolist()
         cols = ['post_date'] + cols
         group_acc = pandas.concat([group_acc, s], axis=1)
+        group_acc.sort_values(by='post_date', inplace=True)
         group_acc.set_index(cols, inplace=True)
 
         # print(sel_df.head())
 
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
+
         group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
+        self.dataframe_to_excel(group_acc, 'group_acc')
 
         # print(group_acc)
         # return
@@ -263,10 +266,10 @@ class RepBuilder:
         #     sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='sum',
+        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='last',
                                      fill_value=0)
 
-        self.dataframe_to_excel(pivot_t, 'pivot_t')
+        # self.dataframe_to_excel(pivot_t, 'pivot_t')
 
         return pivot_t
 
