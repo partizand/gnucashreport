@@ -259,9 +259,10 @@ class RepBuilder:
         # Timestap to date
         # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: x.date())
         # Convert datetme to date (skip time)
-        group_acc['post_date'] = group_acc['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
+        # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
         group_acc.set_index(cols, inplace=True)
 
+        # Здесь получается очень интересная таблица
         # self.dataframe_to_excel(group_acc, 'group_acc_split')
 
         # print(sel_df.head())
@@ -287,7 +288,7 @@ class RepBuilder:
         pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='sum',
                                      fill_value=0)
 
-        self.dataframe_to_excel(pivot_t, 'pivot_t')
+        # self.dataframe_to_excel(pivot_t, 'pivot_t')
 
         return pivot_t
 

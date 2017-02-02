@@ -27,6 +27,12 @@ class GroupByTest(unittest.TestCase):
         df_etalon = pandas.read_pickle(filename)
         assert_frame_equal(df, df_etalon, check_like=True, obj='Group Prices')
 
+    def test_balance(self):
+        filename = 'U:/test_data/assets.pkl'
+        df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date)
+        df_etalon = pandas.read_pickle(filename)
+        assert_frame_equal(df, df_etalon, check_like=True, obj='Group assets')
+
 
 if __name__ == '__main__':
     unittest.main()

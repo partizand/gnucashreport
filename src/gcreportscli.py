@@ -59,7 +59,10 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # print(balance)
 
 df = rep.balance_by_period(from_date=from_date, to_date=to_date)
-# rep.dataframe_to_excel(df, 'asset-balance')
+# rep.dataframe_to_excel(df, 'balance-exp')
+filename='U:/test_data/assets.pkl'
+df.to_pickle(filename)
+# pr = pr.reset_index()
 
 # a = rep.get_balance(acc)
 # print(a)
