@@ -462,7 +462,6 @@ class RepBuilder:
 
         # Теперь в колонке rate курс ценной бумаги в рублях
         group_prices.rename(columns={'value': 'rate'}, inplace=True)
-        print(group_prices.index)
         return group_prices
 
     def get_balance(self, account_name, on_date=None):

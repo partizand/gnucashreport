@@ -29,7 +29,7 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # print(eur)
 #
 # filename='U:/test_data/prices.pkl'
-pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
+# pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
 # pr.to_pickle(filename)
 # pr = pr.reset_index()
 # rep.dataframe_to_excel(pr, filename)
@@ -67,9 +67,9 @@ pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
 # a = rep.get_balance(acc)
 # print(a)
 
-# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.EXPENSE)
-# filename='U:/test_data/expense.pkl'
-# df.to_pickle(filename)
-# rep.dataframe_to_excel(df, "itog-expense2")
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.INCOME)
+filename='U:/test_data/income.pkl'
+df.to_pickle(filename)
+# rep.dataframe_to_excel(df, "itog-income2")
 
 #print(df)
