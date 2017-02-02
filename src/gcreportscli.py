@@ -28,9 +28,9 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # eur = rep.df_prices.loc[rep.df_prices['mnemonic'] == 'EUR', ['date', 'value']]
 # print(eur)
 #
-filename='U:/test_data/prices.pkl'
+# filename='U:/test_data/prices.pkl'
 pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
-pr.to_pickle(filename)
+# pr.to_pickle(filename)
 # pr = pr.reset_index()
 # rep.dataframe_to_excel(pr, filename)
 

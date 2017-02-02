@@ -37,12 +37,11 @@ class RepBuilder:
     # GNUCash all account assets types
     ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
 
-
     df_accounts = pandas.DataFrame()
 
     dir_excel = "U:/tables"
     # Имя файла excel по умолчанию для сохранения/чтения данных DataFrame таблиц
-    excel_filename = "tables.xlsx"
+    # excel_filename = "tables.xlsx"
 
     book_name = None
 
@@ -52,7 +51,7 @@ class RepBuilder:
     root_account_guid = None
 
     def __init__(self):
-        self.excel_filename = os.path.join(self.dir_excel, self.excel_filename)
+        # self.excel_filename = os.path.join(self.dir_excel, self.excel_filename)
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
         self.df_commodities = pandas.DataFrame()
@@ -61,7 +60,7 @@ class RepBuilder:
 
     def open_book(self, sqlite_file, open_if_lock=False):
         """
-        Open gnucash sqlite file
+        Open gnucash sqlite file, read data to DataFrames
         :param sqlite_file:
         :param open_if_lock:
         :return:
@@ -158,7 +157,6 @@ class RepBuilder:
         :return: DataFrame
         """
 
-
         # Отбираем нужные колонки (почти все и нужны)
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
@@ -178,12 +176,7 @@ class RepBuilder:
         # Поэтому отсекаем повторы
         sel_df.set_index(['account_guid', 'post_date'], inplace=True)
         # отсечение повторов по индексу
-        # self.dataframe_to_excel(sel_df, 'sel_df1')
-        # return
         sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
-
-        # print(sel_df)
-        # return
 
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
@@ -200,8 +193,6 @@ class RepBuilder:
                 df_acc = df_acc.reindex(idx, method='ffill')
                 # Убрать если все значения 0
                 has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
-                # print(has_balances)
-                # return
                 # Берем только не пустые счета
                 if has_balances:
 
@@ -211,9 +202,6 @@ class RepBuilder:
                     # Меняем местами индексы
                     df_acc = df_acc.swaplevel()
 
-                    # if group_prices.empty:
-                    #     group_prices = sel_mnem
-                    # else:
                     group_acc = group_acc.append(df_acc)
 
         # Тут нужно добавить пересчет в нужную валюту
@@ -227,8 +215,6 @@ class RepBuilder:
         # Сбрасываем один уровень индекса (post_date)
         group_acc = group_acc.reset_index()
         # group_acc = group_acc.reset_index(level=1)
-        # print(group_prices)
-        # return
         # Добавление колонки курс
         group_acc = group_acc.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                               how='left')
@@ -243,16 +229,11 @@ class RepBuilder:
         # Теперь в колонке balance_currency реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
-        # self.dataframe_to_excel(group_acc, 'group_acc')
-        # print(group_acc)
 
         # Отбираем нужные колонки
         group_acc = pandas.DataFrame(group_acc,
                                   columns=['post_date', 'fullname',
                                            'balance_currency', 'rate', 'balance'])
-        # self.dataframe_to_excel(group_acc, 'group_acc')
-
-        # return
 
         # Добавление MultiIndex по дате и названиям счетов
         s = group_acc['fullname'].str.split(':', expand=True)
@@ -273,30 +254,12 @@ class RepBuilder:
         # Здесь получается очень интересная таблица
         # self.dataframe_to_excel(group_acc, 'group_acc_split')
 
-        # print(sel_df.head())
-
         # Группировка по нужному уровню
-        # levels = list(range(0,glevel))
-
         group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
-        # self.dataframe_to_excel(group_acc, 'group_acc_gr')
-
-        # print(group_acc)
-        # return
-        # print(sel_df)
-
-        # Timestap to date
-        # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
-
-        # inverse income
-        # if account_type == 'INCOME':
-        #     sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # Переворот в сводную
         pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='sum',
                                      fill_value=0)
-
-        # self.dataframe_to_excel(pivot_t, 'pivot_t')
 
         return pivot_t
 
@@ -421,20 +384,6 @@ class RepBuilder:
 
         return pivot_t
 
-    def get_startfinish_date(self, start_date: date, finish_date: date, tzinfo=None):
-        """
-        Добавляет к датам начала и конца периода время, для правильной фильрации
-        :param start_date:
-        :param finish_date:
-        :param tzinfo:
-        :return: [start_datetime, finish_datetime]
-        """
-        start_time = time(0, 0, 0, 0, tzinfo=tzinfo)
-        finish_time = time(23, 59, 59, 999999, tzinfo=tzinfo)
-        start_datetime = datetime.combine(start_date, start_time)
-        finish_datetime = datetime.combine(finish_date, finish_time)
-        return [start_datetime, finish_datetime]
-
     def dataframe_to_excel(self, dataframe, filename):
         """
         Записывает dataFrame в excel. Указывать только имя файла без расширения!
@@ -450,6 +399,9 @@ class RepBuilder:
         """
         Получение курса/цен активов за период
         Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
+        Возвращаемый DataFrame содержит индекс и столбцы
+        ['commodity_guid', 'date'] (['mnemonic', 'currency_guid', 'rate'], dtype='object')
+        rate - курс
         :param from_date:
         :param to_date:
         :param period:
@@ -510,6 +462,7 @@ class RepBuilder:
 
         # Теперь в колонке rate курс ценной бумаги в рублях
         group_prices.rename(columns={'value': 'rate'}, inplace=True)
+        print(group_prices.index)
         return group_prices
 
     def get_balance(self, account_name, on_date=None):
@@ -558,7 +511,7 @@ class RepBuilder:
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
-    def to_excel(self, filename=None):
+    def __to_excel(self, filename=None):
         """
         Запись таблиц DataFrame в фалй Excel. Для отладки
         :param filename:
@@ -589,7 +542,7 @@ class RepBuilder:
         xls.close()
         return df
 
-    def read_from_excel(self, filename=None):
+    def __read_from_excel(self, filename=None):
         """
         Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
         :param filename:
@@ -609,6 +562,6 @@ class RepBuilder:
 
         xls.close()
 
-    def get_split(self, account_name):
-        return self.df_splits[(self.df_splits['fullname'] == account_name)]
-        # return self.df_splits.loc['fullname' == account_name]
+    # def get_split(self, account_name):
+    #     return self.df_splits[(self.df_splits['fullname'] == account_name)]
+    #     # return self.df_splits.loc['fullname' == account_name]

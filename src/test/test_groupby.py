@@ -1,6 +1,5 @@
 import unittest
 import datetime
-from decimal import Decimal
 import pandas
 from pandas.util.testing import assert_frame_equal
 
