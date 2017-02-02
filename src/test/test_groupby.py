@@ -33,6 +33,12 @@ class GroupByTest(unittest.TestCase):
         df_etalon = pandas.read_pickle(filename)
         assert_frame_equal(df, df_etalon, check_like=True, obj='Group assets')
 
+    def test_turnover(self):
+        filename = 'U:/test_data/expense.pkl'
+        df = self.rep.turnover_by_period(from_date=self.from_date, to_date=self.to_date, account_type=RepBuilder.EXPENSE)
+        df_etalon = pandas.read_pickle(filename)
+        assert_frame_equal(df, df_etalon, check_like=True, obj='Group expenses')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -28,9 +28,9 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # eur = rep.df_prices.loc[rep.df_prices['mnemonic'] == 'EUR', ['date', 'value']]
 # print(eur)
 #
-# filename='U:/test_data/prices.pkl'
-# pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
-# pr.to_pickle(filename)
+filename='U:/test_data/prices.pkl'
+pr = rep.group_prices_by_period(from_date=from_date, to_date=to_date)
+pr.to_pickle(filename)
 # pr = pr.reset_index()
 # rep.dataframe_to_excel(pr, filename)
 
@@ -67,7 +67,9 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # a = rep.get_balance(acc)
 # print(a)
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.EXPENSE)
+# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.EXPENSE)
+# filename='U:/test_data/expense.pkl'
+# df.to_pickle(filename)
 # rep.dataframe_to_excel(df, "itog-expense2")
 
 #print(df)
