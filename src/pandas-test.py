@@ -70,12 +70,21 @@ df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
 
-list1 = ['a','b','c','d']
-list2 = ['b', 'c', 'd','f']
-l1=set(list1)
-l2 = set(list2)
-l3= set(list1) & set(list2)
-print(l3)
+list1 = [0, 0, 0, 0]
+list2 = [0, 1, 0, 0]
+df_n = pandas.DataFrame(list1)
+df_nn = pandas.DataFrame(list2)
+# print(df_n)
+# exit()
+# ar = df_nn[0].nonzero()
+# print(ar)
+# exit()
+# print(df_nn[0].apply(lambda x: x == 0).all())
+has_bal = not (df_n[0].apply(lambda x: x == 0).all())
+if has_bal:
+    print('Значения')
+else:
+    print('Пусто')
 exit()
 
 # Загрузка балансов из excel

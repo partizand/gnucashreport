@@ -189,17 +189,24 @@ class RepBuilder:
             if not df_acc.empty:
                 df_acc = df_acc.resample(period).ffill()
 
-                df_acc = df_acc.reindex(idx, method='nearest')
-                df_acc.index.name = 'post_date'
-                df_acc['account_guid'] = account_guid
-                df_acc.set_index('account_guid', append=True, inplace=True)
-                # Меняем местами индексы
-                df_acc = df_acc.swaplevel()
+                df_acc = df_acc.reindex(idx, method='ffill')
+                # Убрать если все значения 0
+                has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
+                # print(has_balances)
+                # return
+                # Берем только не пустые счета
+                if has_balances:
 
-                # if group_prices.empty:
-                #     group_prices = sel_mnem
-                # else:
-                group_acc = group_acc.append(df_acc)
+                    df_acc.index.name = 'post_date'
+                    df_acc['account_guid'] = account_guid
+                    df_acc.set_index('account_guid', append=True, inplace=True)
+                    # Меняем местами индексы
+                    df_acc = df_acc.swaplevel()
+
+                    # if group_prices.empty:
+                    #     group_prices = sel_mnem
+                    # else:
+                    group_acc = group_acc.append(df_acc)
 
         # Тут нужно добавить пересчет в нужную валюту
 
@@ -231,11 +238,13 @@ class RepBuilder:
         # self.dataframe_to_excel(group_acc, 'group_acc')
         # print(group_acc)
 
-        # Отбираем нужные колонки (почти все и нужны)
+        # Отбираем нужные колонки
         group_acc = pandas.DataFrame(group_acc,
-                                  columns=['account_guid', 'post_date', 'fullname',
-                                           'balance_currency', 'rate', 'balance', 'quantity'])
+                                  columns=['post_date', 'fullname',
+                                           'balance_currency', 'rate', 'balance'])
         # self.dataframe_to_excel(group_acc, 'group_acc')
+
+        # return
 
         # Добавление MultiIndex по дате и названиям счетов
         s = group_acc['fullname'].str.split(':', expand=True)
@@ -243,8 +252,11 @@ class RepBuilder:
         cols = cols.tolist()
         cols = ['post_date'] + cols
         group_acc = pandas.concat([group_acc, s], axis=1)
-        group_acc.sort_values(by='post_date', inplace=True)
+        group_acc.sort_values(by=cols, inplace=True)
+        group_acc.dropna(subset=['balance_currency'], inplace=True)
         group_acc.set_index(cols, inplace=True)
+
+        self.dataframe_to_excel(group_acc, 'group_acc_split')
 
         # print(sel_df.head())
 
@@ -252,7 +264,7 @@ class RepBuilder:
         # levels = list(range(0,glevel))
 
         group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
-        self.dataframe_to_excel(group_acc, 'group_acc')
+        self.dataframe_to_excel(group_acc, 'group_acc_gr')
 
         # print(group_acc)
         # return
