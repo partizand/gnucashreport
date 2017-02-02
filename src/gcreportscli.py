@@ -4,8 +4,6 @@ import time
 import pandas
 from pandas.util.testing import assert_frame_equal
 from gcreports.repbuilder import RepBuilder
-# import gcreports.repbuilder as repbuilder
-
 
 
 
@@ -15,7 +13,8 @@ rep = RepBuilder()
 from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
 # start_time = time.time()
-rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+# rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # print("Loading from sqlite --- %s seconds ---" % (time.time() - start_time))
 # rep.to_excel()
 
@@ -67,9 +66,9 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # a = rep.get_balance(acc)
 # print(a)
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.INCOME)
-filename='U:/test_data/income.pkl'
-df.to_pickle(filename)
+# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.INCOME)
+# filename='U:/test_data/income.pkl'
+# df.to_pickle(filename)
 # rep.dataframe_to_excel(df, "itog-income2")
 
 #print(df)

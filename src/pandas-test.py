@@ -2,6 +2,10 @@ import pandas
 import numpy
 import pytz
 from decimal import Decimal
+import sys
+
+print(sys.version_info.major)
+exit()
 
 from gcreports.repbuilder import RepBuilder
 

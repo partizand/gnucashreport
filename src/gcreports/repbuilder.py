@@ -1,11 +1,24 @@
 import os
 
+import sys
+# if sys.version_info < (3,):
+#     integer_types = (int, long,)
+# else:
+#     integer_types = (int,)
+#
+if sys.version_info.major > 3:
+    long = int
+# print(sys.version_info)
+# exit()
+
 import piecash
+import gnucashxml
 import pandas
 from operator import attrgetter
 from datetime import date
 
 from decimal import Decimal
+
 
 
 class RepBuilder:
@@ -56,6 +69,36 @@ class RepBuilder:
         # self.df_splits = pandas.DataFrame()
         # self.df_prices = pandas.DataFrame()
 
+    def open_book_xml(self, xml_file):
+        book = gnucashxml.from_filename(xml_file)
+
+        # Accounts
+
+        all_accounts = []
+        for account, children, splits in book.walk():
+            all_accounts.append(account)
+        # print(all_accounts)
+        # return
+        fields = ['guid', 'name', 'actype', 'description', 'parent.guid', 'commodity', 'commodity_scu']
+        df_accounts = self.object_to_dataframe(all_accounts, fields)
+        print(df_accounts)
+
+        # Transactions
+
+        tr = book.transactions
+        fields = ['guid', 'currency', 'date', 'description']
+        df_tr = self.object_to_dataframe(tr, fields)
+        # print(df_tr)
+
+        # Splits
+
+        splits = book.root_account.get_all_splits()
+        fields = ['guid', 'reconciled_state', 'value', 'quantity', 'account.guid', 'transaction.guid']
+        df_splits = self.object_to_dataframe(splits, fields)
+        # print(df_splits)
+
+
+
     def open_book(self, sqlite_file, open_if_lock=False):
         """
         Open gnucash sqlite file, read data to DataFrames
@@ -88,6 +131,8 @@ class RepBuilder:
                       "commodity_guid", "commodity_scu",
                       "parent_guid", "description", "hidden"]
             self.df_accounts = self.object_to_dataframe(t_accounts, fields)
+            # print(self.df_accounts)
+            # return
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
             # Get fullname of accounts
@@ -465,8 +510,7 @@ class RepBuilder:
         """
         # build dataframe
         fields_getter = [attrgetter(fld) for fld in fields]
-        df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter]
-                                   for sp in pieobject], columns=fields)
+        df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
