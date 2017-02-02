@@ -58,16 +58,16 @@ rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # balance = rep.get_balance_stock(acc)
 # print(balance)
 
-df = rep.balance_by_period(from_date=from_date, to_date=to_date)
+# df = rep.balance_by_period(from_date=from_date, to_date=to_date)
 # rep.dataframe_to_excel(df, 'balance-exp')
-filename='U:/test_data/assets.pkl'
-df.to_pickle(filename)
+# filename='U:/test_data/assets.pkl'
+# df.to_pickle(filename)
 # pr = pr.reset_index()
 
 # a = rep.get_balance(acc)
 # print(a)
 
-# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=repbuilder.RepBuilder.EXPENSE)
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.EXPENSE)
 # rep.dataframe_to_excel(df, "itog-expense2")
 
 #print(df)

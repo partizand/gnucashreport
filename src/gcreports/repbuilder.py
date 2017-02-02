@@ -148,7 +148,15 @@ class RepBuilder:
             # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
     def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
-
+        """
+        Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
+        :param from_date:
+        :param to_date:
+        :param period:
+        :param account_types:
+        :param glevel:
+        :return: DataFrame
+        """
 
 
         # Отбираем нужные колонки (почти все и нужны)
@@ -226,7 +234,7 @@ class RepBuilder:
                               how='left')
 
         # Теперь в колонке rate курс ценной бумаги в рублях
-        group_acc.rename(columns={'value': 'rate'}, inplace=True)
+        # group_acc.rename(columns={'value': 'rate'}, inplace=True)
         # Заполнить пустые поля еденицей
         group_acc['rate'] = group_acc['rate'].fillna(Decimal(1))
 
@@ -342,7 +350,7 @@ class RepBuilder:
 
         # Группировка по месяцу
         sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'mnemonic']).value.sum().reset_index()
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
 
         # Тестовая запись промежуточных итогов
         # self.dataframe_to_excel(sel_df, "grouped_acc1")
@@ -350,23 +358,33 @@ class RepBuilder:
         # Тут нужно добавить пересчет в нужную валюту
 
         # Получаем список всех нужных mnemonic
-        mnem_list = sel_df['mnemonic'].drop_duplicates().tolist()
+        commodity_guids = sel_df['commodity_guid'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
-        group_prices = self.group_prices_by_period(from_date, to_date, period, mnem_list)
+        group_prices = self.group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
         # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
-        sel_df = sel_df.merge(group_prices, left_on=['post_date', 'mnemonic'], right_on=['date', 'mnemonic'],
+        sel_df = sel_df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                               how='left')
+        # print(sel_df.columns)
+        # return
         # Заполнить пустые поля еденицей
-        sel_df['course'] = sel_df['course'].fillna(Decimal(1))
+        sel_df['rate'] = sel_df['rate'].fillna(Decimal(1))
 
+        # inverse income
+        if account_type == self.INCOME:
+            sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
         # Пересчет в валюту представления
-        sel_df['value'] = (sel_df['value'] * sel_df['course']).apply(lambda x: round(x, 2))
-        sel_df.drop('course', axis=1, inplace=True)  # Удаление колонки курс
+        sel_df['value_currency'] = (sel_df['value'] * sel_df['rate']).apply(lambda x: round(x, 2))
+        # sel_df.drop('course', axis=1, inplace=True)  # Удаление колонки курс
         # Теперь в колонке value реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
+
+        # Отбираем нужные колонки
+        sel_df = pandas.DataFrame(sel_df,
+                                     columns=['post_date', 'fullname',
+                                              'value_currency', 'rate', 'value'])
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -374,23 +392,29 @@ class RepBuilder:
         cols = cols.tolist()
         cols = ['post_date'] + cols
         sel_df = pandas.concat([sel_df, s], axis=1)
+
+        sel_df.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
+        sel_df.dropna(subset=['value_currency'], inplace=True)  # Удаление пустых значений
+        sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
+        sel_df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
         sel_df.set_index(cols, inplace=True)
         # print(sel_df.head())
 
+        # Здесь получается очень интересная таблица, но она не так интересна как в балансах
+        # self.dataframe_to_excel(sel_df, 'turnover_split')
+
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
-        sel_df = sel_df.groupby(level=[0, glevel]).sum().reset_index()
+        sel_df = sel_df.groupby(level=[0, glevel]).value_currency.sum().reset_index()
         # print(sel_df)
 
         # Timestap to date
         # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
 
-        # inverse income
-        if account_type == 'INCOME':
-            sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
+
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value', columns='post_date', aggfunc='sum',
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date', aggfunc='sum',
                                      fill_value=0)
 
         # ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
@@ -484,6 +508,8 @@ class RepBuilder:
             # TODO: Здесь нужен пересчет в валюту представления
             pass
 
+        # Теперь в колонке rate курс ценной бумаги в рублях
+        group_prices.rename(columns={'value': 'rate'}, inplace=True)
         return group_prices
 
     def get_balance(self, account_name, on_date=None):
