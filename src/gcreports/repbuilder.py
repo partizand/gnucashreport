@@ -2,9 +2,8 @@ import os
 
 import piecash
 import pandas
-import numpy
 from operator import attrgetter
-from datetime import datetime, date, time
+from datetime import date
 
 from decimal import Decimal
 
@@ -38,25 +37,24 @@ class RepBuilder:
     ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
 
     df_accounts = pandas.DataFrame()
+    df_transactions = pandas.DataFrame()
+    df_commodities = pandas.DataFrame()
+    df_splits = pandas.DataFrame()
+    df_prices = pandas.DataFrame()
 
     dir_excel = "U:/tables"
-    # Имя файла excel по умолчанию для сохранения/чтения данных DataFrame таблиц
-    # excel_filename = "tables.xlsx"
 
     book_name = None
 
-    # Merged splits and transactions
-    # df_m_splits = None
-
     root_account_guid = None
 
-    def __init__(self):
+    # def __init__(self):
         # self.excel_filename = os.path.join(self.dir_excel, self.excel_filename)
-        self.df_accounts = pandas.DataFrame()
-        self.df_transactions = pandas.DataFrame()
-        self.df_commodities = pandas.DataFrame()
-        self.df_splits = pandas.DataFrame()
-        self.df_prices = pandas.DataFrame()
+        # self.df_accounts = pandas.DataFrame()
+        # self.df_transactions = pandas.DataFrame()
+        # self.df_commodities = pandas.DataFrame()
+        # self.df_splits = pandas.DataFrame()
+        # self.df_prices = pandas.DataFrame()
 
     def open_book(self, sqlite_file, open_if_lock=False):
         """
@@ -107,7 +105,8 @@ class RepBuilder:
                       "post_date", "description"]
             self.df_transactions = self.object_to_dataframe(t_transactions, fields)
             # Convert datetme to date (skip time)
-            self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
+            self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(
+                lambda x: pandas.to_datetime(x.date()))
 
             # Splits
 
@@ -131,7 +130,8 @@ class RepBuilder:
             # print(self.df_prices['date'].dtype.tz)
             # Add commodity mnemonic to prices
             # self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
-            self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on='commodity_guid', right_index=True)
+            self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on='commodity_guid',
+                                          right_index=True)
             # Convert datetme to date (skip time)
             self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
 
@@ -195,7 +195,6 @@ class RepBuilder:
                 has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
                 # Берем только не пустые счета
                 if has_balances:
-
                     df_acc.index.name = 'post_date'
                     df_acc['account_guid'] = account_guid
                     df_acc.set_index('account_guid', append=True, inplace=True)
@@ -217,7 +216,7 @@ class RepBuilder:
         # group_acc = group_acc.reset_index(level=1)
         # Добавление колонки курс
         group_acc = group_acc.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
-                              how='left')
+                                    how='left')
 
         # Теперь в колонке rate курс ценной бумаги в рублях
         # group_acc.rename(columns={'value': 'rate'}, inplace=True)
@@ -232,8 +231,8 @@ class RepBuilder:
 
         # Отбираем нужные колонки
         group_acc = pandas.DataFrame(group_acc,
-                                  columns=['post_date', 'fullname',
-                                           'balance_currency', 'rate', 'balance'])
+                                     columns=['post_date', 'fullname',
+                                              'balance_currency', 'rate', 'balance'])
 
         # Добавление MultiIndex по дате и названиям счетов
         s = group_acc['fullname'].str.split(':', expand=True)
@@ -241,9 +240,9 @@ class RepBuilder:
         cols = cols.tolist()
         cols = ['post_date'] + cols
         group_acc = pandas.concat([group_acc, s], axis=1)
-        group_acc.sort_values(by=cols, inplace=True) # Сортировка по дате и счетам
-        group_acc.dropna(subset=['balance_currency'], inplace=True) # Удаление пустых значений
-        group_acc = group_acc[group_acc['balance'] != 0] # Удаление нулевых значений
+        group_acc.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
+        group_acc.dropna(subset=['balance_currency'], inplace=True)  # Удаление пустых значений
+        group_acc = group_acc[group_acc['balance'] != 0]  # Удаление нулевых значений
         group_acc.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
         # Timestap to date
         # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: x.date())
@@ -258,7 +257,8 @@ class RepBuilder:
         group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='sum',
+        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date',
+                                     aggfunc='sum',
                                      fill_value=0)
 
         return pivot_t
@@ -277,46 +277,14 @@ class RepBuilder:
         :return: pivot DataFrame
         """
 
-        # select period and account type
-        # Здесь можно еще добавить часы вмсето добавления колонки
-        # Добавление к дате времени в нужном поясе
-        # start_time = time(0, 0, 0, 0, tzinfo=self.df_splits['post_date'].dtype.tz)
-        # finish_time = time(23, 59, 59, 999999, tzinfo=self.df_splits['post_date'].dtype.tz)
-        # start_datetime = datetime.combine(from_date, start_time)
-        # finish_datetime = datetime.combine(to_date, finish_time)
-
-        # Timestap to date
-        # self.df_splits['post_date'] = self.df_splits['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
-        # self.df_splits['post_date'] = self.df_splits['post_date'].date #apply(lambda x: x.date())
-        # x.astype('M8[m]')
-
-        # print(self.df_splits)
-        # print(self.df_splits.dtypes)
-        # return
-
-        # start_datetime, finish_datetime = self.get_startfinish_date(from_date, to_date, self.df_splits['post_date'].dtype.tz)
-
         # Фильтрация по времени
-        # sel_df = self.df_splits[(self.df_splits['post_date'] >= start_datetime)
-        #                         & (self.df_splits['post_date'] <= finish_datetime)
-        #                         & (self.df_splits['account_type'] == account_type)]
-
         sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
                                 & (self.df_splits['post_date'] <= to_date)
                                 & (self.df_splits['account_type'] == account_type)]
 
-        # Добавление колонки только дата и поиск по ней
-        # self.df_splits['only_date'] = self.df_splits['post_date'].dt.normalize()
-        # sel_df = self.df_splits[(self.df_splits['only_date'] >= from_date)
-        #                         & (self.df_splits['only_date'] <= to_date)
-        #                         & (self.df_splits['account_type'] == account_type)]
-
         # Группировка по месяцу
         sel_df.set_index('post_date', inplace=True)
         sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
-
-        # Тестовая запись промежуточных итогов
-        # self.dataframe_to_excel(sel_df, "grouped_acc1")
 
         # Тут нужно добавить пересчет в нужную валюту
 
@@ -329,8 +297,6 @@ class RepBuilder:
         # Добавление колонки курс
         sel_df = sel_df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                               how='left')
-        # print(sel_df.columns)
-        # return
         # Заполнить пустые поля еденицей
         sel_df['rate'] = sel_df['rate'].fillna(Decimal(1))
 
@@ -339,15 +305,14 @@ class RepBuilder:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
         # Пересчет в валюту представления
         sel_df['value_currency'] = (sel_df['value'] * sel_df['rate']).apply(lambda x: round(x, 2))
-        # sel_df.drop('course', axis=1, inplace=True)  # Удаление колонки курс
-        # Теперь в колонке value реальная сумма в рублях
+        # Теперь в колонке value_currency реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
 
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(sel_df,
-                                     columns=['post_date', 'fullname',
-                                              'value_currency', 'rate', 'value'])
+                                  columns=['post_date', 'fullname',
+                                           'value_currency', 'rate', 'value'])
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -361,7 +326,6 @@ class RepBuilder:
         sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
         sel_df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
         sel_df.set_index(cols, inplace=True)
-        # print(sel_df.head())
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
@@ -369,18 +333,14 @@ class RepBuilder:
         # Группировка по нужному уровню
         # levels = list(range(0,glevel))
         sel_df = sel_df.groupby(level=[0, glevel]).value_currency.sum().reset_index()
-        # print(sel_df)
 
         # Timestap to date
         # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
 
-
-
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date', aggfunc='sum',
+        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date',
+                                     aggfunc='sum',
                                      fill_value=0)
-
-        # ndf = sel_df.groupby([pandas.TimeGrouper(period), 'name','fullname', 'account_guid']).value.sum().reset_index()
 
         return pivot_t
 
@@ -424,7 +384,8 @@ class RepBuilder:
             guids_list = set(guids) & all_commodities_guids
 
         # здесь подразумевается, что есть только одна цена за день
-        sel_df = pandas.DataFrame(self.df_prices, columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
+        sel_df = pandas.DataFrame(self.df_prices,
+                                  columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
         # Поэтому отсекаем повторы
         sel_df.set_index(['commodity_guid', 'date'], inplace=True)
         # отсечение повторов по индексу
@@ -437,7 +398,6 @@ class RepBuilder:
             # DataFrame с датами и значениями
             sel_mnem = sel_df.loc[commodity_guid]
             if not sel_mnem.empty:
-
                 sel_mnem = sel_mnem.resample(period).ffill()
                 # sel_mnem = sel_mnem.resample(period).bfill()
 
@@ -510,14 +470,12 @@ class RepBuilder:
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
-    def __to_excel(self, filename=None):
+    def __to_excel(self, filename):
         """
         Запись таблиц DataFrame в фалй Excel. Для отладки
         :param filename:
         :return:
         """
-        if filename is None:
-            filename = self.excel_filename
 
         writer = pandas.ExcelWriter(filename)
         self.df_accounts.to_excel(writer, "accounts")
@@ -541,14 +499,12 @@ class RepBuilder:
         xls.close()
         return df
 
-    def __read_from_excel(self, filename=None):
+    def __read_from_excel(self, filename):
         """
         Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
         :param filename:
         :return:
         """
-        if filename is None:
-            filename = self.excel_filename
 
         self.book_name = os.path.basename(filename)
         xls = pandas.ExcelFile(filename)
@@ -561,6 +517,6 @@ class RepBuilder:
 
         xls.close()
 
-    # def get_split(self, account_name):
-    #     return self.df_splits[(self.df_splits['fullname'] == account_name)]
-    #     # return self.df_splits.loc['fullname' == account_name]
+        # def get_split(self, account_name):
+        #     return self.df_splits[(self.df_splits['fullname'] == account_name)]
+        #     # return self.df_splits.loc['fullname' == account_name]
