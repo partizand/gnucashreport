@@ -252,11 +252,17 @@ class RepBuilder:
         cols = cols.tolist()
         cols = ['post_date'] + cols
         group_acc = pandas.concat([group_acc, s], axis=1)
-        group_acc.sort_values(by=cols, inplace=True)
-        group_acc.dropna(subset=['balance_currency'], inplace=True)
+        group_acc.sort_values(by=cols, inplace=True) # Сортировка по дате и счетам
+        group_acc.dropna(subset=['balance_currency'], inplace=True) # Удаление пустых значений
+        group_acc = group_acc[group_acc['balance'] != 0] # Удаление нулевых значений
+        group_acc.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
+        # Timestap to date
+        # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: x.date())
+        # Convert datetme to date (skip time)
+        group_acc['post_date'] = group_acc['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
         group_acc.set_index(cols, inplace=True)
 
-        self.dataframe_to_excel(group_acc, 'group_acc_split')
+        # self.dataframe_to_excel(group_acc, 'group_acc_split')
 
         # print(sel_df.head())
 
@@ -264,7 +270,7 @@ class RepBuilder:
         # levels = list(range(0,glevel))
 
         group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
-        self.dataframe_to_excel(group_acc, 'group_acc_gr')
+        # self.dataframe_to_excel(group_acc, 'group_acc_gr')
 
         # print(group_acc)
         # return
@@ -278,10 +284,10 @@ class RepBuilder:
         #     sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='last',
+        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date', aggfunc='sum',
                                      fill_value=0)
 
-        # self.dataframe_to_excel(pivot_t, 'pivot_t')
+        self.dataframe_to_excel(pivot_t, 'pivot_t')
 
         return pivot_t
 
