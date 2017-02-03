@@ -12,14 +12,14 @@ rep = RepBuilder()
 # to_date = datetime.datetime(2016,12,31,23,59,59,0)
 from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
-start_time = time.time()
-# rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+# start_time = time.time()
+# rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
-print("Loading from xml --- %s seconds ---" % (time.time() - start_time))
-
-start_time = time.time()
-rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
-print("Loading from sqlite --- %s seconds ---" % (time.time() - start_time))
+# print("Loading from xml --- %s seconds ---" % (time.time() - start_time))
+# rep.dataframe_to_excel(rep.df_accounts, 'acc-xml')
+# start_time = time.time()
+# rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+# print("Loading from sqlite --- %s seconds ---" % (time.time() - start_time))
 
 # rep.to_excel()
 
@@ -71,9 +71,9 @@ print("Loading from sqlite --- %s seconds ---" % (time.time() - start_time))
 # a = rep.get_balance(acc)
 # print(a)
 
-# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.INCOME)
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.INCOME)
 # filename='U:/test_data/income.pkl'
 # df.to_pickle(filename)
-# rep.dataframe_to_excel(df, "itog-income2")
+rep.dataframe_to_excel(df, "itog-income-xml")
 
 #print(df)

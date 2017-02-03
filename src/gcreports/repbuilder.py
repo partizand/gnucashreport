@@ -69,6 +69,7 @@ class RepBuilder:
         """
         self._read_book_xml(xml_file)
         self._after_read()
+        # print(self.df_prices)
 
     def open_book_sql(self, sqlite_file, open_if_lock=False):
         """
@@ -97,6 +98,8 @@ class RepBuilder:
 
         self.df_accounts = self.object_to_dataframe(book.accounts, fields)
         self.df_accounts.rename(columns={'actype': 'account_type'}, inplace=True)
+        self.root_account_guid = book.root_account_guid
+        # self.dataframe_to_excel(self.df_accounts, 'acc-xml')
         # print(df_accounts)
         # return
 
@@ -130,7 +133,7 @@ class RepBuilder:
                   "date", "source", "price_type", "value"]
         self.df_prices = self.object_to_dataframe(book.prices, fields)
         self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
-        # print(self.df_prices)
+
 
     def _read_book_sql(self, sqlite_file, open_if_lock=False):
         """
@@ -163,6 +166,7 @@ class RepBuilder:
             self.df_accounts = self.object_to_dataframe(t_accounts, fields)
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
+            # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
 
             # Transactions
 
@@ -199,6 +203,10 @@ class RepBuilder:
         Some manipulation with dataframes after load data
         :return:
         """
+
+        # Get root account guid
+        # self.df_accounts[self.df_accounts['acc']]
+
         #  Get fullname of accounts
         self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
 

@@ -15,6 +15,7 @@ class GNUCash_XMLBook:
         self.accounts = []
         self.transactions = []
         self.splits = []
+        self.root_account_guid = None
 
 
     ##################################################################
@@ -329,6 +330,7 @@ class GNUCash_XMLBook:
             commodity = None
             commodity_scu = None
             commodity_guid = None
+            self.root_account_guid = guid
         else:
             parent_guid = tree.find(act + 'parent').text
             commodity_space = tree.find(act + 'commodity/' +

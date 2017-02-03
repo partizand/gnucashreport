@@ -54,11 +54,11 @@ class BaseDataTest(object):
         for field in etalon_fields:
             self.assertIn(field, cols, 'DataFrame {} contain field {}'.format(df_name, field))
 
-    def test_prices_sql(self):
-        filename = 'U:/test_data/prices.pkl'
-        df = self.rep.group_prices_by_period(from_date=self.from_date, to_date=self.to_date)
-        df_etalon = pandas.read_pickle(filename)
-        assert_frame_equal(df, df_etalon, check_like=True, obj='Group Prices')
+    # def test_prices_sql(self):
+    #     filename = 'U:/test_data/prices.pkl'
+    #     df = self.rep.group_prices_by_period(from_date=self.from_date, to_date=self.to_date)
+    #     df_etalon = pandas.read_pickle(filename)
+    #     assert_frame_equal(df, df_etalon, check_like=True, obj='Group Prices')
 
     def test_balance_sql(self):
         filename = 'U:/test_data/assets.pkl'
