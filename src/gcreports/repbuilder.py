@@ -1,23 +1,15 @@
 import os
 
-import sys
-# if sys.version_info < (3,):
-#     integer_types = (int, long,)
-# else:
-#     integer_types = (int,)
-#
-if sys.version_info.major > 3:
-    long = int
-# print(sys.version_info)
-# exit()
-
 import piecash
-import gnucashxml
 import pandas
 from operator import attrgetter
 from datetime import date
 
 from decimal import Decimal
+
+from gcreports.gcxmlreader import GNUCash_XMLBook
+
+# gcreports.gcxmlreader.Account =
 
 
 
@@ -70,24 +62,37 @@ class RepBuilder:
         # self.df_prices = pandas.DataFrame()
 
     def open_book_xml(self, xml_file):
-        book = gnucashxml.from_filename(xml_file)
+
+        # read contens of the book
+        book = GNUCash_XMLBook()
+        book.read_from_xml(xml_file)
+
+        # print(book['prices'])
+        # return
 
         # Accounts
 
-        all_accounts = []
-        for account, children, splits in book.walk():
-            all_accounts.append(account)
-        # print(all_accounts)
+        fields = ["guid", "name", "actype",
+                  "commodity_guid", "commodity_scu",
+                  "parent_guid", "description", "hidden"]
+
+        self.df_accounts = self.object_to_dataframe(book.accounts, fields)
+        self.df_accounts.rename(columns={'actype': 'type'}, inplace=True)
+        # print(df_accounts)
         # return
-        fields = ['guid', 'name', 'actype', 'description', 'parent.guid', 'commodity', 'commodity_scu']
-        df_accounts = self.object_to_dataframe(all_accounts, fields)
-        print(df_accounts)
 
         # Transactions
-
-        tr = book.transactions
+        self.guid = guid
+        self.currency = currency
+        self.date = date
+        self.date_entered = date_entered
+        self.description = description
+        self.splits = splits or []
+        self.slots = slots or {}
+        fields = ["guid", "currency_guid", "num",
+                  "post_date", "description"]
         fields = ['guid', 'currency', 'date', 'description']
-        df_tr = self.object_to_dataframe(tr, fields)
+        df_tr = self.object_to_dataframe(book.transactions, fields)
         # print(df_tr)
 
         # Splits
@@ -96,6 +101,13 @@ class RepBuilder:
         fields = ['guid', 'reconciled_state', 'value', 'quantity', 'account.guid', 'transaction.guid']
         df_splits = self.object_to_dataframe(splits, fields)
         # print(df_splits)
+
+        # commodity
+
+        commodities = book.commodities
+        fields = ['name', 'space']
+        df_commodities = self.object_to_dataframe(commodities, fields)
+        print(df_commodities)
 
 
 
