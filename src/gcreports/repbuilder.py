@@ -62,6 +62,25 @@ class RepBuilder:
         # self.df_prices = pandas.DataFrame()
 
     def open_book_xml(self, xml_file):
+        """
+        Opens gnucash book from xml file
+        :param xml_file:
+        :return:
+        """
+        self._read_book_xml(xml_file)
+        self._after_read()
+
+    def open_book_sql(self, sqlite_file, open_if_lock=False):
+        """
+        Opens gnucash book from sqlite file
+        :param sqlite_file:
+        :param open_if_lock:
+        :return:
+        """
+        self._read_book_sql(sqlite_file, open_if_lock)
+        self._after_read()
+
+    def _read_book_xml(self, xml_file):
 
         # read contens of the book
         book = GNUCash_XMLBook()
@@ -113,7 +132,7 @@ class RepBuilder:
         self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
         # print(self.df_prices)
 
-    def open_book(self, sqlite_file, open_if_lock=False):
+    def _read_book_sql(self, sqlite_file, open_if_lock=False):
         """
         Open gnucash sqlite file, read data to DataFrames
         :param sqlite_file:
@@ -127,7 +146,6 @@ class RepBuilder:
 
             # commodities
 
-            # preload list of commodities
             t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
                 piecash.Commodity.namespace != "template").all()
             fields = ["guid", "namespace", "mnemonic",
@@ -137,41 +155,25 @@ class RepBuilder:
 
             # Accounts
 
-            # Get from piecash
             self.root_account_guid = gnucash_book.root_account.guid
             t_accounts = gnucash_book.session.query(piecash.Account).all()
-            # fields accounts
             fields = ["guid", "name", "type", "placeholder",
                       "commodity_guid", "commodity_scu",
                       "parent_guid", "description", "hidden"]
             self.df_accounts = self.object_to_dataframe(t_accounts, fields)
-            # print(self.df_accounts)
-            # return
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
-            # Get fullname of accounts
-            self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
-            # Add commodity mnemonic to accounts
-            mems = self.df_commodities['mnemonic'].to_frame()
-            self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
 
             # Transactions
 
-            # Get from piecash
             t_transactions = gnucash_book.session.query(piecash.Transaction).all()
-            # fields transactions
             fields = ["guid", "currency_guid", "num",
                       "post_date", "description"]
             self.df_transactions = self.object_to_dataframe(t_transactions, fields)
-            # Convert datetme to date (skip time)
-            self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(
-                lambda x: pandas.to_datetime(x.date()))
 
             # Splits
 
-            # load all splits
             t_splits = gnucash_book.session.query(piecash.Split).all()
-            # Some fields not correspond to real names in DB
             fields = ["guid", "transaction_guid", "account_guid",
                       "memo", "action", "reconcile_state",
                       "value",
@@ -186,24 +188,46 @@ class RepBuilder:
             fields = ["guid", "commodity_guid", "currency_guid",
                       "date", "source", "type", "value"]
             self.df_prices = self.object_to_dataframe(t_prices, fields)
-            # print(self.df_prices['date'].dtype.tz)
-            # Add commodity mnemonic to prices
-            # self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
-            self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on='commodity_guid',
-                                          right_index=True)
-            # Convert datetme to date (skip time)
-            self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
 
-            # merge splits and accounts
-            df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
-                                         right_index=True)
-            df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
-            # merge splits and accounts with transactions
-            self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
-                                          right_index=True)
-            # Убрать время из даты проводки
-            # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
-            # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
+            #---------------------------------------------------
+            # After load
+
+
+
+    def _after_read(self):
+        """
+        Some manipulation with dataframes after load data
+        :return:
+        """
+        #  Get fullname of accounts
+        self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
+
+        # Add commodity mnemonic to accounts
+        mems = self.df_commodities['mnemonic'].to_frame()
+        self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
+
+        # Convert datetme to date in transactions (skip time)
+        self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(
+            lambda x: pandas.to_datetime(x.date()))
+
+        # Merge prices with commodities
+        # self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
+        self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on='commodity_guid',
+                                      right_index=True)
+        # Convert datetme to date in prices (skip time)
+        self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
+
+        # merge splits and accounts
+        df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on='account_guid',
+                                     right_index=True)
+        df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
+        # merge splits and accounts with transactions
+        self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on='transaction_guid',
+                                      right_index=True)
+        # Убрать время из даты проводки
+        # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
+        # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
+
 
     def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
         """

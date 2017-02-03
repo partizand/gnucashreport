@@ -6,19 +6,20 @@ from pandas.util.testing import assert_frame_equal
 from gcreports.repbuilder import RepBuilder
 
 
-class GroupByTest(unittest.TestCase):
+
+class BaseDataTest(object):
     """
     All testing data on external resource because it is real data
     """
 
-    bookfile = "u:/sqllite_book/real-2017-01-26.gnucash"
-    bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
+    # bookfile = "u:/sqllite_book/real-2017-01-26.gnucash"
+    # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
     from_date = datetime.date(2016, 1, 1)
     to_date = datetime.date(2016, 12, 31)
     rep = RepBuilder()
-    rep_xml = RepBuilder()
+    # rep_xml = RepBuilder()
 
-    account_fields = ["name", "account_type",
+    account_fields = ["name", "account_type", 'mnemonic',
                       "commodity_guid", "commodity_scu",
                       "parent_guid", "description", "hidden"]
 
@@ -29,11 +30,10 @@ class GroupByTest(unittest.TestCase):
     price_fields = ["commodity_guid", "currency_guid",
               "date", "source", "type", "value"]
 
-
-    def __init__(self, *args, **kwargs):
-        super(GroupByTest, self).__init__(*args, **kwargs)
-        self.rep.open_book(self.bookfile, open_if_lock=True)
-        self.rep_xml.open_book_xml(self.bookfile_xml)
+    # def __init__(self, *args, **kwargs):
+    #     super(BaseDataTest, self).__init__(*args, **kwargs)
+    #     self.rep.open_book_sql(self.bookfile, open_if_lock=True)
+    #     self.rep_xml.open_book_xml(self.bookfile_xml)
 
     def test_fields_sql(self):
         self.dataframe_fields_control(self.rep.df_accounts, self.account_fields, 'df_account sql')
@@ -42,20 +42,17 @@ class GroupByTest(unittest.TestCase):
         self.dataframe_fields_control(self.rep.df_prices, self.price_fields, 'df_prices sql')
         self.dataframe_fields_control(self.rep.df_splits, self.split_fields, 'df_splits sql')
 
-    def test_fields_xml(self):
-        self.dataframe_fields_control(self.rep_xml.df_accounts, self.account_fields, 'df_account xml')
-        self.dataframe_fields_control(self.rep_xml.df_commodities, self.comm_fields, 'df_commodities xml')
-        self.dataframe_fields_control(self.rep_xml.df_transactions, self.tr_fields, 'df_transactions xml')
-        self.dataframe_fields_control(self.rep_xml.df_prices, self.price_fields, 'df_prices xml')
-        self.dataframe_fields_control(self.rep_xml.df_splits, self.split_fields, 'df_splits xml')
+    # def test_fields_xml(self):
+    #     self.dataframe_fields_control(self.rep_xml.df_accounts, self.account_fields, 'df_account xml')
+    #     self.dataframe_fields_control(self.rep_xml.df_commodities, self.comm_fields, 'df_commodities xml')
+    #     self.dataframe_fields_control(self.rep_xml.df_transactions, self.tr_fields, 'df_transactions xml')
+    #     self.dataframe_fields_control(self.rep_xml.df_prices, self.price_fields, 'df_prices xml')
+    #     self.dataframe_fields_control(self.rep_xml.df_splits, self.split_fields, 'df_splits xml')
 
     def dataframe_fields_control(self, df, etalon_fields, df_name):
         cols = df.columns.values.tolist()
         for field in etalon_fields:
             self.assertIn(field, cols, 'DataFrame {} contain field {}'.format(df_name, field))
-
-
-
 
     def test_prices_sql(self):
         filename = 'U:/test_data/prices.pkl'
@@ -82,5 +79,29 @@ class GroupByTest(unittest.TestCase):
         assert_frame_equal(df, df_etalon, check_like=True, obj='Group income')
 
 
+class SQLDataTest(unittest.TestCase, BaseDataTest):
+
+    bookfile = "u:/sqllite_book/real-2017-01-26.gnucash"
+
+    def __init__(self, *args, **kwargs):
+        super(SQLDataTest, self).__init__(*args, **kwargs)
+        self.rep.open_book_sql(self.bookfile, open_if_lock=True)
+
+
+class XMLDataTest(unittest.TestCase, BaseDataTest):
+
+    bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
+
+    def __init__(self, *args, **kwargs):
+        super(XMLDataTest, self).__init__(*args, **kwargs)
+        self.rep.open_book_xml(self.bookfile_xml)
+
+# def suite():
+#     suite = unittest.TestSuite()
+#     suite.addTest(XMLDataTest)
+#     suite.addTest(SQLDataTest)
+#     return suite
+
 if __name__ == '__main__':
+    # suite()
     unittest.main()
