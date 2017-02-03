@@ -110,11 +110,11 @@ class GNUCash_XMLBook:
         # ret_dict = {}
 
         # commodities = []
-        commoditydict = {}
+        # commoditydict = {}
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}commodity'):
             comm = self._commodity_from_tree(child)
             self.commodities.append(comm)
-            commoditydict[(comm.space, comm.name)] = comm
+            # commoditydict[(comm.space, comm.name)] = comm
 
         # ret_dict['commodities'] = commodities
 
@@ -123,7 +123,7 @@ class GNUCash_XMLBook:
         # prices = []
 
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}pricedb/price'):
-            price = self._price_from_tree(child, commoditydict)
+            price = self._price_from_tree(child)
             self.prices.append(price)
         # ret_dict['prices'] = prices
 
@@ -131,7 +131,7 @@ class GNUCash_XMLBook:
         # accountdict = {}
         # accounts = []
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}account'):
-            acc = self._account_from_tree(child, commoditydict)
+            acc = self._account_from_tree(child)
             self.accounts.append(acc)
 
         # ret_dict['accounts'] = accounts
@@ -140,7 +140,7 @@ class GNUCash_XMLBook:
         # splits = []
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}'
                                   'transaction'):
-            transaction = self._transaction_from_tree(child, commoditydict)
+            transaction = self._transaction_from_tree(child)
             self.transactions.append(transaction)
             for split in transaction.splits:
                 self.splits.append(split)
@@ -243,7 +243,7 @@ class GNUCash_XMLBook:
     #     <price:value>1001600000/1000000</price:value>
     #   </price>
 
-    def _price_from_tree(self, tree, commoditydict):
+    def _price_from_tree(self, tree):
         pr = '{http://www.gnucash.org/XML/price}'
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
         ts = '{http://www.gnucash.org/XML/ts}'
@@ -274,18 +274,20 @@ class GNUCash_XMLBook:
                                    cmdty + "space").text
         currency_name = tree.find(pr + "currency/" +
                                   cmdty + "id").text
-        currency = commoditydict[(currency_space, currency_name)]
+        currency_guid = Commodity.get_commodity_guid(space=currency_space, name=currency_name)
+        # currency = commoditydict[(currency_space, currency_name)]
 
         commodity_space = tree.find(pr + "commodity/" +
                                     cmdty + "space").text
         commodity_name = tree.find(pr + "commodity/" +
                                    cmdty + "id").text
-        commodity = commoditydict[(commodity_space, commodity_name)]
+        commodity_guid = Commodity.get_commodity_guid(space=commodity_space, name=commodity_name)
+        # commodity = commoditydict[(commodity_space, commodity_name)]
 
         date = parse_date(tree.find(pr + "time/" +
                                     ts + "date").text)
 
-        price = Price(guid=guid, commodity_guid=commodity.guid, currency_guid=currency.guid, date=date, source=source,
+        price = Price(guid=guid, commodity_guid=commodity_guid, currency_guid=currency_guid, date=date, source=source,
                       price_type=price_type, value=value)
 
         return price
@@ -299,7 +301,7 @@ class GNUCash_XMLBook:
     # - act:commodity-scu
     # - act:parent
     # - act:slots
-    def _account_from_tree(self, tree, commoditydict):
+    def _account_from_tree(self, tree):
         act = '{http://www.gnucash.org/XML/act}'
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
 
@@ -334,11 +336,9 @@ class GNUCash_XMLBook:
             commodity_name = tree.find(act + 'commodity/' +
                                        cmdty + 'id').text
             commodity_scu = tree.find(act + 'commodity-scu').text
-            commodity = commoditydict[(commodity_space, commodity_name)]
-            # if commodity:
-            commodity_guid = commodity.guid
-            # else:
-            #     commodity_guid = None
+            # commodity = commoditydict[(commodity_space, commodity_name)]
+
+            commodity_guid = Commodity.get_commodity_guid(space=commodity_space, name=commodity_name)
 
         account = Account(name=name,
                           description=description,
@@ -405,7 +405,7 @@ class GNUCash_XMLBook:
 
     # def _commodity_guid(self, ):
 
-    def _transaction_from_tree(self, tree, commoditydict):
+    def _transaction_from_tree(self, tree):
         trn = '{http://www.gnucash.org/XML/trn}'
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
         ts = '{http://www.gnucash.org/XML/ts}'
@@ -416,7 +416,8 @@ class GNUCash_XMLBook:
                                    cmdty + "space").text
         currency_name = tree.find(trn + "currency/" +
                                   cmdty + "id").text
-        currency = commoditydict[(currency_space, currency_name)]
+        currency_guid = Commodity.get_commodity_guid(space=currency_space, name=currency_name)
+        # currency = commoditydict[(currency_space, currency_name)]
         date = parse_date(tree.find(trn + "date-posted/" +
                                     ts + "date").text)
         date_entered = parse_date(tree.find(trn + "date-entered/" +
@@ -424,7 +425,7 @@ class GNUCash_XMLBook:
         description = tree.find(trn + "description").text
         slots = self._slots_from_tree(tree.find(trn + "slots"))
         transaction = Transaction(guid=guid,
-                                  currency=currency,
+                                  currency_guid=currency_guid,
                                   date=date,
                                   date_entered=date_entered,
                                   description=description,
@@ -464,7 +465,7 @@ class GNUCash_XMLBook:
         slots = self._slots_from_tree(tree.find(split + "slots"))
         split = Split(guid=guid,
                       memo=memo,
-                      reconciled_state=reconciled_state,
+                      reconcile_state=reconciled_state,
                       reconcile_date=reconcile_date,
                       value=value,
                       quantity=quantity,
@@ -583,12 +584,12 @@ class Transaction(object):
     A transaction is a balanced group of splits.
     """
 
-    def __init__(self, guid=None, currency=None,
+    def __init__(self, guid=None, currency_guid=None,
                  date=None, date_entered=None,
                  description=None, splits=None,
                  slots=None):
         self.guid = guid
-        self.currency = currency
+        self.currency_guid = currency_guid
         self.date = date
         self.date_entered = date_entered
         self.description = description
@@ -611,11 +612,11 @@ class Split(object):
     """
 
     def __init__(self, guid=None, memo=None,
-                 reconciled_state=None, reconcile_date=None, value=None,
+                 reconcile_state=None, reconcile_date=None, value=None,
                  quantity=None, account_guid=None, transaction_guid=None,
                  slots=None):
         self.guid = guid
-        self.reconciled_state = reconciled_state
+        self.reconcile_state = reconcile_state
         self.reconcile_date = reconcile_date
         self.value = value
         self.quantity = quantity

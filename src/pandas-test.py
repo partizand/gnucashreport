@@ -2,10 +2,7 @@ import pandas
 import numpy
 import pytz
 from decimal import Decimal
-import sys
 
-print(sys.version_info.major)
-exit()
 
 from gcreports.repbuilder import RepBuilder
 
@@ -73,6 +70,16 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
+cols = df.columns.values.tolist()
+print(type(cols))
+print(cols)
+
+df.set_index('date', inplace=True)
+idxs = df.index.names
+print(type(idxs))
+print(idxs)
+
+exit()
 
 list1 = [0, 0, 0, 0]
 list2 = [0, 1, 0, 0]

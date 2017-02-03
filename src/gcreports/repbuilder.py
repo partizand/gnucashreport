@@ -77,39 +77,41 @@ class RepBuilder:
                   "parent_guid", "description", "hidden"]
 
         self.df_accounts = self.object_to_dataframe(book.accounts, fields)
-        self.df_accounts.rename(columns={'actype': 'type'}, inplace=True)
+        self.df_accounts.rename(columns={'actype': 'account_type'}, inplace=True)
         # print(df_accounts)
         # return
 
         # Transactions
-        self.guid = guid
-        self.currency = currency
-        self.date = date
-        self.date_entered = date_entered
-        self.description = description
-        self.splits = splits or []
-        self.slots = slots or {}
-        fields = ["guid", "currency_guid", "num",
-                  "post_date", "description"]
-        fields = ['guid', 'currency', 'date', 'description']
-        df_tr = self.object_to_dataframe(book.transactions, fields)
-        # print(df_tr)
+
+        fields = ["guid", "currency_guid", "date", "description"]
+
+        self.df_transactions = self.object_to_dataframe(book.transactions, fields)
+        self.df_transactions.rename(columns={'date': 'post_date'}, inplace=True)
+        # print(self.df_transactions)
+        # return
 
         # Splits
+        fields = ["guid", "transaction_guid", "account_guid",
+                  "memo", "reconcile_state", "value", "quantity"]
 
-        splits = book.root_account.get_all_splits()
-        fields = ['guid', 'reconciled_state', 'value', 'quantity', 'account.guid', 'transaction.guid']
-        df_splits = self.object_to_dataframe(splits, fields)
-        # print(df_splits)
+        self.df_splits = self.object_to_dataframe(book.splits, fields)
+        # print(self.df_splits)
+        # return
 
         # commodity
 
-        commodities = book.commodities
-        fields = ['name', 'space']
-        df_commodities = self.object_to_dataframe(commodities, fields)
-        print(df_commodities)
+        fields = ["guid", "space", "mnemonic"]
+        self.df_commodities = self.object_to_dataframe(book.commodities, fields)
+        self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
+        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+        # print(self.df_commodities)
 
-
+        # Prices
+        fields = ["guid", "commodity_guid", "currency_guid",
+                  "date", "source", "price_type", "value"]
+        self.df_prices = self.object_to_dataframe(book.prices, fields)
+        self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
+        # print(self.df_prices)
 
     def open_book(self, sqlite_file, open_if_lock=False):
         """
