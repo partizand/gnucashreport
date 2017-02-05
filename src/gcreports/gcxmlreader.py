@@ -349,7 +349,6 @@ class GNUCashXMLBook:
                           hidden=hidden,
                           commodity_guid=commodity_guid,
                           commodity_scu=commodity_scu,
-                          slots=slots,
                           parent_guid=parent_guid)
 
         return account
@@ -472,8 +471,8 @@ class GNUCashXMLBook:
                       value=value,
                       quantity=quantity,
                       account_guid=account_guid,
-                      transaction_guid=transaction_guid,
-                      slots=slots)
+                      transaction_guid=transaction_guid
+                      )
         # account.splits.append(split)
         return split
 
@@ -614,7 +613,7 @@ class Split(object):
     def __init__(self, guid=None, memo=None,
                  reconcile_state=None, reconcile_date=None, value=None,
                  quantity=None, account_guid=None, transaction_guid=None,
-                 slots=None):
+                 ):
         self.guid = guid
         self.reconcile_state = reconcile_state
         self.reconcile_date = reconcile_date
@@ -624,7 +623,7 @@ class Split(object):
         # self.transaction = transaction
         self.transaction_guid = transaction_guid
         self.memo = memo
-        self.slots = slots
+        # self.slots = slots
 
     def __repr__(self):
         return "<Split {}>".format(self.guid)
