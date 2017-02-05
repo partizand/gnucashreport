@@ -5,7 +5,7 @@ from dateutil.parser import parse as parse_date
 from xml.etree import ElementTree
 
 
-class GNUCash_XMLBook:
+class GNUCashXMLBook:
     """
     Reads contents of GNUCash xml file into arrays
     """
@@ -430,12 +430,12 @@ class GNUCash_XMLBook:
                                   currency_guid=currency_guid,
                                   date=date,
                                   date_entered=date_entered,
-                                  description=description,
-                                  slots=slots)
+                                  description=description)
 
         for subtree in tree.findall(trn + "splits/" + trn + "split"):
             split = self._split_from_tree(tree=subtree, transaction_guid=transaction.guid)
-            transaction.splits.append(split)
+            self.splits.append(split)
+            # transaction.splits.append(split)
 
         return transaction
 
@@ -565,7 +565,7 @@ class Account(object):
 
     def __init__(self, name, guid, actype, hidden, parent_guid=None,
                  commodity_guid=None, commodity_scu=None,
-                 description=None, slots=None):
+                 description=None):
         self.name = name
         self.guid = guid
         self.actype = actype
@@ -576,7 +576,7 @@ class Account(object):
         self.commodity_scu = commodity_scu
         self.hidden = hidden
         # self.splits = []
-        self.slots = slots or {}
+        # self.slots = slots or {}
 
     def __repr__(self):
         return "<Account {}>".format(self.guid)
@@ -587,16 +587,14 @@ class Transaction(object):
     """
 
     def __init__(self, guid=None, currency_guid=None,
-                 date=None, date_entered=None,
-                 description=None, splits=None,
-                 slots=None):
+                 date=None, date_entered=None, description=None):
         self.guid = guid
         self.currency_guid = currency_guid
         self.date = date
         self.date_entered = date_entered
         self.description = description
-        self.splits = splits or []
-        self.slots = slots or {}
+        # self.splits = splits or []
+        # self.slots = slots or {}
 
     def __repr__(self):
         return u"<Transaction {}>".format(self.guid)
@@ -643,7 +641,7 @@ class Split(object):
 
 if __name__ == '__main__':
     filename = 'U:/xml_book/GnuCash-base.gnucash'
-    book = GNUCash_XMLBook()
+    book = GNUCashXMLBook()
     book.read_from_xml(filename)
 
     print(book.prices)

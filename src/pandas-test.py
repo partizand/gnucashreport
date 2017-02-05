@@ -4,7 +4,7 @@ import pytz
 from decimal import Decimal
 
 
-from gcreports.repbuilder import RepBuilder
+from gcreports.gcreport import GCReport
 
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
@@ -56,7 +56,7 @@ def read_from_excel(filename, sheet):
 #index = list(map(chr, range(97, 97+len(line1))))
 #index = list(range(10))
 
-rep = RepBuilder()
+rep = GCReport()
 
 # Исходный DataFrame
 df = pandas.DataFrame(line1)

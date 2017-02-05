@@ -3,11 +3,11 @@ import datetime
 import time
 import pandas
 from pandas.util.testing import assert_frame_equal
-from gcreports.repbuilder import RepBuilder
+from gcreports.gcreport import GCReport
 
 
 
-rep = RepBuilder()
+rep = GCReport()
 # from_date = datetime.datetime(2016,1,1,0,0,0,0)
 # to_date = datetime.datetime(2016,12,31,23,59,59,0)
 from_date = datetime.date(2016, 1, 1)
@@ -71,7 +71,7 @@ rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # a = rep.get_balance(acc)
 # print(a)
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=RepBuilder.INCOME)
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME)
 # filename='U:/test_data/income.pkl'
 # df.to_pickle(filename)
 rep.dataframe_to_excel(df, "itog-income-xml")

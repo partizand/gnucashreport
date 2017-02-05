@@ -7,15 +7,12 @@ from datetime import date
 
 from decimal import Decimal
 
-from gcreports.gcxmlreader import GNUCash_XMLBook
-
-# gcreports.gcxmlreader.Account =
+from gcreports.gcxmlreader import GNUCashXMLBook
 
 
-
-class RepBuilder:
+class GCReport:
     """
-    DataFrame implementation of GnuCash database tables for buil reports
+    DataFrame implementation of GnuCash database tables for build reports
 
     Exaple use:
 
@@ -84,7 +81,7 @@ class RepBuilder:
     def _read_book_xml(self, xml_file):
 
         # read contens of the book
-        book = GNUCash_XMLBook()
+        book = GNUCashXMLBook()
         book.read_from_xml(xml_file)
 
         # print(book['prices'])
