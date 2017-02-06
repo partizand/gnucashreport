@@ -70,14 +70,18 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
-cols = df.columns.values.tolist()
-print(type(cols))
-print(cols)
 
-df.set_index('date', inplace=True)
-idxs = df.index.names
-print(type(idxs))
-print(idxs)
+print(df.columns.tolist())
+
+# Получение имени колонок
+# cols = df.columns.values.tolist()
+# print(type(cols))
+# print(cols)
+#
+# df.set_index('date', inplace=True)
+# idxs = df.index.names
+# print(type(idxs))
+# print(idxs)
 
 exit()
 
