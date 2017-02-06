@@ -143,8 +143,8 @@ class GNUCashXMLBook:
                                   'transaction'):
             transaction = self._transaction_from_tree(child)
             self.transactions.append(transaction)
-            for split in transaction.splits:
-                self.splits.append(split)
+            # for split in transaction.splits:
+            #     self.splits.append(split)
 
         # ret_dict['transactions'] = transactions
         # ret_dict['splits'] = splits
