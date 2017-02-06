@@ -280,7 +280,8 @@ class GCReport:
 
                 df_acc = df_acc.reindex(idx, method='ffill')
                 # Убрать если все значения 0
-                has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
+                # has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
+                has_balances = True
                 # Берем только не пустые счета
                 if has_balances:
                     df_acc.index.name = 'post_date'
