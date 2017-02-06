@@ -303,7 +303,10 @@ class GCReport:
         group_acc = group_acc.reset_index()
         # group_acc = group_acc.reset_index(level=1)
         # Добавление колонки курс
-        group_acc = group_acc.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+        if group_prices.empty:
+            group_acc['rate'] = 1
+        else:
+            group_acc = group_acc.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                                     how='left')
 
         # Теперь в колонке rate курс ценной бумаги в рублях
@@ -556,7 +559,10 @@ class GCReport:
                 group_prices = group_prices.append(sel_mnem)
 
         # Список guid всех нужных валют
-        currency_guids = set(group_prices['currency_guid'].drop_duplicates().tolist()) & all_commodities_guids
+        if group_prices.empty:
+            currency_guids=None
+        else:
+            currency_guids = set(group_prices['currency_guid'].drop_duplicates().tolist()) & all_commodities_guids
         # print(currency_guids)
         if currency_guids:
             # TODO: Здесь нужен пересчет в валюту представления
