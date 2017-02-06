@@ -65,7 +65,7 @@ def _dataframe_to_writer(writer, dataframe, row, color, name, itog_name, sheet='
 
     return itog_row + 3
 
-def _total_row(workbook, worksheet, row, len, formula_row1, formula_row2, name, color, h_total=False):
+def _total_row(workbook, worksheet, row, len, formula_row1, formula_row2, name, color, formula='={}-{}', h_total=False):
     # Прибыль
 
     frmt_profit = workbook.add_format({'bold': True})
@@ -81,8 +81,8 @@ def _total_row(workbook, worksheet, row, len, formula_row1, formula_row2, name, 
     for i in range(1, len + 1):
         sum1_cell = xl_rowcol_to_cell(formula_row1, i)
         sum2_cell = xl_rowcol_to_cell(formula_row2, i)
-        formula = '={}-{}'.format(sum1_cell, sum2_cell)
-        worksheet.write_formula(row, i, formula, frmt_profit)
+        str_formula = formula.format(sum1_cell, sum2_cell)
+        worksheet.write_formula(row, i, str_formula, frmt_profit)
 
     # right itog sum
     if h_total:
@@ -171,8 +171,16 @@ def complex_test():
 
     # Loans
     loans_row = next_row
-    next_row = _dataframe_to_writer(writer=writer, dataframe=df_loans, row=next_row, color='red',
-                                    name='ДОЛГИ', itog_name='ИТОГО ДОЛГИ', sheet=sheet, h_total=True)
+    next_row = _dataframe_to_writer(writer=writer, dataframe=df_loans, row=next_row, color='#FFFF00',
+                                    name='ДОЛГИ', itog_name='ИТОГО ДОЛГИ', sheet=sheet)
+
+    # Собственные средства
+
+    next_row = next_row - 1
+    itog_row = next_row
+    next_row = _total_row(workbook=workbook, worksheet=worksheet, row=next_row, len=col_count,
+                          formula_row1=asset_row + len(df_assets), formula_row2=loans_row + len(df_loans),
+                          name='СОБСТВЕННЫЕ СРЕДСТВА', color='#00ff11', formula='={}+{}')
 
     # last_row = next_row - 1
 
@@ -250,8 +258,8 @@ def complex_test():
     writer.save()
     writer.close()
 
-# complex_test()
-# exit()
+complex_test()
+exit()
 
 rep = GCReport()
 # from_date = datetime.datetime(2016,1,1,0,0,0,0)
@@ -309,9 +317,9 @@ rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # print(balance)
 
 df = rep.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=1)
-rep.dataframe_to_excel(df, 'loans')
-# filename='U:/test_data/loans.pkl'
-# df.to_pickle(filename)
+# rep.dataframe_to_excel(df, 'loans')
+filename='U:/test_data/loans.pkl'
+df.to_pickle(filename)
 # pr = pr.reset_index()
 
 # a = rep.get_balance(acc)

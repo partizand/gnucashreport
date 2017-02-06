@@ -234,7 +234,7 @@ class GCReport:
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
 
-    def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2):
+    def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2, drop_null=False):
         """
         Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
         :param from_date:
@@ -242,6 +242,7 @@ class GCReport:
         :param period:
         :param account_types:
         :param glevel:
+        :param drop_null: Отбрасывать нулевые значения (итоги могут не содержать всех столбцов)
         :return: DataFrame
         """
 
@@ -280,8 +281,10 @@ class GCReport:
 
                 df_acc = df_acc.reindex(idx, method='ffill')
                 # Убрать если все значения 0
-                # has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
-                has_balances = True
+                if drop_null:
+                    has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
+                else:
+                    has_balances = True
                 # Берем только не пустые счета
                 if has_balances:
                     df_acc.index.name = 'post_date'
@@ -333,8 +336,11 @@ class GCReport:
         cols = ['post_date'] + cols
         group_acc = pandas.concat([group_acc, s], axis=1)
         group_acc.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
-        group_acc.dropna(subset=['balance_currency'], inplace=True)  # Удаление пустых значений
-        group_acc = group_acc[group_acc['balance'] != 0]  # Удаление нулевых значений
+
+        if drop_null:
+            group_acc.dropna(subset=['balance_currency'], inplace=True)  # Удаление пустых значений
+            group_acc = group_acc[group_acc['balance'] != 0]  # Удаление нулевых значений
+
         group_acc.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
         # Timestap to date
         # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: x.date())
