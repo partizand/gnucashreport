@@ -361,7 +361,8 @@ class GCReport:
 
         return pivot_t
 
-    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=2):
+    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=2,
+                           margins=False, drop_null=False):
         """
         Сломана из-за prices
         Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
@@ -420,25 +421,37 @@ class GCReport:
         sel_df = pandas.concat([sel_df, s], axis=1)
 
         sel_df.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
-        sel_df.dropna(subset=['value_currency'], inplace=True)  # Удаление пустых значений
-        sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
+
+        if drop_null:
+            sel_df.dropna(subset=['value_currency'], inplace=True)  # Удаление пустых значений
+            sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
+
         sel_df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
-        sel_df.set_index(cols, inplace=True)
+        # sel_df.set_index(cols, inplace=True)
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
 
         # Группировка по нужному уровню
-        # levels = list(range(0,glevel))
-        sel_df = sel_df.groupby(level=[0, glevel]).value_currency.sum().reset_index()
+        # levels = list(range(0, glevel))
+        # sel_df = sel_df.groupby(level=[0, glevel]).value_currency.sum().reset_index()
+
+        # print(sel_df)
+        # return
 
         # Timestap to date
         # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
 
         # Переворот в сводную
-        pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date',
-                                     aggfunc='sum', margins=True, margins_name='Итого',
-                                     fill_value=0)
+        # index = [i for i in range(1, glevel)]
+        # pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date',
+        #                              aggfunc='sum',
+        #                              fill_value=0)
+        pivot_t = pandas.pivot_table(sel_df, index=[0, 1], values='value_currency', columns='post_date',
+                                     fill_value=0, aggfunc='sum', margins=margins
+                                     )
+
+        # print(pivot_t)
 
         return pivot_t
 

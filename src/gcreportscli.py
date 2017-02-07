@@ -3,7 +3,6 @@ import datetime
 import os
 import time
 import pandas
-from pandas.util.testing import assert_frame_equal
 from gcreports.gcreport import GCReport
 from xlsxwriter.utility import xl_rowcol_to_cell
 from gcreports.xlsxreport import XlSXReport
@@ -262,21 +261,16 @@ def complex_test():
 # complex_test()
 # exit()
 
-filename = 'u:/tables/ex-test.xlsx'
-template_file = 'u:/tables/template.xlsx'
 
-df_income = pandas.read_pickle('U:/test_data/income.pkl')
-df_expense = pandas.read_pickle('U:/test_data/expense.pkl')
-df_assets = pandas.read_pickle('U:/test_data/assets.pkl')
-df_loans = pandas.read_pickle('U:/test_data/loans.pkl')
+
+# df_income = pandas.read_pickle('U:/test_data/income.pkl')
+# df_expense = pandas.read_pickle('U:/test_data/expense.pkl')
+# df_assets = pandas.read_pickle('U:/test_data/assets.pkl')
+# df_loans = pandas.read_pickle('U:/test_data/loans.pkl')
 
 # styles = exutils.MyNamedStyles(template_file)
 
-xlsxreport = XlSXReport(filename=filename, template_file=template_file)
 
-xlsxreport.add_dataframe(df_income, 'income_header', header=True)
-
-xlsxreport.save()
 
 
 rep = GCReport()
@@ -286,6 +280,21 @@ from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
 # start_time = time.time()
 rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME)
+# exit()
+# rep.dataframe_to_excel(df, 'income-test')
+# exit()
+
+filename = 'u:/tables/ex-test.xlsx'
+template_file = 'u:/tables/template.xlsx'
+xlsxreport = XlSXReport(filename=filename, template_file=template_file)
+
+xlsxreport.add_dataframe(df, 'income_header', header=True)
+# xlsxreport.add_df_test(df)
+
+xlsxreport.save()
+
 # rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # print("Loading from xml --- %s seconds ---" % (time.time() - start_time))
 # rep.dataframe_to_excel(rep.df_accounts, 'acc-xml')
