@@ -6,6 +6,7 @@ import pandas
 from pandas.util.testing import assert_frame_equal
 from gcreports.gcreport import GCReport
 from xlsxwriter.utility import xl_rowcol_to_cell
+from gcreports.xlsxreport import XlSXReport
 
 
 def _dataframe_to_writer(writer, dataframe, row, color, name, itog_name, sheet='Sheet1', h_total=False):
@@ -258,8 +259,25 @@ def complex_test():
     writer.save()
     writer.close()
 
-complex_test()
-exit()
+# complex_test()
+# exit()
+
+filename = 'u:/tables/ex-test.xlsx'
+template_file = 'u:/tables/template.xlsx'
+
+df_income = pandas.read_pickle('U:/test_data/income.pkl')
+df_expense = pandas.read_pickle('U:/test_data/expense.pkl')
+df_assets = pandas.read_pickle('U:/test_data/assets.pkl')
+df_loans = pandas.read_pickle('U:/test_data/loans.pkl')
+
+# styles = exutils.MyNamedStyles(template_file)
+
+xlsxreport = XlSXReport(filename=filename, template_file=template_file)
+
+xlsxreport.add_dataframe(df_income, 'income_header', header=True)
+
+xlsxreport.save()
+
 
 rep = GCReport()
 # from_date = datetime.datetime(2016,1,1,0,0,0,0)
@@ -316,10 +334,10 @@ rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 # balance = rep.get_balance_stock(acc)
 # print(balance)
 
-df = rep.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=1)
+# df = rep.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=1)
 # rep.dataframe_to_excel(df, 'loans')
-filename='U:/test_data/loans.pkl'
-df.to_pickle(filename)
+# filename='U:/test_data/loans.pkl'
+# df.to_pickle(filename)
 # pr = pr.reset_index()
 
 # a = rep.get_balance(acc)
@@ -330,5 +348,7 @@ df.to_pickle(filename)
 # filename='U:/test_data/income.pkl'
 # df.to_pickle(filename)
 # rep.dataframe_to_excel(df, "itog-income", datetime_format='mmm yyyy')
+
+# rep.dataframe_to_excel(rep.df_splits, 'all-splits')
 
 #print(df)

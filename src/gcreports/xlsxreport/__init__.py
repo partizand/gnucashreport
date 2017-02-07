@@ -1,0 +1,1 @@
+from gcreports.xlsxreport.xlsxreport import XlSXReport
