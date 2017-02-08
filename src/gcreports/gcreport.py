@@ -437,23 +437,40 @@ class GCReport:
         # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
         for col in cols[1:]:
             sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
-        # sel_df.set_index(cols, inplace=True)
+        sel_df.set_index(cols, inplace=True)
+        # sel_df = sel_df.reset_index()
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
 
         # Переворот дат из строк в колонки
-        # unst = sel_df.unstack(level='post_date', fill_value=0)
-        # unst.columns = unst.columns.droplevel()
+        unst = sel_df.unstack(level='post_date', fill_value=0)
+        unst.columns = unst.columns.droplevel()
 
         # self.dataframe_to_excel(unst, 'unst-')
 
-        # group = unst.groupby(level=[0, 1, 2]).sum()
-        # group = unst.groupby(level=[0, 1]).aggregate(numpy.sum)
+        group = unst.groupby(level=glevel).sum()
+
+        # Список полей для подсчета среднего
+        cols = group.columns.tolist()
+        group.loc['All', ''] = group.sum(level=0)
+
+        # group = group.append([group, pandas.DataFrame(group.sum(axis=0), columns=['Grand Total']).T])
+
+        # group2 = group.sum()
+        print(group.index)
+        print(group.sum())
+
+        # Подсчет среднего
+        if margins:
+
+            # cols.remove(self.TOTAL_NAME)
+            group[self.TOTAL_MEAN] = group[cols].mean(axis=1)
+            group[self.TOTAL_NAME] = group[cols].sum(axis=1)
 
         # print(group.index)
-        # self.dataframe_to_excel(group, 'group')
-        # return
+        self.dataframe_to_excel(group, 'group')
+        return
 
         # Группировка по нужному уровню
         # levels = list(range(0, glevel))
@@ -493,19 +510,36 @@ class GCReport:
         df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
                                             account_type=self.EXPENSE, glevel=glevel)
 
+
+
         # Calculate Profit
         profit = df_income.loc[self.TOTAL_NAME] - df_expense.loc[self.TOTAL_NAME]
+        # empty column
+        # df_income['1'] = 1
+        # df_expense['1'] = 1
         profit[0] = PROFIT_NAME
-        idxcols= profit.index.names
+        idxcols = profit.index.names
         idxcols = [0] + idxcols
         profit.set_index(0, append=True, inplace=True)
         profit = profit.reorder_levels(idxcols)
 
+        # empty line
+        df_empty = pandas.DataFrame(index=profit.index, columns=profit.columns)
+
+        df_empty = df_empty.drop(PROFIT_NAME)
+        df_empty.loc[' ',' '] = ' '
+        # self.dataframe_to_excel(df_empty, 'empty')
+        # print(empty.index)
+        # print(empty)
+        # return
+
         # concatenate all
-        df_cashflow = df_income.append(df_expense)
+        df_cashflow = df_income.append(df_empty)
+        df_cashflow = df_cashflow.append(df_expense)
+        df_cashflow = df_cashflow.append(df_empty)
         df_cashflow = df_cashflow.append(profit)
 
-        # self.dataframe_to_excel(df_cashflow, 'cashflow')
+        self.dataframe_to_excel(df_cashflow, 'cashflow')
 
         return df_cashflow
 
