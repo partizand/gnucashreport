@@ -2,12 +2,15 @@ import os
 
 import piecash
 import pandas
+import numpy
 from operator import attrgetter
 from datetime import date
 
 from decimal import Decimal
 
 from gcreports.gcxmlreader import GNUCashXMLBook
+
+PROFIT_NAME = 'Profit'
 
 
 class GCReport:
@@ -37,6 +40,10 @@ class GCReport:
     ROOT = 'ROOT'
     # GNUCash all account assets types
     ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
+
+    # Название итоговых строк
+    TOTAL_NAME = 'Всего'
+    TOTAL_MEAN = 'Среднее'
 
     df_accounts = pandas.DataFrame()
     df_transactions = pandas.DataFrame()
@@ -361,8 +368,8 @@ class GCReport:
 
         return pivot_t
 
-    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=2,
-                           margins=False, drop_null=False):
+    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=[0,1],
+                           margins=True, drop_null=False):
         """
         Сломана из-за prices
         Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
@@ -410,8 +417,8 @@ class GCReport:
 
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(sel_df,
-                                  columns=['post_date', 'fullname',
-                                           'value_currency', 'rate', 'value'])
+                                  columns=['post_date', 'fullname', 'value_currency'])
+                                           # 'value_currency', 'rate', 'value'])
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -424,13 +431,29 @@ class GCReport:
 
         if drop_null:
             sel_df.dropna(subset=['value_currency'], inplace=True)  # Удаление пустых значений
-            sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
+            # sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
 
         sel_df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
+        # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
+        for col in cols[1:]:
+            sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
         # sel_df.set_index(cols, inplace=True)
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
+
+        # Переворот дат из строк в колонки
+        # unst = sel_df.unstack(level='post_date', fill_value=0)
+        # unst.columns = unst.columns.droplevel()
+
+        # self.dataframe_to_excel(unst, 'unst-')
+
+        # group = unst.groupby(level=[0, 1, 2]).sum()
+        # group = unst.groupby(level=[0, 1]).aggregate(numpy.sum)
+
+        # print(group.index)
+        # self.dataframe_to_excel(group, 'group')
+        # return
 
         # Группировка по нужному уровню
         # levels = list(range(0, glevel))
@@ -447,13 +470,44 @@ class GCReport:
         # pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date',
         #                              aggfunc='sum',
         #                              fill_value=0)
-        pivot_t = pandas.pivot_table(sel_df, index=[0, 1], values='value_currency', columns='post_date',
-                                     fill_value=0, aggfunc='sum', margins=margins
+        pivot_t = pandas.pivot_table(sel_df, index=glevel, values='value_currency', columns='post_date',
+                                     fill_value=0, aggfunc='sum', margins=margins, margins_name=self.TOTAL_NAME
                                      )
 
+        # Подсчет среднего
+        if margins:
+            # Список полей для подсчета среднего
+            cols = pivot_t.columns.tolist()
+            cols.remove(self.TOTAL_NAME)
+            pivot_t[self.TOTAL_MEAN] = pivot_t[cols].mean(axis=1)
+        # pivot_t['mean'] = pivot_t.mean(axis=1)
+
         # print(pivot_t)
+        # pivot_t = pivot_t.reset_index()
 
         return pivot_t
+
+    def cashflow(self, from_date: date, to_date: date, period='M', glevel=[0,1]):
+        df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
+                                            account_type=self.INCOME, glevel=glevel)
+        df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
+                                            account_type=self.EXPENSE, glevel=glevel)
+
+        # Calculate Profit
+        profit = df_income.loc[self.TOTAL_NAME] - df_expense.loc[self.TOTAL_NAME]
+        profit[0] = PROFIT_NAME
+        idxcols= profit.index.names
+        idxcols = [0] + idxcols
+        profit.set_index(0, append=True, inplace=True)
+        profit = profit.reorder_levels(idxcols)
+
+        # concatenate all
+        df_cashflow = df_income.append(df_expense)
+        df_cashflow = df_cashflow.append(profit)
+
+        # self.dataframe_to_excel(df_cashflow, 'cashflow')
+
+        return df_cashflow
 
     def complex_report(self, filename, from_date, to_date, period='M', datetime_format='mmmm yyyy'):
 

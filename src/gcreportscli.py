@@ -281,15 +281,22 @@ to_date = datetime.date(2016, 12, 31)
 # start_time = time.time()
 rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME)
+# df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, margins=True)
+df = rep.cashflow(from_date=from_date, to_date=to_date)
 # exit()
-# rep.dataframe_to_excel(df, 'income-test')
-# exit()
+rep.dataframe_to_excel(df, 'cashflow')
+exit()
 
 filename = 'u:/tables/ex-test.xlsx'
 template_file = 'u:/tables/template.xlsx'
 xlsxreport = XlSXReport(filename=filename, template_file=template_file)
 
+# exit()
+df['index'] = df.index
+df = df.set_index([[0, 1, 2]], drop=False)
+print(df.index)
+print(df)
+exit()
 xlsxreport.add_dataframe(df, 'income_header', header=True)
 # xlsxreport.add_df_test(df)
 

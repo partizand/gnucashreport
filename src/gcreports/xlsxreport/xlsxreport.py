@@ -1,7 +1,6 @@
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from gcreports.xlsxreport.mynamedstyles import MyNamedStyles
-import clipboard as clp
 
 class XlSXReport:
 
@@ -34,26 +33,6 @@ class XlSXReport:
             head = False
 
 
-    def add_df_clipboard(self, df):
-        # Copy dataframe to clipboard
-        df.to_clipboard()
-        # paste the clipboard to a valirable
-        cells = clp.paste()
-        # split text in varialble as rows and columns
-        cells = [x.split() for x in cells.split('\n')]
-
-        # Open the work book
-        wb = openpyxl.load_workbook('H:/template.xlsx')
-        # Get the Sheet
-        sheet = wb.get_sheet_by_name('spam')
-        sheet.title = 'df data'
-        # Paste clipboard values to the sheet
-        for i, r in zip(range(1, len(cells)), cells):
-            for j, c in zip(range(1, len(r)), r):
-                sheet.cell(row=i, column=j).value = c
-        # Save the workbook
-        wb.save('H:/df_out.xlsx')
-
     def add_df_test(self, datafarame):
         for r in dataframe_to_rows(datafarame, index=True, header=True):
             # if type(r) == tuple:
@@ -75,8 +54,8 @@ class XlSXReport:
             col_head = True
             for c_idx, value in enumerate(row, start_col):
                 if value:
-                    ce = self.worksheet.cell(row=r_idx, column=c_idx, value=str(value))
-                    ce = self.worksheet.cell(row=r_idx, column=c_idx, value=str(value))
+                    ce = self.worksheet.cell(row=r_idx, column=c_idx, value=value)
+                    # ce = self.worksheet.cell(row=r_idx, column=c_idx, value=value)
                     if head and header:
                         self.styles.set_style(ce, name)
                 col_head = False
