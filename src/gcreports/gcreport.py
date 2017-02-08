@@ -453,20 +453,18 @@ class GCReport:
 
         # Список полей для подсчета среднего
         cols = group.columns.tolist()
-        group.loc['All', ''] = group.sum(level=0)
+        # group.loc['All', ''] = group.sum(level=0)
 
         # group = group.append([group, pandas.DataFrame(group.sum(axis=0), columns=['Grand Total']).T])
 
-        # group2 = group.sum()
-        print(group.index)
-        print(group.sum())
 
         # Подсчет среднего
         if margins:
-
-            # cols.remove(self.TOTAL_NAME)
-            group[self.TOTAL_MEAN] = group[cols].mean(axis=1)
-            group[self.TOTAL_NAME] = group[cols].sum(axis=1)
+            group = self.add_col_total(group)
+            # group[self.TOTAL_MEAN] = group[cols].mean(axis=1)
+            # group[self.TOTAL_NAME] = group[cols].sum(axis=1)
+            # print(group.sum())
+            group = self.add_row_total(group)
 
         # print(group.index)
         self.dataframe_to_excel(group, 'group')
@@ -503,6 +501,49 @@ class GCReport:
         # pivot_t = pivot_t.reset_index()
 
         return pivot_t
+
+    @staticmethod
+    def add_row_total(dataframe):
+
+        if isinstance(dataframe.index, pandas.core.index.MultiIndex):
+            icount = len(dataframe.index.names)
+            icols = ['' for i in range(1, icount)]
+            icols = ['Total'] + icols
+            index = tuple(icols)
+            # cols = ['1', '2', '3']
+
+            mindex = pandas.MultiIndex.from_tuples([index])
+            # df_ret = dataframe
+            # df_ret.loc[index] = df_ret.sum()
+
+            # df_total = pandas.DataFrame( index=mindex, columns=cols)
+        else:
+            index = 'Total'
+            # Sum the columns:
+            # sum_row = {col: dataframe[col].sum() for col in dataframe}
+            # Turn the sums into a DataFrame with one row with an index of 'Total':
+            # sum_df = pandas.DataFrame(sum_row, index=["Total"])
+            # Now append the row:
+            # df_ret = dataframe.append(sum_df)
+        df_ret = dataframe.copy()
+        print(df_ret.index)
+        # print(index)
+        # print(dataframe.sum())
+        df_ret.loc[index] = dataframe.sum()
+        print(df_ret.index)
+
+        return df_ret
+
+    @staticmethod
+    def add_col_total(dataframe):
+        # Список полей для подсчета среднего
+        cols = dataframe.columns.tolist()
+        # cols.remove(self.TOTAL_NAME)
+        df_ret = dataframe.copy()
+        df_ret['Всего'] = df_ret[cols].sum(axis=1)
+        df_ret['Среднее'] = df_ret[cols].mean(axis=1)
+
+        return df_ret
 
     def cashflow(self, from_date: date, to_date: date, period='M', glevel=[0,1]):
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,

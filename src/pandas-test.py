@@ -2,6 +2,7 @@ import pandas
 import numpy
 import pytz
 from decimal import Decimal
+# import gcreports
 
 
 from gcreports.gcreport import GCReport
@@ -67,11 +68,30 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 
 # df.rename(columns={'value': 'quant'}, inplace=True)
 # df['value'] = df['value'].astype(numpy.dtype(Decimal))
-df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
+# df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
 
-print(df.columns.tolist())
+# df = df.drop(['date', 'account', 'guid'], axis=1)
+df_t = GCReport.add_row_total(df)
+print(df_t)
+exit()
+
+cols = 3
+c = ['' for i in range(1, cols)]
+c = ['Profit'] + c
+index = tuple(c)
+cols = ['1','2','3']
+
+mindex = pandas.MultiIndex.from_tuples([index])
+
+df_t = pandas.DataFrame(index=mindex, columns=cols)
+if isinstance(df_t.index, pandas.core.index.MultiIndex):
+    print('isMulti')
+else:
+    print('isSingle')
+print(df_t)
+# print(df_t.index)
 
 # Получение имени колонок
 # cols = df.columns.values.tolist()

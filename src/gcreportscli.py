@@ -261,7 +261,7 @@ def complex_test():
 # complex_test()
 # exit()
 
-
+# GCReport.add_row_total()
 
 # df_income = pandas.read_pickle('U:/test_data/income.pkl')
 # df_expense = pandas.read_pickle('U:/test_data/expense.pkl')
