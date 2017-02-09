@@ -1,6 +1,4 @@
 import datetime
-import pandas
-from pandas.util.testing import assert_frame_equal
 
 from gcreports.gcreport import GCReport
 from test.basetest import BaseTest
@@ -8,6 +6,7 @@ from test.basetest import BaseTest
 
 class BaseReportTest(BaseTest):
     """
+    Тестирование построения отчетов по данным
     All testing data on external resource because it is real data
     """
 

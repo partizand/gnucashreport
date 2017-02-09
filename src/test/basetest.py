@@ -9,7 +9,7 @@ from gcreports.gcreport import GCReport
 
 class BaseTest(object):
     """
-    Шаблон для тестирования чтения данных из базы
+    Базовый шаблон для тестирования
     """
     rep = GCReport()
 
@@ -55,6 +55,3 @@ class BaseTest(object):
         cols = df.columns.values.tolist()
         for field in etalon_fields:
             self.assertIn(field, cols, 'DataFrame {} contain field {}. {}'.format(df_name, field, self.test_name))
-
-
-
