@@ -4,7 +4,7 @@ import piecash
 import pandas
 import numpy
 from operator import attrgetter
-from datetime import date
+from datetime import date, datetime
 
 from decimal import Decimal
 
@@ -51,6 +51,13 @@ class GCReport:
     df_splits = pandas.DataFrame()
     df_prices = pandas.DataFrame()
 
+    dir_pickle = 'u:/pickle'
+    pickle_prices = 'prices.pkl'
+    pickle_splits = 'splits.pkl'
+    pickle_accounts = 'accounts.pkl'
+    pickle_tr = 'transactions.pkl'
+    pickle_commodities = 'commodities.pkl'
+
     dir_excel = "U:/tables"
 
     book_name = None
@@ -84,6 +91,74 @@ class GCReport:
         """
         self._read_book_sql(sqlite_file, open_if_lock)
         self._after_read()
+
+
+    def save_pickle(self, year=None, folder=None):
+        """
+        Запись данных базы в pickle файлы каталога. Если указан год, записывается дополнительно этот год
+        :param year: дополнительный год для записи
+        :param folder: Каталог с файлами базы
+        :return:
+        """
+
+        self.dataframe_to_pickle(self.df_accounts, self.pickle_accounts, folder=folder)
+        self.dataframe_to_pickle(self.df_commodities, self.pickle_commodities, folder=folder)
+        self.dataframe_to_pickle(self.df_prices, self.pickle_prices, folder=folder)
+        self.dataframe_to_pickle(self.df_transactions, self.pickle_tr, folder=folder)
+        self.dataframe_to_pickle(self.df_splits, self.pickle_splits, folder=folder)
+        if year:
+            df_splits = self.df_splits.copy()
+            filename_splits = self.pickle_splits
+            from_date = date(year,1,1)
+            to_date = date(year, 12, 31)
+            df_splits = df_splits[(df_splits['post_date'] >= from_date) & (self.df_splits['post_date'] <= to_date)]
+            basename, ext = os.path.splitext(self.pickle_splits)
+            filename_splits = basename+str(year)+ext
+            self.dataframe_to_pickle(df_splits, filename_splits, folder=folder)
+
+    def open_pickle(self, year=None, folder=None):
+        """
+        Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
+        :param year: Год для загрузки, None - все данные
+        :param folder: Каталог с файлами базы
+        :return:
+        """
+        self.df_accounts=self.dataframe_from_pickle(self.pickle_accounts, folder=folder)
+        self.df_commodities=self.dataframe_from_pickle(self.pickle_commodities, folder=folder)
+        self.df_prices=self.dataframe_from_pickle(self.pickle_prices, folder=folder)
+        self.df_transactions=self.dataframe_from_pickle(self.pickle_tr, folder=folder)
+
+        filename_splits = self.pickle_splits
+        if year:
+            basename, ext = os.path.splitext(self.pickle_splits)
+            filename_splits = basename + str(year) + ext
+        self.df_splits = self.dataframe_from_pickle(filename_splits, folder=folder)
+
+    def dataframe_from_pickle(self, filename, folder=None):
+        """
+        Читает dataframe из pickle файла
+        :param filename: Полное или короткое имя файла
+        :param folder: Каталог с файлом
+        :return: DataFrame
+        """
+        if not folder:
+            folder = self.dir_pickle
+        fullfilename = os.path.join(folder, filename)
+        df = pandas.read_pickle(fullfilename)
+        return df
+
+    def dataframe_to_pickle(self, dataframe, filename, folder=None):
+        """
+        Записаывает DataFrame в pickle файл
+        :param dataframe:
+        :param filename:
+        :param folder:
+        :return:
+        """
+        if not folder:
+            folder = self.dir_pickle
+        fullfilename = os.path.join(folder, filename)
+        dataframe.to_pickle(fullfilename)
 
     def _read_book_xml(self, xml_file):
 
@@ -368,8 +443,8 @@ class GCReport:
 
         return pivot_t
 
-    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=[0,1],
-                           margins=True, drop_null=False):
+    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=1,
+                           margins=False, drop_null=False):
         """
         Сломана из-за prices
         Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
@@ -449,6 +524,7 @@ class GCReport:
 
         # self.dataframe_to_excel(unst, 'unst-')
 
+        # Группировка по нужному уровню
         group = unst.groupby(level=glevel).sum()
 
         # Список полей для подсчета среднего
@@ -467,40 +543,26 @@ class GCReport:
             group = self.add_row_total(group)
 
         # print(group.index)
-        self.dataframe_to_excel(group, 'group')
-        return
+        # self.dataframe_to_excel(group, 'group')
 
-        # Группировка по нужному уровню
-        # levels = list(range(0, glevel))
-        # sel_df = sel_df.groupby(level=[0, glevel]).value_currency.sum().reset_index()
-
-        # print(sel_df)
         # return
 
-        # Timestap to date
-        # sel_df['post_date'] = sel_df['post_date'].apply(lambda x: x.date())
 
-        # Переворот в сводную
-        # index = [i for i in range(1, glevel)]
-        # pivot_t = pandas.pivot_table(sel_df, index=(glevel - 1), values='value_currency', columns='post_date',
-        #                              aggfunc='sum',
-        #                              fill_value=0)
-        pivot_t = pandas.pivot_table(sel_df, index=glevel, values='value_currency', columns='post_date',
-                                     fill_value=0, aggfunc='sum', margins=margins, margins_name=self.TOTAL_NAME
-                                     )
+        # pivot_t = pandas.pivot_table(sel_df, index=glevel, values='value_currency', columns='post_date',
+        #                              fill_value=0, aggfunc='sum', margins=margins, margins_name=self.TOTAL_NAME
+        #                              )
 
         # Подсчет среднего
-        if margins:
+        # if margins:
             # Список полей для подсчета среднего
-            cols = pivot_t.columns.tolist()
-            cols.remove(self.TOTAL_NAME)
-            pivot_t[self.TOTAL_MEAN] = pivot_t[cols].mean(axis=1)
-        # pivot_t['mean'] = pivot_t.mean(axis=1)
+            # cols = pivot_t.columns.tolist()
+            # cols.remove(self.TOTAL_NAME)
+            # pivot_t[self.TOTAL_MEAN] = pivot_t[cols].mean(axis=1)
 
         # print(pivot_t)
         # pivot_t = pivot_t.reset_index()
 
-        return pivot_t
+        return group
 
     @staticmethod
     def add_row_total(dataframe):
