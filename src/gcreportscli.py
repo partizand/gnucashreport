@@ -291,11 +291,11 @@ to_date = datetime.date(2016, 12, 31)
 # rep.open_pickle(year=2016)
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
-rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
-rep.save_pickle()
+# rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
+# rep.save_pickle()
 
 # rep.save_pickle(year=2016)
-exit()
+# exit()
 
 df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1)
 
