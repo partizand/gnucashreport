@@ -5,7 +5,7 @@ from test.baseopentest import BaseOpenTest
 
 class PickleOpenTest(unittest.TestCase, BaseOpenTest):
     """
-    Тестирование чтения данных из sql
+    Тестирование чтения данных из pickle
     """
 
     # bookfile = "u:/sqllite_book/real-2017-01-26.gnucash"

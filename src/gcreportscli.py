@@ -278,16 +278,32 @@ rep = GCReport()
 # to_date = datetime.datetime(2016,12,31,23,59,59,0)
 from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
-# start_time = time.time()
-rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+
+# start_time_sql = time.time()
+# rep.open_book_sql("u:/sqllite_book/real-2017-01-26.gnucash", open_if_lock=True)
+# print("Loading from sql --- %s seconds ---" % (time.time() - start_time_sql))
+
+# start_time_pickle = time.time()
+# rep.open_pickle()
+# print("Loading from pickle all --- %s seconds ---" % (time.time() - start_time_pickle))
+
+# start_time_pickle = time.time()
+rep.open_pickle(year=2016)
+# print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
+
 
 # rep.save_pickle(year=2016)
 # exit()
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME)
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1)
+
+df = rep.add_col_total(df)
+df = rep.add_row_total(df)
+
+# print(df)
 rep.dataframe_to_excel(df, 'income')
-df = rep.balance_by_period(from_date=from_date, to_date=to_date)
-rep.dataframe_to_excel(df, 'assets')
+# df = rep.balance_by_period(from_date=from_date, to_date=to_date)
+# rep.dataframe_to_excel(df, 'assets')
 
 exit()
 

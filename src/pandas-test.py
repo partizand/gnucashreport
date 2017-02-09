@@ -71,6 +71,77 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 # df['value'] = df['value'].map(lambda x:Decimal(repr(x)))
 # df['value'] = df['value'].astype(numpy.float64)
 
+df = df.set_index('guid', append=True)
+# print(df)
+
+
+
+arrays = [['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux'],
+            ['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two']]
+
+
+tuples = list(zip(*arrays))
+
+index = pandas.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+
+s = pandas.Series(numpy.random.randn(8), index=index)
+
+d = {'values': s}
+
+# df = pandas.DataFrame(d)
+
+
+for col in df.index.names:
+     df = df.unstack(col)
+     df[('values', 'total')] = df.sum(axis=1)
+     df = df.stack()
+
+print(df)
+
+# Удаляет все из DataFrame
+# df = df.drop(df.index)
+# print(df.index)
+exit()
+
+df_sum=pandas.DataFrame(data=df.sum()).T
+df_sum=df_sum.reindex(columns=df.columns)
+df_final=df.append(df_sum,ignore_index=False)
+print(df_final)
+
+# Работает но не суммирует decimal и нет строки итого
+
+# print(df_t)
+
+
+
+exit()
+
+# Создание datarame c одной строкой итогов
+if isinstance(df.index, pandas.core.index.MultiIndex):
+    icount = len(df.index.names)
+    icols = ['' for i in range(1, icount)]
+    icols = ['Total'] + icols
+    index = tuple(icols)
+    # cols = ['1', '2', '3']
+
+    mindex = pandas.MultiIndex.from_tuples([index])
+    # df_ret = dataframe
+    # df_ret.loc[index] = df_ret.sum()
+
+    # df_total = pandas.DataFrame( index=mindex, columns=cols)
+else:
+    index = ['Total']
+df_total = df.drop(df.index)
+print(df.index)
+print(df_total.index)
+# df_total.loc[index] = 1
+print(df_total)
+
+# Работает но не суммирует decimal и нет строки итого
+# df = df.append(df.sum(), ignore_index=True)
+# print(df)
+
+exit()
 
 # df = df.drop(['date', 'account', 'guid'], axis=1)
 df_t = GCReport.add_row_total(df)

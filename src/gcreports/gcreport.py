@@ -119,6 +119,10 @@ class GCReport:
     def open_pickle(self, year=None, folder=None):
         """
         Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
+        Loading from sql --- 6.193211078643799 seconds ---
+        Loading from pickle all --- 0.09360003471374512 seconds ---
+        Loading from pickle 2016 --- 0.031199932098388672 seconds ---
+
         :param year: Год для загрузки, None - все данные
         :param folder: Каталог с файлами базы
         :return:
@@ -566,35 +570,50 @@ class GCReport:
 
     @staticmethod
     def add_row_total(dataframe):
-
         if isinstance(dataframe.index, pandas.core.index.MultiIndex):
-            icount = len(dataframe.index.names)
-            icols = ['' for i in range(1, icount)]
-            icols = ['Total'] + icols
-            index = tuple(icols)
-            # cols = ['1', '2', '3']
+            # icount = len(dataframe.index.names)
+            # inames = dataframe.index.names
+            # icols = ['' for i in range(1, icount)]
+            # icols = ['Total'] + icols
+            # index = tuple(icols)
 
-            mindex = pandas.MultiIndex.from_tuples([index])
-            # df_ret = dataframe
-            # df_ret.loc[index] = df_ret.sum()
+            df_ret = dataframe.copy()
+            df_sum = pandas.DataFrame(data=dataframe.sum()).T
+            # print(dataframe.sum().transponse())
+            df_sum.reindex()
+            # Строковые имена колонок индекса
+            strinames = [str(name) for name in dataframe.index.names]
 
-            # df_total = pandas.DataFrame( index=mindex, columns=cols)
+            first = True
+            for i in strinames:
+                if first:
+                    df_sum[i] = 'Total'
+                    first = False
+                else:
+                    df_sum[i] = ''
+            df_sum.set_index(strinames, inplace=True)
+            df_ret = df_ret.append(df_sum)
+            # print(df_ret)
+            return df_ret
+
         else:
             index = 'Total'
+            df_ret = dataframe.copy()
+            # print(df_ret.index)
+            # print(index)
+            # print(dataframe.sum())
+            df_ret.loc[index] = dataframe.sum()
+            # Создание datarame c одной строкой итогов
+            # df_total = pandas.DataFrame(index=index, columns=dataframe.columns)
+            return df_ret
             # Sum the columns:
             # sum_row = {col: dataframe[col].sum() for col in dataframe}
             # Turn the sums into a DataFrame with one row with an index of 'Total':
             # sum_df = pandas.DataFrame(sum_row, index=["Total"])
             # Now append the row:
             # df_ret = dataframe.append(sum_df)
-        df_ret = dataframe.copy()
-        print(df_ret.index)
-        # print(index)
-        # print(dataframe.sum())
-        df_ret.loc[index] = dataframe.sum()
-        print(df_ret.index)
 
-        return df_ret
+
 
     @staticmethod
     def add_col_total(dataframe):
