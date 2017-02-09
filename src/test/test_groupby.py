@@ -6,7 +6,6 @@ from pandas.util.testing import assert_frame_equal
 from gcreports.gcreport import GCReport
 
 
-
 class BaseDataTest(object):
     """
     All testing data on external resource because it is real data

@@ -73,7 +73,15 @@ pr['date']=pandas.to_datetime(pr['date'], format='%d.%m.%Y')
 
 df = df.set_index('guid', append=True)
 # print(df)
+print(df.index)
 
+df_new = pandas.DataFrame(data=None, index=df.index, columns=df.columns)
+df_new = df_new.dropna()
+# df_sum= df.sum()
+df_new.loc[0, '10'] = df.sum()
+print(df_new.index)
+print(df_new)
+exit()
 
 
 arrays = [['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux'],

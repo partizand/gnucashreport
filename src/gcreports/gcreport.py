@@ -43,7 +43,7 @@ class GCReport:
 
     # Название итоговых строк
     TOTAL_NAME = 'Всего'
-    TOTAL_MEAN = 'Среднее'
+    MEAN_NAME = 'Среднее'
 
     df_accounts = pandas.DataFrame()
     df_transactions = pandas.DataFrame()
@@ -569,62 +569,62 @@ class GCReport:
         return group
 
     @staticmethod
-    def add_row_total(dataframe):
+    def add_row_total(dataframe, total_name=None):
+        if not total_name:
+            total_name = GCReport.TOTAL_NAME
         if isinstance(dataframe.index, pandas.core.index.MultiIndex):
-            # icount = len(dataframe.index.names)
-            # inames = dataframe.index.names
-            # icols = ['' for i in range(1, icount)]
-            # icols = ['Total'] + icols
-            # index = tuple(icols)
 
             df_ret = dataframe.copy()
             df_sum = pandas.DataFrame(data=dataframe.sum()).T
-            # print(dataframe.sum().transponse())
-            df_sum.reindex()
+            # df_sum.reindex()
             # Строковые имена колонок индекса
             strinames = [str(name) for name in dataframe.index.names]
 
             first = True
             for i in strinames:
                 if first:
-                    df_sum[i] = 'Total'
+                    df_sum[i] = total_name
                     first = False
                 else:
                     df_sum[i] = ''
             df_sum.set_index(strinames, inplace=True)
             df_ret = df_ret.append(df_sum)
-            # print(df_ret)
             return df_ret
 
         else:
-            index = 'Total'
+            index = total_name
             df_ret = dataframe.copy()
-            # print(df_ret.index)
-            # print(index)
-            # print(dataframe.sum())
             df_ret.loc[index] = dataframe.sum()
-            # Создание datarame c одной строкой итогов
-            # df_total = pandas.DataFrame(index=index, columns=dataframe.columns)
             return df_ret
-            # Sum the columns:
-            # sum_row = {col: dataframe[col].sum() for col in dataframe}
-            # Turn the sums into a DataFrame with one row with an index of 'Total':
-            # sum_df = pandas.DataFrame(sum_row, index=["Total"])
-            # Now append the row:
-            # df_ret = dataframe.append(sum_df)
-
-
 
     @staticmethod
-    def add_col_total(dataframe):
+    def add_col_total(dataframe, total=True, mean=True, total_name=None, mean_name=None, empty_col=False):
+        if not total_name:
+            total_name = GCReport.TOTAL_NAME
+        if not mean_name:
+            mean_name = GCReport.MEAN_NAME
         # Список полей для подсчета среднего
         cols = dataframe.columns.tolist()
-        # cols.remove(self.TOTAL_NAME)
         df_ret = dataframe.copy()
-        df_ret['Всего'] = df_ret[cols].sum(axis=1)
-        df_ret['Среднее'] = df_ret[cols].mean(axis=1)
+        # Добавление пустого столбца
+        if empty_col:
+            df_ret[''] = ''
+        if total:
+            df_ret[total_name] = df_ret[cols].sum(axis=1)
+        if mean:
+            df_ret[mean_name] = df_ret[cols].mean(axis=1)
 
         return df_ret
+
+    def get_empty_dataframe(self, dataframe):
+        """
+        Возвращает такой же но пустой dataframe
+        :param dataframe:
+        :return:
+        """
+        df_new = pandas.DataFrame(data=None, index=dataframe.index, columns=dataframe.columns)
+        df_new = df_new.dropna()
+        return df_new
 
     def cashflow(self, from_date: date, to_date: date, period='M', glevel=[0,1]):
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
