@@ -20,15 +20,17 @@ class BaseTest(object):
 
     dir_pickle = 'U:/test_data'
 
+    @classmethod
+    def open_sql(cls):
+        cls.rep.open_book_sql(cls.bookfile_sql, open_if_lock=True)
 
-    def open_sql(self):
-        self.rep.open_book_sql(self.bookfile_sql, open_if_lock=True)
+    @classmethod
+    def open_xml(cls):
+        cls.rep.open_book_xml(cls.bookfile_xml)
 
-    def open_xml(self):
-        self.rep.open_book_xml(self.bookfile_xml)
-
-    def open_pickle(self):
-        self.rep.open_pickle()
+    @classmethod
+    def open_pickle(cls):
+        cls.rep.open_pickle()
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
         """
