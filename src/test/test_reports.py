@@ -4,6 +4,7 @@ import pandas
 from pandas.util.testing import assert_frame_equal
 
 from gcreports.gcreport import GCReport
+from test.basereporttest import BaseReportTest
 
 
 class BaseDataTest(object):
@@ -78,22 +79,22 @@ class BaseDataTest(object):
         assert_frame_equal(df, df_etalon, check_like=True, obj='Group income')
 
 
-class SQLDataTest(unittest.TestCase, BaseDataTest):
+class SQLReportTest(unittest.TestCase, BaseReportTest):
 
-    bookfile = "u:/sqllite_book/real-2017-01-26.gnucash"
-
-    def __init__(self, *args, **kwargs):
-        super(SQLDataTest, self).__init__(*args, **kwargs)
-        self.rep.open_book_sql(self.bookfile, open_if_lock=True)
-
-
-class XMLDataTest(unittest.TestCase, BaseDataTest):
-
-    bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
+    # bookfile = "u:/sqllite_book/real-2017-01-26.gnucash"
 
     def __init__(self, *args, **kwargs):
-        super(XMLDataTest, self).__init__(*args, **kwargs)
-        self.rep.open_book_xml(self.bookfile_xml)
+        super(SQLReportTest, self).__init__(*args, **kwargs)
+        self.open_sql()
+        # self.rep.open_book_sql(self.bookfile, open_if_lock=True)
+
+
+class XMLReportTest(unittest.TestCase, BaseReportTest):
+
+    def __init__(self, *args, **kwargs):
+        super(XMLReportTest, self).__init__(*args, **kwargs)
+        self.open_xml()
+        # self.rep.open_book_xml(self.bookfile_xml)
 
 # def suite():
 #     suite = unittest.TestSuite()
