@@ -93,6 +93,7 @@ class GCReport:
 
     def save_pickle(self, year=None, folder=None):
         """
+        For test purpose
         Запись данных базы в pickle файлы каталога. Если указан год, записывается дополнительно этот год
         :param year: дополнительный год для записи
         :param folder: Каталог с файлами базы
@@ -116,6 +117,7 @@ class GCReport:
 
     def open_pickle(self, year=None, folder=None):
         """
+        For test purpose
         Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
         Loading from sql --- 6.193211078643799 seconds ---
         Loading from pickle all --- 0.09360003471374512 seconds ---
@@ -405,7 +407,6 @@ class GCReport:
                            margins: Margins = None, drop_null=False):
 
         """
-        Сломана из-за prices
         Получение сводных оборотов по тратам/доходам за промежуток времени с разбивкой на периоды
         Например, ежемесячные траты за год. Возвращает DataFrame
 
@@ -490,8 +491,28 @@ class GCReport:
         return df
 
     def _group_by_accounts(self, dataframe, glevel=1,
-                           margins:Margins=None, drop_null=False):
+                           margins: Margins=None, drop_null=False):
         """
+        Group dataframe by accounts, add totals
+        glevel - group level of accounts: array of levels or single int level
+        Example:
+        glevel=[0, 1] - Group accounts for 0 and 1 level,
+        into 2 rows and 2 columns (Multiindex dataframe):
+        Assets - Current assets
+               - reserve
+
+        glevel=1 - groups only 1 level, into 2 rows and 1 column:
+        Current assets
+        reserve
+
+        Accounts example:
+            0   1               2 (account levels)
+        Assets:Current assets:Cash
+        Assets:Current assets:Card
+        Assets:reserve:Deposite
+        Assets:reserve:Cash
+
+
         Группирует dataframe по счетам, добавляет итоги
         glevel - Уровень группировки счетов: массив уровней или номер уровня
         Например:
@@ -510,7 +531,6 @@ class GCReport:
         Активы:Текущие активы:Карта
         Активы:Резервы:Депозит
         Активы:Резервы:Заначка
-        А
 
         :param dataframe:
         :param glevel: Уровень группировки счетов: массив уровней или номер уровня
