@@ -60,6 +60,25 @@ class XLSXReport:
         new_style.set_align('center')
         self.worksheet.write(2, 3, self.worksheet.written_cells[self.sheet].get('C2'), new_style)
 
+    def add_header(self, dataframe, row=-1):
+        # Заголовок таблицы
+        if row <= -1:
+            row=self.cur_row
+        frmt_date = self.workbook.add_format()
+        frmt_date.set_num_format('mmm yyyy')
+        frmt_date.set_bold()
+        frmt_date.set_align('center')
+        cols = dataframe.columns.tolist()
+        i = len(dataframe.index.names)
+
+        for col_name in cols:
+            # self.worksheet.write(0, i, col, frmt_date)
+            self.worksheet.write(row, i, col_name, frmt_date)
+            i = i + 1
+        # self.worksheet.write(0, col_count + 2, 'Всего', frmt_bold)
+        # self.worksheet.write(0, col_count + 3, 'Среднее', frmt_bold)
+        self.cur_row = row + 1
+
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None):
         # income_start_row = 2
         # income_height = len(dataframe)
@@ -150,11 +169,15 @@ class XLSXReport:
         index_len = len(dataframe.index.names)
         # print(index_len)
         self.worksheet.set_column(firstcol=0, lastcol=index_len-1, width=25)
-
         self.worksheet.set_column(firstcol=index_len, lastcol=col_count, cell_format=frmt_money, width=12)
+
         if margins:
             if margins.empty_col:
-                self.worksheet.set_column(firstcol=col_count-width_totals_col, lastcol=col_count-width_totals_col, cell_format=frmt_money, width=3)
+                empty_col = col_count-width_totals_col
+                # print(empty_col)
+                self.worksheet.set_column(firstcol=empty_col, lastcol=empty_col, width=5)
+
+
 
         # Ширина за последней колонкой
         # self.worksheet.set_column(firstcol=col_count + 1, lastcol=col_count + 1, width=3)
