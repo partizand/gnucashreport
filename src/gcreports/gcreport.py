@@ -470,33 +470,63 @@ class GCReport:
         sel_df.set_index('post_date', inplace=True)
         sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
 
+        # inverse income
+        if account_type == self.INCOME:
+            sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
+
         # Тут нужно добавить пересчет в нужную валюту
 
+        sel_df = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+
+        group = self._group_by_accounts(sel_df, glevel=glevel, margins=margins, drop_null=drop_null)
+
+        return group
+
+    def _currency_calc(self, dataframe, from_date, to_date, period='M'):
+        """
+        Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
+        Исходный datafrmae должен содержать поля:
+        value - стоимость в валюте счета или кол-во ценных бумаг
+        commodity_guid - guid счета или ценной бумаги
+        Добавятся колонки:
+        rate - курс в валюте  учета
+        value_currency - стоимость в валюте учета
+        исходный datafrmae должен быть сгруппирован по from_date, to_date, period
+        Но функция его не группирует!
+        :param dataframe:
+        :param from_date:
+        :param to_date:
+        :param period:
+        :return:
+        """
+        # Тут нужно добавить пересчет в нужную валюту
+        df = dataframe.copy()
         # Получаем список всех нужных mnemonic
-        commodity_guids = sel_df['commodity_guid'].drop_duplicates().tolist()
+        commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
         group_prices = self.group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
         # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
-        sel_df = sel_df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+        df = df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                               how='left')
         # Заполнить пустые поля еденицей
-        sel_df['rate'] = sel_df['rate'].fillna(Decimal(1))
+        df['rate'] = df['rate'].fillna(Decimal(1))
 
-        # inverse income
-        if account_type == self.INCOME:
-            sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
         # Пересчет в валюту представления
-        sel_df['value_currency'] = (sel_df['value'] * sel_df['rate']).apply(lambda x: round(x, 2))
+        df['value_currency'] = (df['value'] * df['rate']).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
+        return df
+
+    def _group_by_accounts(self, dataframe, glevel=1,
+                           margins:Margins=None, drop_null=False):
+
 
         # Отбираем нужные колонки
-        sel_df = pandas.DataFrame(sel_df,
-                                  columns=['post_date', 'fullname', 'value_currency'])
-                                           # 'value_currency', 'rate', 'value'])
+        sel_df = pandas.DataFrame(dataframe,
+                                  columns=['post_date', 'fullname', 'value_currency']).copy()
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df['fullname'].str.split(':', expand=True)
@@ -536,107 +566,6 @@ class GCReport:
         # Добавление итогов
         if margins:
             group = margins.add_margins(group)
-        # if total_row or total_col or mean_col:
-        #     group = self.add_totals(group, total_row=total_row, total_col=total_col, mean_col=mean_col,
-        #            total_name=total_name, mean_name=mean_name,
-        #            empty_col=empty_col)
-
-
-
-
-        # print(group.index)
-        # self.dataframe_to_excel(group, 'group')
-
-        # return
-
-
-        # pivot_t = pandas.pivot_table(sel_df, index=glevel, values='value_currency', columns='post_date',
-        #                              fill_value=0, aggfunc='sum', margins=margins, margins_name=self.TOTAL_NAME
-        #                              )
-
-        # Подсчет среднего
-        # if margins:
-            # Список полей для подсчета среднего
-            # cols = pivot_t.columns.tolist()
-            # cols.remove(self.TOTAL_NAME)
-            # pivot_t[self.TOTAL_MEAN] = pivot_t[cols].mean(axis=1)
-
-        # print(pivot_t)
-        # pivot_t = pivot_t.reset_index()
-
-        return group
-
-    def _after_group(self, dataframe, glevel=1,
-                           margins:Margins=None, drop_null=False):
-        # Добавление MultiIndex по дате и названиям счетов
-        df = dataframe.copy()
-        s = df['fullname'].str.split(':', expand=True)
-        cols = s.columns
-        cols = cols.tolist()
-        cols = ['post_date'] + cols
-        df = pandas.concat([df, s], axis=1)
-
-        df.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
-
-        if drop_null:
-            df.dropna(subset=['value_currency'], inplace=True)  # Удаление пустых значений
-            # sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
-
-        df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
-        # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
-        for col in cols[1:]:
-            df[col] = df[col].apply(lambda x: x if x else '-')
-        df.set_index(cols, inplace=True)
-        # sel_df = sel_df.reset_index()
-
-        # Здесь получается очень интересная таблица, но она не так интересна как в балансах
-        # self.dataframe_to_excel(sel_df, 'turnover_split')
-
-        # Переворот дат из строк в колонки
-        unst = df.unstack(level='post_date', fill_value=0)
-        unst.columns = unst.columns.droplevel()
-
-        # self.dataframe_to_excel(unst, 'unst-')
-
-        # Группировка по нужному уровню
-        group = unst.groupby(level=glevel).sum()
-
-        # Список полей для подсчета среднего
-        cols = group.columns.tolist()
-        # group.loc['All', ''] = group.sum(level=0)
-
-        # group = group.append([group, pandas.DataFrame(group.sum(axis=0), columns=['Grand Total']).T])
-
-
-        # Добавление итогов
-        # if total_row or total_col or mean_col:
-        #     group = self.add_totals(group, total_row=total_row, total_col=total_col, mean_col=mean_col,
-        #                             total_name=total_name, mean_name=mean_name,
-        #                             empty_col=empty_col)
-
-
-
-
-            # print(group.index)
-            # self.dataframe_to_excel(group, 'group')
-
-            # return
-
-
-            # pivot_t = pandas.pivot_table(sel_df, index=glevel, values='value_currency', columns='post_date',
-            #                              fill_value=0, aggfunc='sum', margins=margins, margins_name=self.TOTAL_NAME
-            #                              )
-
-            # Подсчет среднего
-            # if margins:
-            # Список полей для подсчета среднего
-            # cols = pivot_t.columns.tolist()
-            # cols.remove(self.TOTAL_NAME)
-            # pivot_t[self.TOTAL_MEAN] = pivot_t[cols].mean(axis=1)
-
-        # print(pivot_t)
-        # pivot_t = pivot_t.reset_index()
-
         return group
 
     def get_empty_dataframe(self, dataframe):

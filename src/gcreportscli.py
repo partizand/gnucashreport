@@ -5,6 +5,8 @@ import time
 import pandas
 from gcreports.gcreport import GCReport
 from xlsxwriter.utility import xl_rowcol_to_cell
+
+from gcreports.margins import Margins
 from gcreports.xlsxreport import XlSXReport
 
 
@@ -288,7 +290,7 @@ to_date = datetime.date(2016, 12, 31)
 # print("Loading from pickle all --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # start_time_pickle = time.time()
-# rep.open_pickle(year=2016)
+rep.open_pickle(year=2016)
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
@@ -296,11 +298,14 @@ to_date = datetime.date(2016, 12, 31)
 
 # rep.save_pickle(year=2016)
 # exit()
+margins = Margins()
+margins.set_for_turnover()
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1)
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME,
+                            glevel=1, margins=margins)
 
-df = rep.add_col_total(df)
-df = rep.add_row_total(df)
+# df = rep.add_col_total(df)
+# df = rep.add_row_total(df)
 
 # print(df)
 rep.dataframe_to_excel(df, 'income')
