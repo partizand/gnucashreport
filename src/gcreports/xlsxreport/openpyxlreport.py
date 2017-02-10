@@ -1,18 +1,36 @@
+import os
+
+import pandas
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
+
+from gcreports.xlsxreport.excelreport import ExcelReport
 from gcreports.xlsxreport.mynamedstyles import MyNamedStyles
 
-class XlSXReport:
+class OpenpyxlReport(ExcelReport):
+    """
+    Reports from dataframe to Excel based on openpyxl
+    Недработано
+    but
+    Note: Support for OpenPyxl v2.2 is currently EXPERIMENTAL (GH7565).
+    """
+
+    # default_dir_reports = 'U:/tables'
 
     def __init__(self, filename, sheet='Sheet1', template_file=None):
+        super(OpenpyxlReport, self).__init__(filename=filename, sheet=sheet, engine='openpyxl')
         self.styles = MyNamedStyles(template_file)
-        self.filename = filename
-        self.workbook = Workbook()
-        self.worksheet = self.workbook.active
-        self.worksheet.title = sheet
+        # self.filename = filename
+        # Create a Pandas Excel writer using XlsxWriter as the engine.
+        # writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+        # self.writer = pandas.ExcelWriter(filename, engine='openpyxl')
 
-    def save(self):
-        self.workbook.save(self.filename)
+        # self.workbook = self.writer.book
+        # self.worksheet = self.workbook.active
+        # self.worksheet.title = sheet
+
+    # def save(self):
+    #     self.workbook.save(self.filename)
 
     def _rows_to_sheet(self, rows, name, start_row=2, start_col=1, header=False, index=True):
         head = True

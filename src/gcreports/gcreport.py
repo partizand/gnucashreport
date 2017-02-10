@@ -677,14 +677,18 @@ class GCReport:
             filename = os.path.join(self.dir_excel, filename + ".xlsx")
 
         # Create a Pandas Excel writer using XlsxWriter as the engine.
-        writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+        # writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+        writer = pandas.ExcelWriter(filename, engine='openpyxl', datetime_format=datetime_format)
 
         # Convert the dataframe to an XlsxWriter Excel object.
         dataframe.to_excel(writer, sheet_name=sheet)
 
         # Get the xlsxwriter objects from the dataframe writer object.
         workbook = writer.book
-        worksheet = writer.sheets[sheet]
+        # worksheet = writer.sheets[sheet] # Так работает
+        worksheet = workbook.active # Так тоже работает
+
+        worksheet['A1'] = 'A1'
 
         # Close the Pandas Excel writer and output the Excel file.
         writer.save()

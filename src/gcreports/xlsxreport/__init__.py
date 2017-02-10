@@ -1,1 +1,1 @@
-from gcreports.xlsxreport.xlsxreport import XlSXReport
+from gcreports.xlsxreport.openpyxlreport import OpenpyxlReport
