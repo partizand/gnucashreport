@@ -310,7 +310,7 @@ xlsxreport = XLSXReport(filename=filename, datetime_format='mmm yyyy')
 
 xlsxreport.add_dataframe(df, name='Доходы', color='green', header=True, margins=margins)
 xlsxreport.add_empty_row()
-xlsxreport.add_dataframe(df)
+# xlsxreport.add_dataframe(df)
 # xlsxreport.set_cell_format()
 # xlsxreport.add_df_test(df)
 
