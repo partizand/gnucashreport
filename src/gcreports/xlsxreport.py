@@ -132,7 +132,7 @@ class XLSXReport:
                 if margins.mean_col:
                     width_totals_col += 1
                 start_col = col_count
-                self.worksheet.conditional_format(first_row=df_start_row, last_row=itog_row, first_col=col_count-width_totals_col-1,
+                self.worksheet.conditional_format(first_row=df_start_row, last_row=itog_row, first_col=col_count-width_totals_col+1,
                                                   last_col=col_count,
                                                   options={'type': 'no_blanks',
                                                            'format': frmt_bold})
@@ -176,6 +176,7 @@ class XLSXReport:
                 empty_col = col_count-width_totals_col
                 # print(empty_col)
                 self.worksheet.set_column(firstcol=empty_col, lastcol=empty_col, width=5)
+                self.worksheet.set_column(14, 14, width=5)
 
 
 
