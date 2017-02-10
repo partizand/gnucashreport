@@ -317,7 +317,7 @@ class GCReport:
         # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
-    def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2,
+    def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
                           margins:Margins = None, drop_null=False):
         """
         Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
@@ -334,6 +334,8 @@ class GCReport:
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
                                            'quantity', 'name', 'hidden', 'mnemonic'])
+        # self.dataframe_to_excel(sel_df, 'splits')
+
         # Отбираем нужные типы счетов
         sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
 
@@ -343,7 +345,7 @@ class GCReport:
         # Добавление колонки нарастающий итог по счетам
         # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
         sel_df.sort_values(by='post_date', inplace=True)
-        sel_df['balance'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
 
         # здесь подразумевается, что есть только одна цена за день
         # Поэтому отсекаем повторы
@@ -351,28 +353,51 @@ class GCReport:
         # отсечение повторов по индексу
         sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
 
+        # self.dataframe_to_excel(sel_df, 'splits')
+
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
 
         # цикл по всем commodity_guid
         group_acc = pandas.DataFrame()
         for account_guid in account_guids:
+            # acc_info = self.df_accounts.loc[account_guid]
+            # fullname = acc_info['fullname']
+            # commodity_guid = acc_info['commodity_guid']
+            # if account_guid == '9c532fbade3dc78cf181c70c21da3347':
+            #     print(type(fullname))
+            #     print(fullname)
+            #     print(commodity_guid)
 
             # DataFrame с датами и значениями
             df_acc = sel_df.loc[account_guid]
             if not df_acc.empty:
+
                 df_acc = df_acc.resample(period).ffill()
 
                 df_acc = df_acc.reindex(idx, method='ffill')
+                # Здесь теряются все колонки если начинается с пустой
+
+                # if account_guid == '9c532fbade3dc78cf181c70c21da3347':
+                #     self.dataframe_to_excel(df_acc, 'mts')
+
                 # Убрать если все значения 0
                 if drop_null:
-                    has_balances = not (df_acc['balance'].apply(lambda x: x == 0).all())
+                    has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
                 else:
                     has_balances = True
                 # Берем только не пустые счета
                 if has_balances:
+                    acc_info = self.df_accounts.loc[account_guid]
                     df_acc.index.name = 'post_date'
                     df_acc['account_guid'] = account_guid
+                    df_acc['fullname'] = acc_info['fullname']
+                    df_acc['commodity_guid'] = acc_info['commodity_guid']
+                    df_acc['account_type'] = acc_info['account_type']
+                    df_acc['name'] = acc_info['name']
+                    df_acc['hidden'] = acc_info['hidden']
+                    df_acc['mnemonic'] = acc_info['mnemonic']
+
                     df_acc.set_index('account_guid', append=True, inplace=True)
                     # Меняем местами индексы
                     df_acc = df_acc.swaplevel()
@@ -380,6 +405,21 @@ class GCReport:
                     group_acc = group_acc.append(df_acc)
 
         # Тут нужно добавить пересчет в нужную валюту
+        # Сбрасываем один уровень индекса (post_date)
+        group_acc = group_acc.reset_index()
+        # print(group_acc.index)
+        # print(group_acc.columns)
+        # return
+        # self.dataframe_to_excel(group_acc, 'group_acc1')
+        group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
+
+        # self.dataframe_to_excel(group_acc, 'group_acc')
+
+        group = self._group_by_accounts(group_acc, glevel=glevel, margins=margins, drop_null=drop_null)
+
+
+
+        return group
 
         # Получаем список всех нужных commodity_guid
         commodity_guids = group_acc['commodity_guid'].drop_duplicates().tolist()
@@ -486,6 +526,7 @@ class GCReport:
         """
         Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
         Исходный datafrmae должен содержать поля:
+        post_date - дата
         value - стоимость в валюте счета или кол-во ценных бумаг
         commodity_guid - guid счета или ценной бумаги
         Добавятся колонки:
@@ -508,8 +549,11 @@ class GCReport:
         # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
-        df = df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
-                              how='left')
+        if group_prices.empty:
+            df['rate'] = 1
+        else:
+            df = df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+                          how='left')
         # Заполнить пустые поля еденицей
         df['rate'] = df['rate'].fillna(Decimal(1))
 
@@ -545,7 +589,10 @@ class GCReport:
         # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
         for col in cols[1:]:
             sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
+
         sel_df.set_index(cols, inplace=True)
+
+        # self.dataframe_to_excel(sel_df, 'acc-dup')
         # sel_df = sel_df.reset_index()
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
