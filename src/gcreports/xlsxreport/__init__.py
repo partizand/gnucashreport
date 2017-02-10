@@ -1,1 +1,0 @@
-from gcreports.xlsxreport.openpyxlreport import OpenpyxlReport

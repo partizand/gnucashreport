@@ -7,7 +7,8 @@ from gcreports.gcreport import GCReport
 from xlsxwriter.utility import xl_rowcol_to_cell
 
 from gcreports.margins import Margins
-from gcreports.xlsxreport import OpenpyxlReport
+# from gcreports.xlsxreport import OpenpyxlReport
+from gcreports.xlsxreport import XLSXReport
 
 
 def _dataframe_to_writer(writer, dataframe, row, color, name, itog_name, sheet='Sheet1', h_total=False):
@@ -300,32 +301,17 @@ rep.open_pickle()
 # exit()
 margins = Margins()
 margins.set_for_turnover()
+margins.empty_col = True
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=[0,1])
-#                             glevel=1, margins=margins)
-# df = rep.balance_by_period(from_date=from_date, to_date=to_date)
-# df = rep.add_col_total(df)
-# df = rep.add_row_total(df)
-
-# print(df)
-OpenpyxlReport.dataframe_to_excel(df, 'income-o')
-# rep.dataframe_to_excel(df, 'income-o')
-# df = rep.balance_by_period(from_date=from_date, to_date=to_date)
-# rep.dataframe_to_excel(df, 'assets')
-
-exit()
-
+df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1, margins=margins)
 filename = 'u:/tables/ex-test.xlsx'
-template_file = 'u:/tables/template.xlsx'
-xlsxreport = OpenpyxlReport(filename=filename, template_file=template_file)
+# template_file = 'u:/tables/template.xlsx'
+xlsxreport = XLSXReport(filename=filename, datetime_format='mmm yyyy')
 
-# exit()
-df['index'] = df.index
-df = df.set_index([[0, 1, 2]], drop=False)
-print(df.index)
-print(df)
-exit()
-xlsxreport.add_dataframe(df, 'income_header', header=True)
+xlsxreport.add_dataframe(df, name='Доходы', color='green', header=True, margins=margins)
+xlsxreport.add_empty_row()
+xlsxreport.add_dataframe(df)
+# xlsxreport.set_cell_format()
 # xlsxreport.add_df_test(df)
 
 xlsxreport.save()
