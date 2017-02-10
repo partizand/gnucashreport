@@ -396,10 +396,9 @@ class GCReport:
         group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
-        group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
-
         # Группировка по счетам
-        group = self._group_by_accounts(group_acc, glevel=glevel, margins=margins, drop_null=drop_null)
+        group = self._curcalc_and_accgroup(group_acc, from_date=from_date, to_date=to_date, period=period,
+                                           glevel=glevel, margins=margins, drop_null=drop_null)
 
         return group
 
@@ -431,10 +430,10 @@ class GCReport:
         if account_type == self.INCOME:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
-        # Тпересчет в нужную валюту
-        sel_df = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+        # пересчет в нужную валюту
         # Группировка по счетам
-        group = self._group_by_accounts(sel_df, glevel=glevel, margins=margins, drop_null=drop_null)
+        group = self._curcalc_and_accgroup(sel_df, from_date=from_date, to_date=to_date, period=period,
+                                            glevel=glevel, margins=margins, drop_null=drop_null)
 
         return group
 
@@ -471,7 +470,7 @@ class GCReport:
         # Получаем список всех нужных mnemonic
         commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
-        group_prices = self.group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
+        group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
         # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
@@ -692,7 +691,7 @@ class GCReport:
 
         # dataframe.to_excel(filename)
 
-    def group_prices_by_period(self, from_date, to_date, period='M', guids=None):
+    def _group_prices_by_period(self, from_date, to_date, period='M', guids=None):
         """
         Получение курса/цен активов за период
         Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
