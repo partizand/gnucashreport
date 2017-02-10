@@ -9,9 +9,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from gcreports.gcxmlreader import GNUCashXMLBook
-
-TOTAL_NAME = 'Всего'
-MEAN_NAME = 'Среднее'
+from gcreports.margins import Margins
 
 class GCReport:
     """
@@ -319,10 +317,8 @@ class GCReport:
         # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
-
     def balance_by_period(self, from_date: date, to_date: date, period='M', account_types=ALL_ASSET_TYPES, glevel=2,
-                          total_row=False, total_col=False, mean_col=False, total_name=TOTAL_NAME,
-                          mean_name=MEAN_NAME, empty_col=False, drop_null=False):
+                          margins:Margins = None, drop_null=False):
         """
         Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
         :param from_date:
@@ -450,8 +446,7 @@ class GCReport:
         return pivot_t
 
     def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=1,
-                           total_row=False, total_col=False, mean_col=False, total_name=TOTAL_NAME,
-                           mean_name=MEAN_NAME, empty_col=False, drop_null=False):
+                           margins: Margins = None, drop_null=False):
 
         """
         Сломана из-за prices
@@ -536,17 +531,15 @@ class GCReport:
         group = unst.groupby(level=glevel).sum()
 
         # Список полей для подсчета среднего
-        cols = group.columns.tolist()
-        # group.loc['All', ''] = group.sum(level=0)
-
-        # group = group.append([group, pandas.DataFrame(group.sum(axis=0), columns=['Grand Total']).T])
-
+        # cols = group.columns.tolist()
 
         # Добавление итогов
-        if total_row or total_col or mean_col:
-            group = self.add_totals(group, total_row=total_row, total_col=total_col, mean_col=mean_col,
-                   total_name=total_name, mean_name=mean_name,
-                   empty_col=empty_col)
+        if margins:
+            group = margins.add_margins(group)
+        # if total_row or total_col or mean_col:
+        #     group = self.add_totals(group, total_row=total_row, total_col=total_col, mean_col=mean_col,
+        #            total_name=total_name, mean_name=mean_name,
+        #            empty_col=empty_col)
 
 
 
@@ -574,8 +567,7 @@ class GCReport:
         return group
 
     def _after_group(self, dataframe, glevel=1,
-                           total_row=False, total_col=False, mean_col=False, total_name=TOTAL_NAME,
-                           mean_name=MEAN_NAME, empty_col=False, drop_null=False):
+                           margins:Margins=None, drop_null=False):
         # Добавление MultiIndex по дате и названиям счетов
         df = dataframe.copy()
         s = df['fullname'].str.split(':', expand=True)
@@ -617,10 +609,10 @@ class GCReport:
 
 
         # Добавление итогов
-        if total_row or total_col or mean_col:
-            group = self.add_totals(group, total_row=total_row, total_col=total_col, mean_col=mean_col,
-                                    total_name=total_name, mean_name=mean_name,
-                                    empty_col=empty_col)
+        # if total_row or total_col or mean_col:
+        #     group = self.add_totals(group, total_row=total_row, total_col=total_col, mean_col=mean_col,
+        #                             total_name=total_name, mean_name=mean_name,
+        #                             empty_col=empty_col)
 
 
 
@@ -646,76 +638,6 @@ class GCReport:
         # pivot_t = pivot_t.reset_index()
 
         return group
-
-    @staticmethod
-    def add_totals(dataframe, total_row=True, total_col=False, mean_col=False,
-                   total_name=TOTAL_NAME, mean_name=MEAN_NAME,
-                   empty_col=False):
-        """
-        Добавляет итоги в DataFrame
-        :param dataframe:
-        :param total_row: Добавить строку итогов
-        :param total_col: Добавить колонку итогов
-        :param mean_col: Добавить колонку среднее
-        :param total_name: Имя итогов
-        :param mean_name: Имя среднего
-        :param empty_col: Добавить пустую колонку перед итогами
-        :return: DataFrame с итогами
-        """
-        df = dataframe.copy()
-        if total_row:
-            df = GCReport.add_row_total(df,total_name=total_name)
-
-        if total_col or mean_col:
-            df = GCReport.add_col_total(df, total=total_col, mean=mean_col,
-                                        total_name=total_name, mean_name=mean_name,
-                                        empty_col=empty_col)
-        return df
-
-
-
-    @staticmethod
-    def add_row_total(dataframe, total_name=TOTAL_NAME):
-
-        if isinstance(dataframe.index, pandas.core.index.MultiIndex):
-
-            df_ret = dataframe.copy()
-            df_sum = pandas.DataFrame(data=dataframe.sum()).T
-            # df_sum.reindex()
-            # Строковые имена колонок индекса
-            strinames = [str(name) for name in dataframe.index.names]
-
-            first = True
-            for i in strinames:
-                if first:
-                    df_sum[i] = total_name
-                    first = False
-                else:
-                    df_sum[i] = ''
-            df_sum.set_index(strinames, inplace=True)
-            df_ret = df_ret.append(df_sum)
-            return df_ret
-
-        else:
-            index = total_name
-            df_ret = dataframe.copy()
-            df_ret.loc[index] = dataframe.sum()
-            return df_ret
-
-    @staticmethod
-    def add_col_total(dataframe, total=True, mean=True, total_name=TOTAL_NAME, mean_name=MEAN_NAME, empty_col=False):
-        # Список полей для подсчета среднего
-        cols = dataframe.columns.tolist()
-        df_ret = dataframe.copy()
-        # Добавление пустого столбца
-        if empty_col:
-            df_ret[''] = ''
-        if total:
-            df_ret[total_name] = df_ret[cols].sum(axis=1)
-        if mean:
-            df_ret[mean_name] = df_ret[cols].mean(axis=1)
-
-        return df_ret
 
     def get_empty_dataframe(self, dataframe):
         """
