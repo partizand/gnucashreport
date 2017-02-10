@@ -334,8 +334,6 @@ class GCReport:
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
                                            'quantity', 'name', 'hidden', 'mnemonic'])
-        # self.dataframe_to_excel(sel_df, 'splits')
-
         # Отбираем нужные типы счетов
         sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
 
@@ -353,21 +351,12 @@ class GCReport:
         # отсечение повторов по индексу
         sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
 
-        # self.dataframe_to_excel(sel_df, 'splits')
-
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
 
         # цикл по всем commodity_guid
         group_acc = pandas.DataFrame()
         for account_guid in account_guids:
-            # acc_info = self.df_accounts.loc[account_guid]
-            # fullname = acc_info['fullname']
-            # commodity_guid = acc_info['commodity_guid']
-            # if account_guid == '9c532fbade3dc78cf181c70c21da3347':
-            #     print(type(fullname))
-            #     print(fullname)
-            #     print(commodity_guid)
 
             # DataFrame с датами и значениями
             df_acc = sel_df.loc[account_guid]
@@ -378,11 +367,8 @@ class GCReport:
                 df_acc = df_acc.reindex(idx, method='ffill')
                 # Здесь теряются все колонки если начинается с пустой
 
-                # if account_guid == '9c532fbade3dc78cf181c70c21da3347':
-                #     self.dataframe_to_excel(df_acc, 'mts')
-
-                # Убрать если все значения 0
                 if drop_null:
+                    # Убрать если все значения 0
                     has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
                 else:
                     has_balances = True
@@ -404,86 +390,16 @@ class GCReport:
 
                     group_acc = group_acc.append(df_acc)
 
-        # Тут нужно добавить пересчет в нужную валюту
         # Сбрасываем один уровень индекса (post_date)
         group_acc = group_acc.reset_index()
-        # print(group_acc.index)
-        # print(group_acc.columns)
-        # return
-        # self.dataframe_to_excel(group_acc, 'group_acc1')
+
+        # пересчет в нужную валюту
         group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
 
-        # self.dataframe_to_excel(group_acc, 'group_acc')
-
+        # Группировка по счетам
         group = self._group_by_accounts(group_acc, glevel=glevel, margins=margins, drop_null=drop_null)
 
-
-
         return group
-
-        # Получаем список всех нужных commodity_guid
-        commodity_guids = group_acc['commodity_guid'].drop_duplicates().tolist()
-        # Получаем их сгруппированные цены
-        group_prices = self.group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
-        # group_prices = group_prices.reset_index()
-
-        # Сбрасываем один уровень индекса (post_date)
-        group_acc = group_acc.reset_index()
-        # group_acc = group_acc.reset_index(level=1)
-        # Добавление колонки курс
-        if group_prices.empty:
-            group_acc['rate'] = 1
-        else:
-            group_acc = group_acc.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
-                                    how='left')
-
-        # Теперь в колонке rate курс ценной бумаги в рублях
-        # group_acc.rename(columns={'value': 'rate'}, inplace=True)
-        # Заполнить пустые поля еденицей
-        group_acc['rate'] = group_acc['rate'].fillna(Decimal(1))
-
-        # Пересчет в валюту представления
-        group_acc['balance_currency'] = (group_acc['balance'] * group_acc['rate']).apply(lambda x: round(x, 2))
-        # Теперь в колонке balance_currency реальная сумма в рублях
-
-        # Конец пересчета в нужную валюту
-
-        # Отбираем нужные колонки
-        group_acc = pandas.DataFrame(group_acc,
-                                     columns=['post_date', 'fullname',
-                                              'balance_currency', 'rate', 'balance'])
-
-        # Добавление MultiIndex по дате и названиям счетов
-        s = group_acc['fullname'].str.split(':', expand=True)
-        cols = s.columns
-        cols = cols.tolist()
-        cols = ['post_date'] + cols
-        group_acc = pandas.concat([group_acc, s], axis=1)
-        group_acc.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
-
-        if drop_null:
-            group_acc.dropna(subset=['balance_currency'], inplace=True)  # Удаление пустых значений
-            group_acc = group_acc[group_acc['balance'] != 0]  # Удаление нулевых значений
-
-        group_acc.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
-        # Timestap to date
-        # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: x.date())
-        # Convert datetme to date (skip time)
-        # group_acc['post_date'] = group_acc['post_date'].apply(lambda x: pandas.to_datetime(x.date()))
-        group_acc.set_index(cols, inplace=True)
-
-        # Здесь получается очень интересная таблица
-        # self.dataframe_to_excel(group_acc, 'group_acc_split')
-
-        # Группировка по нужному уровню
-        group_acc = group_acc.groupby(level=[0, glevel]).balance_currency.sum().reset_index()
-
-        # Переворот в сводную
-        pivot_t = pandas.pivot_table(group_acc, index=(glevel - 1), values='balance_currency', columns='post_date',
-                                     aggfunc='sum',
-                                     fill_value=0)
-
-        return pivot_t
 
     def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=1,
                            margins: Margins = None, drop_null=False):
@@ -514,15 +430,24 @@ class GCReport:
         if account_type == self.INCOME:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
-        # Тут нужно добавить пересчет в нужную валюту
-
+        # Тпересчет в нужную валюту
         sel_df = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
-
+        # Группировка по счетам
         group = self._group_by_accounts(sel_df, glevel=glevel, margins=margins, drop_null=drop_null)
 
         return group
 
-    def _currency_calc(self, dataframe, from_date, to_date, period='M'):
+    def _curcalc_and_accgroup(self, dataframe, from_date, to_date, period, glevel,
+                              margins:Margins=None, drop_null=False):
+
+        # пересчет в нужную валюту
+        group = self._currency_calc(dataframe, from_date=from_date, to_date=to_date, period=period)
+
+        # Группировка по счетам
+        group = self._group_by_accounts(group, glevel=glevel, margins=margins, drop_null=drop_null)
+        return group
+
+    def _currency_calc(self, dataframe, from_date, to_date, period):
         """
         Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
         Исходный datafrmae должен содержать поля:
@@ -538,7 +463,7 @@ class GCReport:
         :param from_date:
         :param to_date:
         :param period:
-        :return:
+        :return: DataFrame с добавленными колонками
         """
         # Тут нужно добавить пересчет в нужную валюту
         df = dataframe.copy()
@@ -566,7 +491,33 @@ class GCReport:
 
     def _group_by_accounts(self, dataframe, glevel=1,
                            margins:Margins=None, drop_null=False):
+        """
+        Группирует dataframe по счетам, добавляет итоги
+        glevel - Уровень группировки счетов: массив уровней или номер уровня
+        Например:
+        glevel=[0, 1] - Сгруппирует все счета с 0 по 1-ый уровень,
+        будут две строки и два столбца (Multiindex dataframe):
+        Активы - Текущие активы
+               - Резервы
 
+        glevel=1 - сгруппирует только первый уровень, будут две строки и один столбец:
+        Текущие активы
+        Резервы
+
+        Пример счетов:
+            0   1               2 (Уровни счетов)
+        Активы:Текущие активы:Деньги
+        Активы:Текущие активы:Карта
+        Активы:Резервы:Депозит
+        Активы:Резервы:Заначка
+        А
+
+        :param dataframe:
+        :param glevel: Уровень группировки счетов: массив уровней или номер уровня
+        :param margins: Итоги
+        :param drop_null:
+        :return:
+        """
 
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(dataframe,
@@ -592,9 +543,6 @@ class GCReport:
 
         sel_df.set_index(cols, inplace=True)
 
-        # self.dataframe_to_excel(sel_df, 'acc-dup')
-        # sel_df = sel_df.reset_index()
-
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
 
@@ -602,13 +550,8 @@ class GCReport:
         unst = sel_df.unstack(level='post_date', fill_value=0)
         unst.columns = unst.columns.droplevel()
 
-        # self.dataframe_to_excel(unst, 'unst-')
-
         # Группировка по нужному уровню
         group = unst.groupby(level=glevel).sum()
-
-        # Список полей для подсчета среднего
-        # cols = group.columns.tolist()
 
         # Добавление итогов
         if margins:
