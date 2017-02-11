@@ -7,13 +7,17 @@ class XLSXReport:
 
     default_dir_reports = 'U:/tables'
 
-    def __init__(self, filename, sheet='Sheet1', datetime_format=None):
+    def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
         self.filename = filename
         self.sheet = sheet
         self.worksheet = None
         self.writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
         self.workbook = self.writer.book
-        self.cur_row = 0
+        self.cur_row = start_row
+        if datetime_format:
+            self.datetime_format = datetime_format
+        else:
+            self.datetime_format = 'dd-mm-yyyy'
 
     def save(self):
         self.writer.save()
@@ -52,13 +56,20 @@ class XLSXReport:
         writer.save()
 
     def add_empty_row(self):
+        """
+        Добавляет пустую строку
+        :return:
+        """
         self.cur_row += 1
 
-    def set_cell_format(self, cell=None, format=None):
-        new_style = self.workbook.add_format()
-        new_style.set_bold()
-        new_style.set_align('center')
-        self.worksheet.write(2, 3, self.worksheet.written_cells[self.sheet].get('C2'), new_style)
+    def _update_cur_row(self, next_row):
+        """
+        Update current row
+        :param next_row: end of added lines
+        :return:
+        """
+        if self.cur_row < next_row:
+            self.cur_row = next_row
 
     def add_header(self, dataframe, row=-1):
         # Заголовок таблицы
@@ -77,7 +88,8 @@ class XLSXReport:
             i = i + 1
         # self.worksheet.write(0, col_count + 2, 'Всего', frmt_bold)
         # self.worksheet.write(0, col_count + 3, 'Среднее', frmt_bold)
-        self.cur_row = row + 1
+        self._update_cur_row(row + 1)
+        # self.cur_row = row + 1
 
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None):
         # income_start_row = 2
@@ -175,8 +187,8 @@ class XLSXReport:
             if margins.empty_col:
                 empty_col = col_count-width_totals_col
                 # print(empty_col)
-                self.worksheet.set_column(firstcol=empty_col, lastcol=empty_col, width=5)
-                self.worksheet.set_column(14, 14, width=5)
+                self.worksheet.set_column(firstcol=empty_col, lastcol=empty_col, width=1)
+                # self.worksheet.set_column(14, 14, width=5)
 
 
 
@@ -190,6 +202,7 @@ class XLSXReport:
         #                              last_row=itog_row, last_col=col_count,
         #                              options={'type': 'no_blanks', 'format': frmt_head})
 
-        self.cur_row = itog_row + 1
+        # self.cur_row = itog_row + 1
+        self._update_cur_row(itog_row + 1)
         # return itog_row + 1
 

@@ -285,11 +285,11 @@ to_date = datetime.date(2016, 12, 31)
 # start_time_sql = time.time()
 # rep.open_book_xml()
 # rep.save_pickle()
-exit()
+# exit()
 # print("Loading from sql --- %s seconds ---" % (time.time() - start_time_sql))
 
 # start_time_pickle = time.time()
-# rep.open_pickle()
+rep.open_pickle()
 # print("Loading from pickle all --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # start_time_pickle = time.time()
@@ -304,14 +304,21 @@ exit()
 margins = Margins()
 margins.set_for_turnover()
 margins.empty_col = True
+filename = 'v:/tables/ex-test.xlsx'
 
-df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1, margins=margins)
-filename = 'u:/tables/ex-test.xlsx'
-# template_file = 'u:/tables/template.xlsx'
 xlsxreport = XLSXReport(filename=filename, datetime_format='mmm yyyy')
 
-xlsxreport.add_dataframe(df, name='Доходы', color='green', header=False, margins=margins, row=1)
-xlsxreport.add_header(df, row=0)
+df_income = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1, margins=margins)
+xlsxreport.add_dataframe(df_income, name='Доходы', color='green', header=False, margins=margins, row=1)
+xlsxreport.add_empty_row()
+
+df_expense = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=1, margins=margins)
+xlsxreport.add_dataframe(df_expense, name='Расходы', color='yellow', header=False, margins=margins)
+xlsxreport.add_empty_row()
+
+
+
+xlsxreport.add_header(df_income, row=0)
 # xlsxreport.add_empty_row()
 # xlsxreport.add_dataframe(df)
 # xlsxreport.set_cell_format()
