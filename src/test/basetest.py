@@ -13,20 +13,20 @@ class BaseTest(object):
     """
     rep = GCReport()
 
-    bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
-    bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
+    # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
+    # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
 
     test_name = 'abstract_test'
 
-    dir_pickle = 'U:/test_data'
+    dir_testdata = GCReport.dir_testdata
 
     @classmethod
     def open_sql(cls):
-        cls.rep.open_book_sql(cls.bookfile_sql, open_if_lock=True)
+        cls.rep.open_book_sql(GCReport.bookfile_sql, open_if_lock=True)
 
     @classmethod
     def open_xml(cls):
-        cls.rep.open_book_xml(cls.bookfile_xml)
+        cls.rep.open_book_xml(GCReport.bookfile_xml)
 
     @classmethod
     def open_pickle(cls):
@@ -40,7 +40,7 @@ class BaseTest(object):
         :param test_name:
         :return:
         """
-        filename = os.path.join(self.dir_pickle, pickle_file)
+        filename = os.path.join(self.dir_testdata, pickle_file)
         df_etalon = pandas.read_pickle(filename)
         assert_frame_equal(df_to_test, df_etalon, check_like=True, obj=test_name)
 

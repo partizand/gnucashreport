@@ -41,55 +41,83 @@ class GCReport:
 
     # Название итоговых строк
     # TOTAL_NAME = 'Всего'
-    MEAN_NAME = 'Среднее'
+    # MEAN_NAME = 'Среднее'
 
-    df_accounts = pandas.DataFrame()
-    df_transactions = pandas.DataFrame()
-    df_commodities = pandas.DataFrame()
-    df_splits = pandas.DataFrame()
-    df_prices = pandas.DataFrame()
 
-    dir_pickle = 'u:/pickle'
+
+    # Каталог с pickle базой
+
     pickle_prices = 'prices.pkl'
     pickle_splits = 'splits.pkl'
     pickle_accounts = 'accounts.pkl'
     pickle_tr = 'transactions.pkl'
     pickle_commodities = 'commodities.pkl'
 
-    dir_excel = "U:/tables"
+    dir_excel = "v:/tables"
+    dir_pickle = 'V:/pickle'
+    dir_testdata = 'v:/test_data'
+
+    bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
+    bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
+
+    # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
+    # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
 
     book_name = None
 
     root_account_guid = None
 
-    # def __init__(self):
-        # self.excel_filename = os.path.join(self.dir_excel, self.excel_filename)
-        # self.df_accounts = pandas.DataFrame()
-        # self.df_transactions = pandas.DataFrame()
-        # self.df_commodities = pandas.DataFrame()
-        # self.df_splits = pandas.DataFrame()
-        # self.df_prices = pandas.DataFrame()
+    def __init__(self):
+        self.df_accounts = pandas.DataFrame()
+        self.df_transactions = pandas.DataFrame()
+        self.df_commodities = pandas.DataFrame()
+        self.df_splits = pandas.DataFrame()
+        self.df_prices = pandas.DataFrame()
 
-    def open_book_xml(self, xml_file):
+    def open_book_xml(self, xml_file=None):
         """
         Opens gnucash book from xml file
         :param xml_file:
         :return:
         """
+        if not xml_file:
+            xml_file = self.bookfile_xml
         self._read_book_xml(xml_file)
         self._after_read()
         # print(self.df_prices)
 
-    def open_book_sql(self, sqlite_file, open_if_lock=False):
+    def open_book_sql(self, sqlite_file=None, open_if_lock=False):
         """
         Opens gnucash book from sqlite file
         :param sqlite_file:
         :param open_if_lock:
         :return:
         """
+        if not sqlite_file:
+            sqlite_file = self.bookfile_sql
         self._read_book_sql(sqlite_file, open_if_lock)
         self._after_read()
 
+
+    def save_testdata(self):
+        """
+        Запись тестовых pickle для последующей проверки в тестах
+        :return:
+        """
+        from_date = date(2016, 1, 1)
+        to_date = date(2016, 12, 31)
+
+        filename = 'assets.pkl'
+        df = self.balance_by_period(from_date=from_date, to_date=to_date)
+        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+
+        filename = 'expense.pkl'
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE)
+        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+
+        filename = 'income.pkl'
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME)
+        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
 
     def save_pickle(self, year=None, folder=None):
         """
@@ -596,11 +624,11 @@ class GCReport:
 
 
         # Calculate Profit
-        profit = df_income.loc[self.TOTAL_NAME] - df_expense.loc[self.TOTAL_NAME]
+        profit = df_income.loc['Total'] - df_expense.loc['Total']
         # empty column
         # df_income['1'] = 1
         # df_expense['1'] = 1
-        profit[0] = PROFIT_NAME
+        profit[0] = 'Profit'
         idxcols = profit.index.names
         idxcols = [0] + idxcols
         profit.set_index(0, append=True, inplace=True)
@@ -609,7 +637,7 @@ class GCReport:
         # empty line
         df_empty = pandas.DataFrame(index=profit.index, columns=profit.columns)
 
-        df_empty = df_empty.drop(PROFIT_NAME)
+        df_empty = df_empty.drop('Profit')
         df_empty.loc[' ',' '] = ' '
         # self.dataframe_to_excel(df_empty, 'empty')
         # print(empty.index)
