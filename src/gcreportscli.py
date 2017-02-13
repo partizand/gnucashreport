@@ -298,25 +298,31 @@ rep.open_pickle()
 
 # rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # rep.save_pickle()
-
-# rep.save_pickle(year=2016)
+# margins = Margins()
+# margins.set_for_profit()
+# df = rep.profit_by_period(from_date=from_date, to_date=to_date, glevel=[0, 1], margins=margins)
+# XLSXReport.dataframe_to_excel(df, 'profit')
 # exit()
 margins = Margins()
 margins.set_for_turnover()
 margins.empty_col = True
 filename = 'v:/tables/ex-test.xlsx'
-
+glevel = 1
 xlsxreport = XLSXReport(filename=filename, datetime_format='mmm yyyy')
 
-df_income = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=1, margins=margins)
+df_income = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=glevel, margins=margins)
 xlsxreport.add_dataframe(df_income, name='Доходы', color='green', header=False, margins=margins, row=1)
 xlsxreport.add_empty_row()
 
-df_expense = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=1, margins=margins)
+df_expense = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=glevel, margins=margins)
 xlsxreport.add_dataframe(df_expense, name='Расходы', color='yellow', header=False, margins=margins)
 xlsxreport.add_empty_row()
 
-
+margins.set_for_profit()
+df_profit = rep.profit_by_period(from_date=from_date, to_date=to_date, glevel=glevel)
+rep.dataframe_to_pickle(df_profit, 'v:/profit.pkl')
+xlsxreport.add_dataframe(df_profit, color='red', header=False, margins=margins)
+xlsxreport.add_empty_row()
 
 xlsxreport.add_header(df_income, row=0)
 # xlsxreport.add_empty_row()

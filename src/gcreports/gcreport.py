@@ -9,7 +9,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from gcreports.gcxmlreader import GNUCashXMLBook
-from gcreports.margins import Margins
+from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME
 
 class GCReport:
     """
@@ -63,9 +63,9 @@ class GCReport:
     # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
     # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
 
-    book_name = None
+    # book_name = None
 
-    root_account_guid = None
+    # root_account_guid = None
 
     def __init__(self):
         self.df_accounts = pandas.DataFrame()
@@ -73,6 +73,9 @@ class GCReport:
         self.df_commodities = pandas.DataFrame()
         self.df_splits = pandas.DataFrame()
         self.df_prices = pandas.DataFrame()
+
+        self.book_name = None
+        self.root_account_guid = None
 
     def open_book_xml(self, xml_file=None):
         """
@@ -347,6 +350,126 @@ class GCReport:
         # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
+    def add_margins(self, dataframe, margins=None):
+        """
+        Добавляет итоги в DataFrame
+        :param dataframe:
+        :margins dataframe:
+        :return: DataFrame с итогами
+        """
+
+        df = dataframe.copy()
+        if margins:
+            if margins.total_row:
+                df = self._add_row_total(df, margins)
+
+            if margins.total_col or margins.mean_col:
+                df = self._add_col_total(df, margins)
+        return df
+
+    def _add_col_total(self, dataframe, margins):
+
+        # Список полей для подсчета среднего
+        cols = dataframe.columns.tolist()
+        df_ret = dataframe.copy()
+        # Добавление пустого столбца
+        if margins.empty_col:
+            df_ret[''] = ''
+        if margins.total_col:
+            df_ret[margins.total_name] = df_ret[cols].sum(axis=1)
+        if margins.mean_col:
+            df_ret[margins.mean_name] = df_ret[cols].mean(axis=1)
+
+        return df_ret
+
+    def _add_row_total(self, dataframe, margins=None):
+
+        total_name = TOTAL_NAME
+        if margins:
+            total_name = margins.total_name
+        if isinstance(dataframe.index, pandas.core.index.MultiIndex):
+
+            df_ret = dataframe.copy()
+            df_sum = pandas.DataFrame(data=dataframe.sum()).T
+            # df_sum.reindex()
+            # Строковые имена колонок индекса
+            strinames = [str(name) for name in dataframe.index.names]
+
+            first = True
+            for i in strinames:
+                if first:
+                    df_sum[i] = total_name
+                    first = False
+                else:
+                    df_sum[i] = ''
+            df_sum.set_index(strinames, inplace=True)
+            df_ret = df_ret.append(df_sum)
+            return df_ret
+
+        else:
+            index = total_name
+            df_ret = dataframe.copy()
+            df_ret.loc[index] = dataframe.sum()
+            return df_ret
+
+
+    def profit_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
+                           margins: Margins = None):
+
+        """
+        Получение прибыли за период
+        Возвращает DataFrame
+
+        :param from_date: Start date
+        :param to_date: Finish date
+        :param period: "M" for month, "D" for day...
+        :param account_type: INCOME or EXPENSE
+        :param glevel: group level
+        :return: pivot DataFrame
+        """
+
+        income_and_expense = [GCReport.INCOME, GCReport.EXPENSE]
+        # Фильтрация по времени
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+                                & (self.df_splits['post_date'] <= to_date)]
+
+        # Отбираем нужные типы счетов
+        sel_df = sel_df[(sel_df['account_type']).isin(income_and_expense)]
+
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+
+        # пересчет в нужную валюту
+        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+        # Группировка по счетам
+
+        # Суммируем
+        group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
+
+        # Переворот дат из строк в колонки
+        df = pandas.DataFrame(group).T
+        profit_name = PROFIT_NAME
+        if margins:
+            profit_name = margins.profit_name
+        df.index = [profit_name]
+
+        # Нужно добавить колонки если Multiindex
+        if type(glevel) is int:
+            glevel = [glevel]
+        idx_len = len(glevel)
+        new_indexes = [str(i) for i in range(1, idx_len)]
+        if new_indexes:
+            # Нужно добавить уровни
+            for col_name in new_indexes:
+                df[col_name] = ''
+            df.set_index(new_indexes, append=True, inplace=True)
+
+        # Добавление итогов
+        df = self.add_margins(df, margins)
+
+        return df
+
     def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
                           margins:Margins = None, drop_null=False):
         """
@@ -601,8 +724,8 @@ class GCReport:
         group = unst.groupby(level=glevel).sum()
 
         # Добавление итогов
-        if margins:
-            group = margins.add_margins(group)
+        group = self.add_margins(group, margins)
+
         return group
 
     def get_empty_dataframe(self, dataframe):
@@ -694,7 +817,7 @@ class GCReport:
 
     # def _dataframe_to_writer(self, writer, dataframe, ):
 
-    def dataframe_to_excel(self, dataframe, filename, sheet='Sheet1', datetime_format='dd-mm-yyyy hh:mm:ss'):
+    def dataframe_to_excel(self, dataframe, filename, sheet='Sheet1', datetime_format='dd-mm-yyyy'):
         """
         Записывает dataFrame в excel. Указывать только имя файла без расширения!
         :param dataframe:
@@ -706,7 +829,7 @@ class GCReport:
 
         # Create a Pandas Excel writer using XlsxWriter as the engine.
         # writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
-        writer = pandas.ExcelWriter(filename, engine='openpyxl', datetime_format=datetime_format)
+        writer = pandas.ExcelWriter(filename, datetime_format=datetime_format)
 
         # Convert the dataframe to an XlsxWriter Excel object.
         dataframe.to_excel(writer, sheet_name=sheet)
@@ -716,7 +839,7 @@ class GCReport:
         # worksheet = writer.sheets[sheet] # Так работает
         worksheet = workbook.active # Так тоже работает
 
-        worksheet['A1'] = 'A1'
+        # worksheet['A1'] = 'A1'
 
         # Close the Pandas Excel writer and output the Excel file.
         writer.save()

@@ -5,7 +5,7 @@ import pandas
 
 class XLSXReport:
 
-    default_dir_reports = 'U:/tables'
+    default_dir_reports = 'V:/tables'
 
     def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
         self.filename = filename
@@ -130,10 +130,10 @@ class XLSXReport:
         if margins:
 
 
-            if margins.total_row:
+            if (margins.total_row) or (len(dataframe) == 1 and color):
                 self.worksheet.conditional_format(first_row=itog_row, last_row=itog_row, first_col=0, last_col=col_count,
                                                   options={'type': 'no_blanks',
-                                                   'format': frmt_head})
+                                                  'format': frmt_head})
                 self.worksheet.conditional_format(first_row=itog_row, last_row=itog_row, first_col=0,
                                                   last_col=col_count,
                                                   options={'type': 'blanks',
