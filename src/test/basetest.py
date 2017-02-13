@@ -43,6 +43,7 @@ class BaseTest(object):
         filename = os.path.join(self.dir_testdata, pickle_file)
         df_etalon = pandas.read_pickle(filename)
         assert_frame_equal(df_to_test, df_etalon, check_like=True, obj=test_name)
+        self.assert_equal(len(df_to_test), len(df_etalon), 'length of dataframe')
 
     def dataframe_fields_control(self, df, etalon_fields, df_name):
         """

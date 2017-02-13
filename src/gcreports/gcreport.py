@@ -9,7 +9,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from gcreports.gcxmlreader import GNUCashXMLBook
-from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME
+from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
 
 class GCReport:
     """
@@ -43,9 +43,9 @@ class GCReport:
     # TOTAL_NAME = 'Всего'
     # MEAN_NAME = 'Среднее'
 
-
-
-    # Каталог с pickle базой
+    # Данные для генерации тестовых данных и тестирования
+    dir_pickle = 'V:/pickle'
+    dir_testdata = 'v:/test_data'
 
     pickle_prices = 'prices.pkl'
     pickle_splits = 'splits.pkl'
@@ -53,9 +53,20 @@ class GCReport:
     pickle_tr = 'transactions.pkl'
     pickle_commodities = 'commodities.pkl'
 
+    pickle_assets = 'assets.pkl'
+    pickle_loans = 'loans.pkl'
+    pickle_expense = 'expense.pkl'
+    pickle_income = 'income.pkl'
+    pickle_profit = 'profit.pkl'
+    pickle_equity = 'equity.pkl'
+
+    test_glevel = 1
+
+    test_from_date = datetime.date(2016, 1, 1)
+    test_to_date = datetime.date(2016, 12, 31)
+    # Конец тестовых данных
+
     dir_excel = "v:/tables"
-    dir_pickle = 'V:/pickle'
-    dir_testdata = 'v:/test_data'
 
     bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
     bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
@@ -111,15 +122,28 @@ class GCReport:
         to_date = date(2016, 12, 31)
 
         filename = 'assets.pkl'
-        df = self.balance_by_period(from_date=from_date, to_date=to_date)
+        df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=1)
+        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+
+        filename = 'loans.pkl'
+        df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=1)
         self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
 
         filename = 'expense.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE)
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=1)
         self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
 
         filename = 'income.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME)
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME,
+                                     glevel=1)
+        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+
+        filename = 'profit.pkl'
+        df = self.profit_by_period(from_date=from_date, to_date=to_date, glevel=0)
+        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+
+        filename = 'equity.pkl'
+        df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
         self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
 
     def save_pickle(self, year=None, folder=None):
@@ -425,32 +449,91 @@ class GCReport:
         :param glevel: group level
         :return: pivot DataFrame
         """
-
-        assets_and_liability = [GCReport.ALL_ASSET_TYPES, GCReport.LIABILITY]
+        assets_and_liability = GCReport.ALL_ASSET_TYPES
+        assets_and_liability.append(GCReport.LIABILITY)
         # Фильтрация по времени
-        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-                                & (self.df_splits['post_date'] <= to_date)]
+        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+        #                         & (self.df_splits['post_date'] <= to_date)]
+
+        # Очень большая таблица!!??
+        sel_df = self.df_splits.copy()
 
         # Отбираем нужные типы счетов
         sel_df = sel_df[(sel_df['account_type']).isin(assets_and_liability)]
 
-        # Группировка по месяцу
-        sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+        # Список всех account_guid
+        account_guids = sel_df['account_guid'].drop_duplicates().tolist()
+
+        # Добавление колонки нарастающий итог по счетам
+        # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
+        sel_df.sort_values(by='post_date', inplace=True)
+        sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+
+        # здесь подразумевается, что есть только одна цена за день
+        # Поэтому отсекаем повторы
+        sel_df.set_index(['account_guid', 'post_date'], inplace=True)
+        # отсечение повторов по индексу
+        sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
+
+        # Индекс по периоду
+        idx = pandas.date_range(from_date, to_date, freq=period)
+
+        # цикл по всем commodity_guid
+        drop_null = False
+        group_acc = pandas.DataFrame()
+        for account_guid in account_guids:
+
+            # DataFrame с датами и значениями
+            df_acc = sel_df.loc[account_guid]
+            if not df_acc.empty:
+
+                df_acc = df_acc.resample(period).ffill()
+
+                df_acc = df_acc.reindex(idx, method='ffill')
+                # Здесь теряются все колонки если начинается с пустой
+
+                if drop_null:
+                    # Убрать если все значения 0
+                    has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
+                else:
+                    has_balances = True
+                # Берем только не пустые счета
+                if has_balances:
+                    acc_info = self.df_accounts.loc[account_guid]
+                    df_acc.index.name = 'post_date'
+                    df_acc['account_guid'] = account_guid
+                    df_acc['fullname'] = acc_info['fullname']
+                    df_acc['commodity_guid'] = acc_info['commodity_guid']
+                    df_acc['account_type'] = acc_info['account_type']
+                    df_acc['name'] = acc_info['name']
+                    df_acc['hidden'] = acc_info['hidden']
+                    df_acc['mnemonic'] = acc_info['mnemonic']
+
+                    df_acc.set_index('account_guid', append=True, inplace=True)
+                    # Меняем местами индексы
+                    df_acc = df_acc.swaplevel()
+
+                    group_acc = group_acc.append(df_acc)
+
+        # Сбрасываем один уровень индекса (post_date)
+        group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
-        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
-        # Группировка по счетам
+        group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
 
         # Суммируем
-        group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
+        group = group_acc.groupby('post_date').value_currency.sum()
+
+
 
         # Переворот дат из строк в колонки
         df = pandas.DataFrame(group).T
-        profit_name = PROFIT_NAME
+        equity_name = EQUITY_NAME
         if margins:
-            profit_name = margins.profit_name
-        df.index = [profit_name]
+            equity_name = margins.equity_name
+        df.index = [equity_name]
+
+        # print(df)
 
         # Нужно добавить колонки если Multiindex
         if type(glevel) is int:
@@ -465,6 +548,7 @@ class GCReport:
 
         # Добавление итогов
         df = self.add_margins(df, margins)
+
 
         return df
 
