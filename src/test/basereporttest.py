@@ -15,7 +15,7 @@ class BaseReportTest(BaseTest):
     rep = GCReport()
     glevel = 1
 
-    def test_balance(self):
+    def test_assets(self):
         filename = 'assets.pkl'
         df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date)
         self.pickle_control(filename, df, 'Group assets')
