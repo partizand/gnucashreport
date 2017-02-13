@@ -1,6 +1,7 @@
 import datetime
 
 from gcreports.gcreport import GCReport
+from gcreports.xlsxreport import XLSXReport
 from test.basetest import BaseTest
 
 
@@ -24,14 +25,16 @@ class BaseReportTest(BaseTest):
 
     def test_assets(self):
         # filename = 'assets.pkl'
-        df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date, glevel=self.glevel)
+        df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
+                                        account_types=GCReport.ALL_ASSET_TYPES, glevel=1)
+        # XLSXReport.dataframe_to_excel(df, 'df-' + self.test_name)
         self.pickle_control(self.pickle_assets, df, 'Group assets')
 
     def test_loans(self):
         # filename = 'assets.pkl'
-        df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
-                                        account_types=[GCReport.LIABILITY], glevel=self.glevel)
-        self.pickle_control(self.pickle_loans, df, 'Loans')
+        df2 = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
+                                        account_types=[GCReport.LIABILITY], glevel=0)
+        self.pickle_control(self.pickle_loans, df2, 'Loans')
 
     def test_expense(self):
         # filename = 'expense.pkl'

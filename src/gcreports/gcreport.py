@@ -62,8 +62,8 @@ class GCReport:
 
     test_glevel = 1
 
-    test_from_date = datetime.date(2016, 1, 1)
-    test_to_date = datetime.date(2016, 12, 31)
+    test_from_date = date(2016, 1, 1)
+    test_to_date = date(2016, 12, 31)
     # Конец тестовых данных
 
     dir_excel = "v:/tables"
@@ -118,33 +118,35 @@ class GCReport:
         Запись тестовых pickle для последующей проверки в тестах
         :return:
         """
-        from_date = date(2016, 1, 1)
-        to_date = date(2016, 12, 31)
+        from_date = self.test_from_date # date(2016, 1, 1)
+        to_date = self.test_to_date  #    date(2016, 12, 31)
 
-        filename = 'assets.pkl'
-        df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=1)
-        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+        self.save_pickle(folder=self.dir_testdata)
 
-        filename = 'loans.pkl'
-        df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=1)
-        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+        # filename = self.pickle_assets
+        df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=self.test_glevel)
+        self.dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
 
-        filename = 'expense.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=1)
-        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+        # filename = 'loans.pkl'
+        df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=0)
+        self.dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
 
-        filename = 'income.pkl'
+        # filename = 'expense.pkl'
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=self.test_glevel)
+        self.dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
+
+        # filename = 'income.pkl'
         df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME,
-                                     glevel=1)
-        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+                                     glevel=self.test_glevel)
+        self.dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
 
-        filename = 'profit.pkl'
+        # filename = 'profit.pkl'
         df = self.profit_by_period(from_date=from_date, to_date=to_date, glevel=0)
-        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+        self.dataframe_to_pickle(df, filename=self.pickle_profit, folder=self.dir_testdata)
 
-        filename = 'equity.pkl'
+        # filename = 'equity.pkl'
         df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
-        self.dataframe_to_pickle(df, filename=filename, folder=self.dir_testdata)
+        self.dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
 
     def save_pickle(self, year=None, folder=None):
         """

@@ -34,6 +34,20 @@ class Margins:
         self.total_col = False
         self.mean_col = False
 
+    def get_counts_vtotals(self):
+        """
+        Возвращает количество итоговых колонок
+        :return:
+        """
+        width = 0
+        if self.total_col:
+            width += 1
+        if self.mean_col:
+            width += 1
+        if (self.total_col or self.mean_col) and self.empty_col:
+            width += 1
+        return width
+
 
 
 

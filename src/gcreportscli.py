@@ -289,71 +289,25 @@ to_date = datetime.date(2016, 12, 31)
 # print("Loading from sql --- %s seconds ---" % (time.time() - start_time_sql))
 
 # start_time_pickle = time.time()
-rep.open_pickle()
+# rep.open_pickle()
 # print("Loading from pickle all --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # start_time_pickle = time.time()
-# rep.open_pickle()
+rep.open_pickle()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
+
+# rep.open_book_sql()
 
 # rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # rep.save_pickle()
-margins = Margins()
-# margins.set_for_profit()
-# df = rep.equity_by_period(from_date=from_date, to_date=to_date, glevel=[0, 1], margins=margins)
-# XLSXReport.dataframe_to_excel(df, 'equity')
+# rep.save_testdata()
+# df = rep.balance_by_period(from_date=from_date, to_date=to_date, glevel=1)
+# XLSXReport.dataframe_to_excel(df, 'asset-sql')
 # exit()
-margins = Margins()
-margins.set_for_turnover()
-margins.empty_col = True
 filename = 'v:/tables/ex-test.xlsx'
-glevel = 1
-xlsxreport = XLSXReport(filename=filename, datetime_format='mmm yyyy')
-
-# Income
-df_income = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME, glevel=glevel, margins=margins)
-xlsxreport.add_dataframe(df_income, name='Доходы', color='green', header=False, margins=margins, row=1)
-xlsxreport.add_empty_row()
-
-# expense
-df_expense = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=glevel, margins=margins)
-xlsxreport.add_dataframe(df_expense, name='Расходы', color='yellow', header=False, margins=margins)
-xlsxreport.add_empty_row()
-
-# profit
-margins.set_for_profit()
-df_profit = rep.profit_by_period(from_date=from_date, to_date=to_date, glevel=glevel, margins=margins)
-xlsxreport.add_dataframe(df_profit, color='red', header=False, margins=margins)
-xlsxreport.add_empty_row()
-
-# assets
-margins.set_for_balances()
-df_assets = rep.balance_by_period(from_date=from_date, to_date=to_date, glevel=glevel, margins=margins)
-xlsxreport.add_dataframe(df_assets, color='green', name='Активы', header=False, margins=margins)
-xlsxreport.add_empty_row()
-
-# loans
-margins.total_row = False
-df_loans = rep.balance_by_period(from_date=from_date, to_date=to_date, glevel=0, account_types=GCReport.LIABILITY,
-                                  margins=margins)
-xlsxreport.add_dataframe(df_loans, color='yellow', header=False, margins=margins)
-xlsxreport.add_empty_row()
-
-# equity
-# margins.set_for_profit()
-df_profit = rep.equity_by_period(from_date=from_date, to_date=to_date, glevel=glevel, margins=margins)
-xlsxreport.add_dataframe(df_profit, color='green', header=False, margins=margins)
-# xlsxreport.add_empty_row()
-
-
-xlsxreport.add_header(df_income, row=0)
-# xlsxreport.add_empty_row()
-# xlsxreport.add_dataframe(df)
-# xlsxreport.set_cell_format()
-# xlsxreport.add_df_test(df)
-
-xlsxreport.save()
-
+excel_report = XLSXReport(filename)
+excel_report.complex_report(rep, from_date=from_date, to_date=to_date)
+excel_report.save()
 # rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # print("Loading from xml --- %s seconds ---" % (time.time() - start_time))
 # rep.dataframe_to_excel(rep.df_accounts, 'acc-xml')
