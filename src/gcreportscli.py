@@ -319,10 +319,21 @@ xlsxreport.add_dataframe(df_expense, name='Расходы', color='yellow', head
 xlsxreport.add_empty_row()
 
 margins.set_for_profit()
-df_profit = rep.profit_by_period(from_date=from_date, to_date=to_date, glevel=glevel)
-rep.dataframe_to_pickle(df_profit, 'v:/profit.pkl')
+df_profit = rep.profit_by_period(from_date=from_date, to_date=to_date, glevel=glevel, margins=margins)
 xlsxreport.add_dataframe(df_profit, color='red', header=False, margins=margins)
 xlsxreport.add_empty_row()
+
+margins.set_for_balances()
+df_assets = rep.balance_by_period(from_date=from_date, to_date=to_date, glevel=glevel, margins=margins)
+xlsxreport.add_dataframe(df_assets, color='green', name='Активы', header=False, margins=margins)
+xlsxreport.add_empty_row()
+
+margins.total_row = False
+df_loans = rep.balance_by_period(from_date=from_date, to_date=to_date, glevel=0, account_types=GCReport.LIABILITY,
+                                  margins=margins)
+xlsxreport.add_dataframe(df_loans, color='yellow', header=False, margins=margins)
+xlsxreport.add_empty_row()
+
 
 xlsxreport.add_header(df_income, row=0)
 # xlsxreport.add_empty_row()

@@ -412,6 +412,61 @@ class GCReport:
             df_ret.loc[index] = dataframe.sum()
             return df_ret
 
+    def equity_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
+                           margins: Margins = None):
+
+        """
+        Получение капитала за период
+        Возвращает DataFrame
+
+        :param from_date: Start date
+        :param to_date: Finish date
+        :param period: "M" for month, "D" for day...
+        :param glevel: group level
+        :return: pivot DataFrame
+        """
+
+        assets_and_liability = [GCReport.ALL_ASSET_TYPES, GCReport.LIABILITY]
+        # Фильтрация по времени
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+                                & (self.df_splits['post_date'] <= to_date)]
+
+        # Отбираем нужные типы счетов
+        sel_df = sel_df[(sel_df['account_type']).isin(assets_and_liability)]
+
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+
+        # пересчет в нужную валюту
+        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+        # Группировка по счетам
+
+        # Суммируем
+        group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
+
+        # Переворот дат из строк в колонки
+        df = pandas.DataFrame(group).T
+        profit_name = PROFIT_NAME
+        if margins:
+            profit_name = margins.profit_name
+        df.index = [profit_name]
+
+        # Нужно добавить колонки если Multiindex
+        if type(glevel) is int:
+            glevel = [glevel]
+        idx_len = len(glevel)
+        new_indexes = [str(i) for i in range(1, idx_len)]
+        if new_indexes:
+            # Нужно добавить уровни
+            for col_name in new_indexes:
+                df[col_name] = ''
+            df.set_index(new_indexes, append=True, inplace=True)
+
+        # Добавление итогов
+        df = self.add_margins(df, margins)
+
+        return df
 
     def profit_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
                            margins: Margins = None):
@@ -488,6 +543,8 @@ class GCReport:
                                   columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
                                            'quantity', 'name', 'hidden', 'mnemonic'])
         # Отбираем нужные типы счетов
+        if type(account_types) is str:
+            account_types = [account_types]
         sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
 
         # Список всех account_guid
@@ -708,8 +765,8 @@ class GCReport:
 
         sel_df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
         # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
-        for col in cols[1:]:
-            sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
+        # for col in cols[1:]:
+        #     sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
 
         sel_df.set_index(cols, inplace=True)
 
