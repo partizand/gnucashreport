@@ -30,7 +30,7 @@ class BaseTest(object):
 
     @classmethod
     def open_pickle(cls):
-        cls.rep.open_pickle()
+        cls.rep._open_pickle()
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
         """

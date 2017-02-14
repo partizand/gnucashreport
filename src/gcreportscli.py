@@ -308,7 +308,7 @@ to_date = datetime.date(2016, 12, 31)
 filename = 'v:/tables/ex-test.xlsx'
 # gcrep = GNUCashReport()
 # gcrep.open_pickle()
-rep.open_pickle()
+rep._open_pickle()
 rep.profit_by_period(from_date=from_date, to_date=to_date)
 exit()
 # gcrep.

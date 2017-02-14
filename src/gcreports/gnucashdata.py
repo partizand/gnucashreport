@@ -14,6 +14,7 @@ from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUIT
 class GNUCashData:
     """
     DataFrame implementation of GnuCash database tables for build reports
+    Basic reports
 
     Exaple use:
 
@@ -143,7 +144,7 @@ class GNUCashData:
         self._after_read()
 
 
-    def save_testdata(self):
+    def _save_testdata(self):
         """
         Запись тестовых pickle для последующей проверки в тестах
         :return:
@@ -151,34 +152,34 @@ class GNUCashData:
         from_date = self.test_from_date # date(2016, 1, 1)
         to_date = self.test_to_date  #    date(2016, 12, 31)
 
-        self.save_pickle(folder=self.dir_testdata)
+        self._save_pickle(folder=self.dir_testdata)
 
         # filename = self.pickle_assets
         df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=self.test_glevel)
-        self.dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
+        self._dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
 
         # filename = 'loans.pkl'
         df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY], glevel=0)
-        self.dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
+        self._dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
 
         # filename = 'expense.pkl'
         df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE, glevel=self.test_glevel)
-        self.dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
+        self._dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
 
         # filename = 'income.pkl'
         df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.INCOME,
                                      glevel=self.test_glevel)
-        self.dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
+        self._dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
 
         # filename = 'profit.pkl'
         df = self.profit_by_period(from_date=from_date, to_date=to_date, glevel=0)
-        self.dataframe_to_pickle(df, filename=self.pickle_profit, folder=self.dir_testdata)
+        self._dataframe_to_pickle(df, filename=self.pickle_profit, folder=self.dir_testdata)
 
         # filename = 'equity.pkl'
         df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
-        self.dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
+        self._dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
 
-    def save_pickle(self, year=None, folder=None):
+    def _save_pickle(self, year=None, folder=None):
         """
         For test purpose
         Запись данных базы в pickle файлы каталога. Если указан год, записывается дополнительно этот год
@@ -187,11 +188,11 @@ class GNUCashData:
         :return:
         """
 
-        self.dataframe_to_pickle(self.df_accounts, self.pickle_accounts, folder=folder)
-        self.dataframe_to_pickle(self.df_commodities, self.pickle_commodities, folder=folder)
-        self.dataframe_to_pickle(self.df_prices, self.pickle_prices, folder=folder)
-        self.dataframe_to_pickle(self.df_transactions, self.pickle_tr, folder=folder)
-        self.dataframe_to_pickle(self.df_splits, self.pickle_splits, folder=folder)
+        self._dataframe_to_pickle(self.df_accounts, self.pickle_accounts, folder=folder)
+        self._dataframe_to_pickle(self.df_commodities, self.pickle_commodities, folder=folder)
+        self._dataframe_to_pickle(self.df_prices, self.pickle_prices, folder=folder)
+        self._dataframe_to_pickle(self.df_transactions, self.pickle_tr, folder=folder)
+        self._dataframe_to_pickle(self.df_splits, self.pickle_splits, folder=folder)
         if year:
             df_splits = self.df_splits.copy()
             filename_splits = self.pickle_splits
@@ -200,9 +201,9 @@ class GNUCashData:
             df_splits = df_splits[(df_splits['post_date'] >= from_date) & (self.df_splits['post_date'] <= to_date)]
             basename, ext = os.path.splitext(self.pickle_splits)
             filename_splits = basename+str(year)+ext
-            self.dataframe_to_pickle(df_splits, filename_splits, folder=folder)
+            self._dataframe_to_pickle(df_splits, filename_splits, folder=folder)
 
-    def open_pickle(self, year=None, folder=None):
+    def _open_pickle(self, year=None, folder=None):
         """
         For test purpose
         Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
@@ -214,18 +215,18 @@ class GNUCashData:
         :param folder: Каталог с файлами базы
         :return:
         """
-        self.df_accounts=self.dataframe_from_pickle(self.pickle_accounts, folder=folder)
-        self.df_commodities=self.dataframe_from_pickle(self.pickle_commodities, folder=folder)
-        self.df_prices=self.dataframe_from_pickle(self.pickle_prices, folder=folder)
-        self.df_transactions=self.dataframe_from_pickle(self.pickle_tr, folder=folder)
+        self.df_accounts=self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
+        self.df_commodities=self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
+        self.df_prices=self._dataframe_from_pickle(self.pickle_prices, folder=folder)
+        self.df_transactions=self._dataframe_from_pickle(self.pickle_tr, folder=folder)
 
         filename_splits = self.pickle_splits
         if year:
             basename, ext = os.path.splitext(self.pickle_splits)
             filename_splits = basename + str(year) + ext
-        self.df_splits = self.dataframe_from_pickle(filename_splits, folder=folder)
+        self.df_splits = self._dataframe_from_pickle(filename_splits, folder=folder)
 
-    def dataframe_from_pickle(self, filename, folder=None):
+    def _dataframe_from_pickle(self, filename, folder=None):
         """
         Читает dataframe из pickle файла
         :param filename: Полное или короткое имя файла
@@ -238,7 +239,7 @@ class GNUCashData:
         df = pandas.read_pickle(fullfilename)
         return df
 
-    def dataframe_to_pickle(self, dataframe, filename, folder=None):
+    def _dataframe_to_pickle(self, dataframe, filename, folder=None):
         """
         Записаывает DataFrame в pickle файл
         :param dataframe:
@@ -1281,7 +1282,7 @@ class GNUCashData:
         writer.save()
 
     @staticmethod
-    def read_dataframe_from_excel(filename, sheet='Sheet1'):
+    def _read_dataframe_from_excel(filename, sheet='Sheet1'):
         """
         Чтение dataframe из Excel
         :param filename:
@@ -1293,7 +1294,7 @@ class GNUCashData:
         xls.close()
         return df
 
-    def __read_from_excel(self, filename):
+    def _read_from_excel(self, filename):
         """
         Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
         :param filename:
