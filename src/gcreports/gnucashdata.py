@@ -714,14 +714,17 @@ class GNUCashData:
         :return: pivot DataFrame
         """
 
+        sel_df = self._turnover_group_by_period(from_date=from_date, to_date=to_date, period=period,
+                                                account_type=account_type)
+
         # Фильтрация по времени
-        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-                                & (self.df_splits['post_date'] <= to_date)
-                                & (self.df_splits['account_type'] == account_type)]
+        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+        #                         & (self.df_splits['post_date'] <= to_date)
+        #                         & (self.df_splits['account_type'] == account_type)]
 
         # Группировка по месяцу
-        sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+        # sel_df.set_index('post_date', inplace=True)
+        # sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
 
         # inverse income
         if account_type == self.INCOME:
@@ -750,16 +753,20 @@ class GNUCashData:
         """
 
         income_and_expense = [GNUCashData.INCOME, GNUCashData.EXPENSE]
+
+        sel_df = self._turnover_group_by_period(from_date=from_date, to_date=to_date, period=period,
+                                                account_type=income_and_expense)
+
         # Фильтрация по времени
-        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-                                & (self.df_splits['post_date'] <= to_date)]
+        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+        #                         & (self.df_splits['post_date'] <= to_date)]
 
         # Отбираем нужные типы счетов
-        sel_df = sel_df[(sel_df['account_type']).isin(income_and_expense)]
+        # sel_df = sel_df[(sel_df['account_type']).isin(income_and_expense)]
 
         # Группировка по месяцу
-        sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+        # sel_df.set_index('post_date', inplace=True)
+        # sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
 
         # пересчет в нужную валюту
         group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
@@ -791,7 +798,30 @@ class GNUCashData:
 
         return df
 
+    def _turnover_group_by_period(self, from_date, to_date, period, account_type):
+        """
+        Возвращает обороты по счетам сгруппированные по периодам
+        :param from_date:
+        :param to_date:
+        :param period:
+        :param account_type:
+        :return:
+        """
+        if type(account_type) is str:
+            account_type = [account_type]
 
+        # Фильтрация по времени
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+                                & (self.df_splits['post_date'] <= to_date)]
+
+        # Отбираем нужные типы счетов
+        sel_df = sel_df[(sel_df['account_type']).isin(account_type)]
+
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+
+        return sel_df
 
     def _curcalc_and_accgroup(self, dataframe, from_date, to_date, period, glevel,
                               margins:Margins=None, drop_null=False):
