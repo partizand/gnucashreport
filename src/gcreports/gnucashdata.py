@@ -267,7 +267,7 @@ class GNUCashData:
                   "commodity_guid", "commodity_scu",
                   "parent_guid", "description", "hidden"]
 
-        self.df_accounts = self.object_to_dataframe(book.accounts, fields)
+        self.df_accounts = self._object_to_dataframe(book.accounts, fields)
         self.df_accounts.rename(columns={'actype': 'account_type'}, inplace=True)
         self.root_account_guid = book.root_account_guid
         # self.dataframe_to_excel(self.df_accounts, 'acc-xml')
@@ -278,7 +278,7 @@ class GNUCashData:
 
         fields = ["guid", "currency_guid", "date", "description"]
 
-        self.df_transactions = self.object_to_dataframe(book.transactions, fields)
+        self.df_transactions = self._object_to_dataframe(book.transactions, fields)
         self.df_transactions.rename(columns={'date': 'post_date'}, inplace=True)
         # print(self.df_transactions)
         # return
@@ -287,14 +287,14 @@ class GNUCashData:
         fields = ["guid", "transaction_guid", "account_guid",
                   "memo", "reconcile_state", "value", "quantity"]
 
-        self.df_splits = self.object_to_dataframe(book.splits, fields)
+        self.df_splits = self._object_to_dataframe(book.splits, fields)
         # print(self.df_splits)
         # return
 
         # commodity
 
         fields = ["guid", "space", "mnemonic"]
-        self.df_commodities = self.object_to_dataframe(book.commodities, fields)
+        self.df_commodities = self._object_to_dataframe(book.commodities, fields)
         self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
         self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
         # print(self.df_commodities)
@@ -302,7 +302,7 @@ class GNUCashData:
         # Prices
         fields = ["guid", "commodity_guid", "currency_guid",
                   "date", "source", "price_type", "value"]
-        self.df_prices = self.object_to_dataframe(book.prices, fields)
+        self.df_prices = self._object_to_dataframe(book.prices, fields)
         self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
 
     def _read_book_sql(self,
@@ -355,7 +355,7 @@ class GNUCashData:
             fields = ["guid", "namespace", "mnemonic",
                       "fullname", "cusip", "fraction",
                       "quote_flag", "quote_source", "quote_tz"]
-            self.df_commodities = self.object_to_dataframe(t_commodities, fields)
+            self.df_commodities = self._object_to_dataframe(t_commodities, fields)
 
             # Accounts
 
@@ -364,7 +364,7 @@ class GNUCashData:
             fields = ["guid", "name", "type", "placeholder",
                       "commodity_guid", "commodity_scu",
                       "parent_guid", "description", "hidden"]
-            self.df_accounts = self.object_to_dataframe(t_accounts, fields)
+            self.df_accounts = self._object_to_dataframe(t_accounts, fields)
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
             # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
@@ -374,7 +374,7 @@ class GNUCashData:
             t_transactions = gnucash_book.session.query(piecash.Transaction).all()
             fields = ["guid", "currency_guid", "num",
                       "post_date", "description"]
-            self.df_transactions = self.object_to_dataframe(t_transactions, fields)
+            self.df_transactions = self._object_to_dataframe(t_transactions, fields)
 
             # Splits
 
@@ -383,7 +383,7 @@ class GNUCashData:
                       "memo", "action", "reconcile_state",
                       "value",
                       "quantity", "lot_guid"]
-            self.df_splits = self.object_to_dataframe(t_splits, fields)
+            self.df_splits = self._object_to_dataframe(t_splits, fields)
 
             # Prices
 
@@ -392,7 +392,7 @@ class GNUCashData:
             # Some fields not correspond to real names in DB
             fields = ["guid", "commodity_guid", "currency_guid",
                       "date", "source", "type", "value"]
-            self.df_prices = self.object_to_dataframe(t_prices, fields)
+            self.df_prices = self._object_to_dataframe(t_prices, fields)
 
             #---------------------------------------------------
             # After load
@@ -1149,7 +1149,7 @@ class GNUCashData:
             return 'error'
 
     @staticmethod
-    def object_to_dataframe(pieobject, fields):
+    def _object_to_dataframe(pieobject, fields):
         """
         Преобразовывае объект piecash в DataFrame с заданными полями
         :param pieobject:
