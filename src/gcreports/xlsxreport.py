@@ -4,7 +4,7 @@ import pandas
 
 from xlsxwriter.utility import xl_col_to_name
 
-from gcreports.gcreport import GCReport
+from gcreports.gnucashdata import GNUCashData
 from gcreports.margins import Margins
 
 class XLSXReport:
@@ -19,10 +19,11 @@ class XLSXReport:
         self.workbook = self.writer.book
         self.cur_row = start_row
         self.charts = []
-        if datetime_format:
-            self.datetime_format = datetime_format
-        else:
-            self.datetime_format = 'dd-mm-yyyy'
+        self.datetime_format = XLSXReport.dateformat_from_period(period=datetime_format)
+        # if datetime_format:
+        #     self.datetime_format = datetime_format
+        # else:
+        #     self.datetime_format = 'dd-mm-yyyy'
 
     def save(self):
         self._add_charts()
@@ -61,6 +62,25 @@ class XLSXReport:
         # Close the Pandas Excel writer and output the Excel file.
         writer.save()
 
+    @staticmethod
+    def dateformat_from_period(period:str):
+        """
+        Get Excel date format from period letter (D, M, Y ...)
+        :param period: D, M, Q, Y (day, month, quarter, year)
+        :return: datetime_format for excel
+        """
+
+        dateformat = 'dd-mm-yyyy'
+
+        if period:
+            if period.upper() == 'M':
+                dateformat = 'mmm yyyy'
+            if period.upper() == 'Y':
+                dateformat = 'yyyy'
+            if period.upper() == 'Q':
+                dateformat = 'Q YY'  # ???
+        return dateformat
+
 
     def complex_report(self, gcreport, from_date, to_date, period='M', glevel=1):
         # margins.set_for_profit()
@@ -75,14 +95,14 @@ class XLSXReport:
         # xlsxreport = XLSXReport(filename=self.filename, datetime_format='mmm yyyy')
 
         # Income
-        df_income = gcreport.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GCReport.INCOME,
-                                           glevel=glevel, margins=margins)
+        df_income = gcreport.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.INCOME,
+                                                glevel=glevel, margins=margins)
         self.add_dataframe(df_income, name='Доходы', color='green', header=False, margins=margins, row=1)
         self.add_empty_row()
 
         # expense
-        df_expense = gcreport.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GCReport.EXPENSE,
-                                            glevel=glevel, margins=margins)
+        df_expense = gcreport.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.EXPENSE,
+                                                 glevel=glevel, margins=margins)
         self.add_dataframe(df_expense, name='Расходы', color='yellow', header=False, margins=margins)
         self.add_empty_row()
 
@@ -101,8 +121,8 @@ class XLSXReport:
         # loans
         margins.total_row = False
         df_loans = gcreport.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0,
-                                         account_types=GCReport.LIABILITY,
-                                         margins=margins)
+                                              account_types=GNUCashData.LIABILITY,
+                                              margins=margins)
         self.add_dataframe(df_loans, color='yellow', header=False, margins=margins)
         self.add_empty_row()
 

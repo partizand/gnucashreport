@@ -11,7 +11,7 @@ from decimal import Decimal
 from gcreports.gcxmlreader import GNUCashXMLBook
 from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
 
-class GCReport:
+class GNUCashData:
     """
     DataFrame implementation of GnuCash database tables for build reports
 
@@ -100,16 +100,46 @@ class GCReport:
         self._after_read()
         # print(self.df_prices)
 
-    def open_book_sql(self, sqlite_file=None, open_if_lock=False):
+    def open_book_sql(self,
+                      sqlite_file=None,
+                      uri_conn=None,
+                      readonly=True,
+                      open_if_lock=False,
+                      do_backup=True,
+                      db_type=None,
+                      db_user=None,
+                      db_password=None,
+                      db_name=None,
+                      db_host=None,
+                      db_port=None,
+                       **kwargs):
         """
-        Opens gnucash book from sqlite file
-        :param sqlite_file:
-        :param open_if_lock:
+        Opens gnucash book from sql
+        :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
+        :param str uri_conn: a sqlalchemy connection string
+        :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
+        :param bool open_if_lock: open the file even if it is locked by another user
+            (using open_if_lock=True with readonly=False is not recommended)
+        :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
+            (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
+        :raises GnucashException: if the document does not exist
+        :raises GnucashException: if there is a lock on the file and open_if_lock is False
         :return:
         """
         if not sqlite_file:
             sqlite_file = self.bookfile_sql
-        self._read_book_sql(sqlite_file, open_if_lock)
+        self._read_book_sql(sqlite_file=sqlite_file,
+                               uri_conn=uri_conn,
+                               readonly=readonly,
+                               open_if_lock=open_if_lock,
+                               do_backup=do_backup,
+                               db_type=db_type,
+                               db_user=db_user,
+                               db_password=db_password,
+                               db_name=db_name,
+                               db_host=db_host,
+                               db_port=db_port,
+                               **kwargs)
         self._after_read()
 
 
@@ -128,15 +158,15 @@ class GCReport:
         self.dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
 
         # filename = 'loans.pkl'
-        df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GCReport.LIABILITY], glevel=0)
+        df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY], glevel=0)
         self.dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
 
         # filename = 'expense.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.EXPENSE, glevel=self.test_glevel)
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE, glevel=self.test_glevel)
         self.dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
 
         # filename = 'income.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GCReport.INCOME,
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.INCOME,
                                      glevel=self.test_glevel)
         self.dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
 
@@ -274,17 +304,47 @@ class GCReport:
         self.df_prices = self.object_to_dataframe(book.prices, fields)
         self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
 
+    def _read_book_sql(self,
+                       sqlite_file=None,
+                       uri_conn=None,
+                       readonly=True,
+                       open_if_lock=False,
+                       do_backup=True,
+                       db_type=None,
+                       db_user=None,
+                       db_password=None,
+                       db_name=None,
+                       db_host=None,
+                       db_port=None,
+                       **kwargs):
+        """Open an existing GnuCash sql book, read data to DataFrames
 
-    def _read_book_sql(self, sqlite_file, open_if_lock=False):
-        """
-        Open gnucash sqlite file, read data to DataFrames
-        :param sqlite_file:
-        :param open_if_lock:
+        :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
+        :param str uri_conn: a sqlalchemy connection string
+        :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
+        :param bool open_if_lock: open the file even if it is locked by another user
+            (using open_if_lock=True with readonly=False is not recommended)
+        :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
+            (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
+        :raises GnucashException: if the document does not exist
+        :raises GnucashException: if there is a lock on the file and open_if_lock is False
         :return:
         """
 
         self.book_name = os.path.basename(sqlite_file)
-        with piecash.open_book(sqlite_file, open_if_lock=open_if_lock) as gnucash_book:
+        with piecash.open_book(sqlite_file=sqlite_file,
+                               uri_conn=uri_conn,
+                               readonly=readonly,
+                               open_if_lock=open_if_lock,
+                               do_backup=do_backup,
+                               db_type=db_type,
+                               db_user=db_user,
+                               db_password=db_password,
+                               db_name=db_name,
+                               db_host=db_host,
+                               db_port=db_port,
+                               **kwargs
+                               ) as gnucash_book:
             # Read data tables in dataframes
 
             # commodities
@@ -451,8 +511,8 @@ class GCReport:
         :param glevel: group level
         :return: pivot DataFrame
         """
-        assets_and_liability = GCReport.ALL_ASSET_TYPES
-        assets_and_liability.append(GCReport.LIABILITY)
+        assets_and_liability = GNUCashData.ALL_ASSET_TYPES
+        assets_and_liability.append(GNUCashData.LIABILITY)
         # Фильтрация по времени
         # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
         #                         & (self.df_splits['post_date'] <= to_date)]
@@ -551,63 +611,6 @@ class GCReport:
         # Добавление итогов
         df = self.add_margins(df, margins)
 
-
-        return df
-
-    def profit_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
-                           margins: Margins = None):
-
-        """
-        Получение прибыли за период
-        Возвращает DataFrame
-
-        :param from_date: Start date
-        :param to_date: Finish date
-        :param period: "M" for month, "D" for day...
-        :param account_type: INCOME or EXPENSE
-        :param glevel: group level
-        :return: pivot DataFrame
-        """
-
-        income_and_expense = [GCReport.INCOME, GCReport.EXPENSE]
-        # Фильтрация по времени
-        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-                                & (self.df_splits['post_date'] <= to_date)]
-
-        # Отбираем нужные типы счетов
-        sel_df = sel_df[(sel_df['account_type']).isin(income_and_expense)]
-
-        # Группировка по месяцу
-        sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
-
-        # пересчет в нужную валюту
-        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
-        # Группировка по счетам
-
-        # Суммируем
-        group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
-
-        # Переворот дат из строк в колонки
-        df = pandas.DataFrame(group).T
-        profit_name = PROFIT_NAME
-        if margins:
-            profit_name = margins.profit_name
-        df.index = [profit_name]
-
-        # Нужно добавить колонки если Multiindex
-        if type(glevel) is int:
-            glevel = [glevel]
-        idx_len = len(glevel)
-        new_indexes = [str(i) for i in range(1, idx_len)]
-        if new_indexes:
-            # Нужно добавить уровни
-            for col_name in new_indexes:
-                df[col_name] = ''
-            df.set_index(new_indexes, append=True, inplace=True)
-
-        # Добавление итогов
-        df = self.add_margins(df, margins)
 
         return df
 
@@ -730,6 +733,65 @@ class GCReport:
                                             glevel=glevel, margins=margins, drop_null=drop_null)
 
         return group
+
+    def profit_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
+                           margins: Margins = None):
+
+        """
+        Получение прибыли за период
+        Возвращает DataFrame
+
+        :param from_date: Start date
+        :param to_date: Finish date
+        :param period: "M" for month, "D" for day...
+        :param account_type: INCOME or EXPENSE
+        :param glevel: group level
+        :return: pivot DataFrame
+        """
+
+        income_and_expense = [GNUCashData.INCOME, GNUCashData.EXPENSE]
+        # Фильтрация по времени
+        sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
+                                & (self.df_splits['post_date'] <= to_date)]
+
+        # Отбираем нужные типы счетов
+        sel_df = sel_df[(sel_df['account_type']).isin(income_and_expense)]
+
+        # Группировка по месяцу
+        sel_df.set_index('post_date', inplace=True)
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+
+        # пересчет в нужную валюту
+        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+        # Группировка по счетам
+
+        # Суммируем
+        group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
+
+        # Переворот дат из строк в колонки
+        df = pandas.DataFrame(group).T
+        profit_name = PROFIT_NAME
+        if margins:
+            profit_name = margins.profit_name
+        df.index = [profit_name]
+
+        # Нужно добавить колонки если Multiindex
+        if type(glevel) is int:
+            glevel = [glevel]
+        idx_len = len(glevel)
+        new_indexes = [str(i) for i in range(1, idx_len)]
+        if new_indexes:
+            # Нужно добавить уровни
+            for col_name in new_indexes:
+                df[col_name] = ''
+            df.set_index(new_indexes, append=True, inplace=True)
+
+        # Добавление итогов
+        df = self.add_margins(df, margins)
+
+        return df
+
+
 
     def _curcalc_and_accgroup(self, dataframe, from_date, to_date, period, glevel,
                               margins:Margins=None, drop_null=False):

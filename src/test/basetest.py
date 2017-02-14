@@ -4,29 +4,29 @@ import os
 import pandas
 from pandas.util.testing import assert_frame_equal
 
-from gcreports.gcreport import GCReport
+from gcreports.gnucashdata import GNUCashData
 
 
 class BaseTest(object):
     """
     Базовый шаблон для тестирования
     """
-    rep = GCReport()
+    rep = GNUCashData()
 
     # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
     # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
 
     test_name = 'abstract_test'
 
-    dir_testdata = GCReport.dir_testdata
+    dir_testdata = GNUCashData.dir_testdata
 
     @classmethod
     def open_sql(cls):
-        cls.rep.open_book_sql(GCReport.bookfile_sql, open_if_lock=True)
+        cls.rep.open_book_sql(GNUCashData.bookfile_sql, open_if_lock=True)
 
     @classmethod
     def open_xml(cls):
-        cls.rep.open_book_xml(GCReport.bookfile_xml)
+        cls.rep.open_book_xml(GNUCashData.bookfile_xml)
 
     @classmethod
     def open_pickle(cls):

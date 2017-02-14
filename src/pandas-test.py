@@ -5,7 +5,7 @@ from decimal import Decimal
 # import gcreports
 
 
-from gcreports.gcreport import GCReport
+from gcreports.gnucashdata import GNUCashData
 
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
@@ -57,7 +57,7 @@ def read_from_excel(filename, sheet):
 #index = list(map(chr, range(97, 97+len(line1))))
 #index = list(range(10))
 
-rep = GCReport()
+rep = GNUCashData()
 
 # Исходный DataFrame
 df = pandas.DataFrame(line1)
@@ -152,7 +152,7 @@ print(df_total)
 exit()
 
 # df = df.drop(['date', 'account', 'guid'], axis=1)
-df_t = GCReport.add_row_total(df)
+df_t = GNUCashData.add_row_total(df)
 print(df_t)
 exit()
 

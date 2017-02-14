@@ -1,6 +1,6 @@
 import datetime
 
-from gcreports.gcreport import GCReport
+from gcreports.gnucashdata import GNUCashData
 from gcreports.xlsxreport import XLSXReport
 from test.basetest import BaseTest
 
@@ -11,40 +11,40 @@ class BaseReportTest(BaseTest):
     All testing data on external resource because it is real data
     """
 
-    from_date = GCReport.test_from_date
-    to_date = GCReport.test_to_date
-    rep = GCReport()
-    glevel = GCReport.test_glevel
+    from_date = GNUCashData.test_from_date
+    to_date = GNUCashData.test_to_date
+    rep = GNUCashData()
+    glevel = GNUCashData.test_glevel
 
-    pickle_assets = GCReport.pickle_assets
-    pickle_loans = GCReport.pickle_loans
-    pickle_expense = GCReport.pickle_expense
-    pickle_income = GCReport.pickle_income
-    pickle_profit = GCReport.pickle_profit
-    pickle_equity = GCReport.pickle_equity
+    pickle_assets = GNUCashData.pickle_assets
+    pickle_loans = GNUCashData.pickle_loans
+    pickle_expense = GNUCashData.pickle_expense
+    pickle_income = GNUCashData.pickle_income
+    pickle_profit = GNUCashData.pickle_profit
+    pickle_equity = GNUCashData.pickle_equity
 
     def test_assets(self):
         # filename = 'assets.pkl'
         df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
-                                        account_types=GCReport.ALL_ASSET_TYPES, glevel=1)
+                                        account_types=GNUCashData.ALL_ASSET_TYPES, glevel=1)
         # XLSXReport.dataframe_to_excel(df, 'df-' + self.test_name)
         self.pickle_control(self.pickle_assets, df, 'Group assets')
 
     def test_loans(self):
         # filename = 'assets.pkl'
         df2 = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
-                                        account_types=[GCReport.LIABILITY], glevel=0)
+                                         account_types=[GNUCashData.LIABILITY], glevel=0)
         self.pickle_control(self.pickle_loans, df2, 'Loans')
 
     def test_expense(self):
         # filename = 'expense.pkl'
-        df = self.rep.turnover_by_period(from_date=self.from_date, to_date=self.to_date, account_type=GCReport.EXPENSE,
+        df = self.rep.turnover_by_period(from_date=self.from_date, to_date=self.to_date, account_type=GNUCashData.EXPENSE,
                                          glevel=self.glevel)
         self.pickle_control(self.pickle_expense, df, 'Group expenses')
 
     def test_income(self):
         # filename = 'income.pkl'
-        df = self.rep.turnover_by_period(from_date=self.from_date, to_date=self.to_date, account_type=GCReport.INCOME,
+        df = self.rep.turnover_by_period(from_date=self.from_date, to_date=self.to_date, account_type=GNUCashData.INCOME,
                                          glevel=self.glevel)
         self.pickle_control(self.pickle_income, df, 'Group income')
 

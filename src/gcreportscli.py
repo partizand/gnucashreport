@@ -3,9 +3,10 @@ import datetime
 import os
 import time
 import pandas
-from gcreports.gcreport import GCReport
+from gcreports.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
 
+from gcreports.gnucashreport import GNUCashReport
 from gcreports.margins import Margins
 # from gcreports.xlsxreport import OpenpyxlReport
 from gcreports.xlsxreport import XLSXReport
@@ -276,7 +277,7 @@ def complex_test():
 
 
 
-rep = GCReport()
+rep = GNUCashData()
 # from_date = datetime.datetime(2016,1,1,0,0,0,0)
 # to_date = datetime.datetime(2016,12,31,23,59,59,0)
 from_date = datetime.date(2016, 1, 1)
@@ -293,7 +294,7 @@ to_date = datetime.date(2016, 12, 31)
 # print("Loading from pickle all --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # start_time_pickle = time.time()
-rep.open_pickle()
+# rep.open_pickle()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # rep.open_book_sql()
@@ -305,6 +306,11 @@ rep.open_pickle()
 # XLSXReport.dataframe_to_excel(df, 'asset-sql')
 # exit()
 filename = 'v:/tables/ex-test.xlsx'
+gcrep = GNUCashReport()
+gcrep.open_book_sql()
+# gcrep.
+# print(gcrep.gcdata.tu)
+
 excel_report = XLSXReport(filename)
 excel_report.complex_report(rep, from_date=from_date, to_date=to_date)
 excel_report.save()
