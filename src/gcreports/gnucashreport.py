@@ -5,21 +5,15 @@ from gcreports.xlsxreport import XLSXReport
 
 class GNUCashReport(GNUCashData):
 
-    # def __init__(self):
-    #     self.gcdata = GNUCashData()
-    #     self.open_book_sql = self.gcdata.open_book_sql
-
     def complex_report_excel(self, filename, from_date, to_date, period='M', glevel=1):
-        # margins.set_for_profit()
-        # df = rep.equity_by_period(from_date=from_date, to_date=to_date, glevel=[0, 1], margins=margins)
-        # XLSXReport.dataframe_to_excel(df, 'equity')
-        # exit()
+
         margins = Margins()
         margins.set_for_turnover()
         margins.empty_col = True
         # filename = 'v:/tables/ex-test.xlsx'
         # glevel = 1
-        xlsxreport = XLSXReport(filename=filename, datetime_format='mmm yyyy')
+        dateformat = self._dateformat_from_period(period)
+        xlsxreport = XLSXReport(filename=filename, datetime_format=dateformat)
 
         # Income
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.INCOME,
@@ -68,5 +62,5 @@ class GNUCashReport(GNUCashData):
         # xlsxreport.set_cell_format()
         # xlsxreport.add_df_test(df)
 
-        # xlsxreport.save()
+        xlsxreport.save()
 

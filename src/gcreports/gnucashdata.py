@@ -1049,46 +1049,6 @@ class GNUCashData:
 
         return df_cashflow
 
-    def complex_report(self, filename, from_date, to_date, period='M', datetime_format='mmmm yyyy'):
-
-        sheet = 'Sheet1'
-
-        if not filename.endswith('.xlsx'):
-            filename = os.path.join(self.dir_excel, filename + ".xlsx")
-
-        df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=self.INCOME)
-        df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=self.EXPENSE)
-
-        df_income.to_pickle('u:/tables/inc-2016.pkl')
-
-        # Create a Pandas Excel writer using XlsxWriter as the engine.
-        writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
-
-
-
-        # Convert the dataframe to an XlsxWriter Excel object.
-        start_row = 2
-        df_income.to_excel(writer, sheet_name=sheet, startrow=start_row)
-        offset_income = len(df_income) + 3
-        expense_row = start_row + offset_income
-        df_expense.to_excel(writer, sheet_name=sheet, header=False, startrow=expense_row)
-
-        # Get the xlsxwriter objects from the dataframe writer object.
-        workbook = writer.book
-        worksheet = writer.sheets[sheet]
-
-        worksheet.write(0, 0, 'Доходы')
-        worksheet.write(expense_row-1, 0, 'Расходы')
-        worksheet.set_column(0, 0, 20)
-
-
-
-        # Close the Pandas Excel writer and output the Excel file.
-        writer.save()
-
-
-    # def _dataframe_to_writer(self, writer, dataframe, ):
-
     @classmethod
     def dataframe_to_excel(cls, dataframe, filename, sheet='Sheet1', datetime_format='dd-mm-yyyy'):
         """
