@@ -436,7 +436,7 @@ class GNUCashData:
         # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
-    def add_margins(self, dataframe, margins=None):
+    def _add_margins(self, dataframe, margins=None):
         """
         Добавляет итоги в DataFrame
         :param dataframe:
@@ -548,7 +548,7 @@ class GNUCashData:
         #     df.set_index(new_indexes, append=True, inplace=True)
 
         # Добавление итогов
-        df = self.add_margins(df, margins)
+        df = self._add_margins(df, margins)
 
 
         return df
@@ -724,7 +724,7 @@ class GNUCashData:
         #                                    glevel=glevel, margins=margins, drop_null=drop_null)
 
         # Добавление итогов
-        group = self.add_margins(group, margins)
+        group = self._add_margins(group, margins)
 
         return group
 
@@ -765,11 +765,8 @@ class GNUCashData:
         # Группировка по счетам
         group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
 
-        # group = self._curcalc_and_accgroup(sel_df, from_date=from_date, to_date=to_date, period=period,
-        #                                     glevel=glevel, margins=margins, drop_null=drop_null)
-
         # Добавление итогов
-        group = self.add_margins(group, margins)
+        group = self._add_margins(group, margins)
 
         return group
 
@@ -806,28 +803,8 @@ class GNUCashData:
             profit_name = margins.profit_name
         df = self._sum_all(group, total_name=profit_name, glevel=glevel, inverse=True)
 
-        # group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
-        #
-        # # Переворот дат из строк в колонки
-        # df = pandas.DataFrame(group).T
-        # profit_name = PROFIT_NAME
-        # if margins:
-        #     profit_name = margins.profit_name
-        # df.index = [profit_name]
-        #
-        # # Нужно добавить колонки если Multiindex
-        # if type(glevel) is int:
-        #     glevel = [glevel]
-        # idx_len = len(glevel)
-        # new_indexes = [str(i) for i in range(1, idx_len)]
-        # if new_indexes:
-        #     # Нужно добавить уровни
-        #     for col_name in new_indexes:
-        #         df[col_name] = ''
-        #     df.set_index(new_indexes, append=True, inplace=True)
-
         # Добавление итогов
-        df = self.add_margins(df, margins)
+        df = self._add_margins(df, margins)
 
         return df
 
@@ -891,16 +868,6 @@ class GNUCashData:
         sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
 
         return sel_df
-
-    def _curcalc_and_accgroup(self, dataframe, from_date, to_date, period, glevel,
-                              margins:Margins=None, drop_null=False):
-
-        # пересчет в нужную валюту
-        group = self._currency_calc(dataframe, from_date=from_date, to_date=to_date, period=period)
-
-        # Группировка по счетам
-        group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
-        return group
 
     def _currency_calc(self, dataframe, from_date, to_date, period):
         """
