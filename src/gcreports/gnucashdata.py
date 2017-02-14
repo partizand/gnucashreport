@@ -502,7 +502,7 @@ class GNUCashData:
                            margins: Margins = None):
 
         """
-        Получение капитала за период
+        Получение капитала за период (активы минус пассивы)
         Возвращает DataFrame
 
         :param from_date: Start date
@@ -716,9 +716,15 @@ class GNUCashData:
         # group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
+        group = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
+
         # Группировка по счетам
-        group = self._curcalc_and_accgroup(group_acc, from_date=from_date, to_date=to_date, period=period,
-                                           glevel=glevel, margins=margins, drop_null=drop_null)
+        group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
+        # group = self._curcalc_and_accgroup(group_acc, from_date=from_date, to_date=to_date, period=period,
+        #                                    glevel=glevel, margins=margins, drop_null=drop_null)
+
+        # Добавление итогов
+        group = self.add_margins(group, margins)
 
         return group
 
@@ -754,9 +760,16 @@ class GNUCashData:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # пересчет в нужную валюту
+        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+
         # Группировка по счетам
-        group = self._curcalc_and_accgroup(sel_df, from_date=from_date, to_date=to_date, period=period,
-                                            glevel=glevel, margins=margins, drop_null=drop_null)
+        group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
+
+        # group = self._curcalc_and_accgroup(sel_df, from_date=from_date, to_date=to_date, period=period,
+        #                                     glevel=glevel, margins=margins, drop_null=drop_null)
+
+        # Добавление итогов
+        group = self.add_margins(group, margins)
 
         return group
 
@@ -886,7 +899,7 @@ class GNUCashData:
         group = self._currency_calc(dataframe, from_date=from_date, to_date=to_date, period=period)
 
         # Группировка по счетам
-        group = self._group_by_accounts(group, glevel=glevel, margins=margins, drop_null=drop_null)
+        group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
         return group
 
     def _currency_calc(self, dataframe, from_date, to_date, period):
@@ -932,7 +945,7 @@ class GNUCashData:
         return df
 
     def _group_by_accounts(self, dataframe, glevel=1,
-                           margins: Margins=None, drop_null=False):
+                           drop_null=False):
         """
         Group dataframe by accounts, add totals
         glevel - group level of accounts: array of levels or single int level
@@ -1015,7 +1028,7 @@ class GNUCashData:
         group = unst.groupby(level=glevel).sum()
 
         # Добавление итогов
-        group = self.add_margins(group, margins)
+        # group = self.add_margins(group, margins)
 
         return group
 
