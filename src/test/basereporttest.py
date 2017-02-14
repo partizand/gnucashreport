@@ -29,14 +29,13 @@ class BaseReportTest(BaseTest):
         account_types = GNUCashData.ALL_ASSET_TYPES
         df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
                                         account_types=account_types, glevel=1)
-        # XLSXReport.dataframe_to_excel(df, 'df-' + self.test_name)
         self.pickle_control(self.pickle_assets, df, 'Group assets')
 
     def test_loans(self):
         # filename = 'assets.pkl'
-        df2 = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
+        df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
                                          account_types=[GNUCashData.LIABILITY], glevel=0)
-        self.pickle_control(self.pickle_loans, df2, 'Loans')
+        self.pickle_control(self.pickle_loans, df, 'Loans')
 
     def test_expense(self):
         # filename = 'expense.pkl'

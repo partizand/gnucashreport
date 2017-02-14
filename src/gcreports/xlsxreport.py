@@ -6,6 +6,8 @@ from xlsxwriter.utility import xl_col_to_name
 
 from gcreports.gnucashdata import GNUCashData
 from gcreports.margins import Margins
+from gcreports.utils import dateformat_from_period
+
 
 class XLSXReport:
 
@@ -19,8 +21,8 @@ class XLSXReport:
         self.workbook = self.writer.book
         self.cur_row = start_row
         self.charts = []
-        # self.datetime_format = XLSXReport.dateformat_from_period(period=datetime_format)
-        self.datetime_format = datetime_format
+        self.datetime_format = dateformat_from_period(datetime_format)
+        # self.datetime_format = datetime_format
         # if datetime_format:
         #     self.datetime_format = datetime_format
         # else:
@@ -46,7 +48,7 @@ class XLSXReport:
         self.cur_row = start_row
         self.worksheet = None
         if datetime_format:
-            self.datetime_format = datetime_format
+            self.datetime_format = dateformat_from_period(datetime_format)
 
     def add_empty_row(self):
         """
@@ -84,7 +86,7 @@ class XLSXReport:
         if row <= -1:
             row=self.cur_row
         frmt_date = self.workbook.add_format()
-        frmt_date.set_num_format('mmm yyyy')
+        frmt_date.set_num_format(self.datetime_format)
         frmt_date.set_bold()
         frmt_date.set_align('center')
         cols = dataframe.columns.tolist()

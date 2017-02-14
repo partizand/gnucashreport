@@ -67,13 +67,12 @@ class GNUCashReport(GNUCashData):
         min_date = self.df_splits['post_date'].min()
         max_date = self.df_splits['post_date'].max()
 
-        min_date += timedelta(days=1)
-        max_date -= timedelta(days=1)
+        years = self._get_list_years(min_date, max_date)
 
-        # print(min_date.year)
-        # print(max_date.year)
+        # print(list(range(1,10)))
 
-        years = list(range(min_date.year, max_date.year))
+        # print(years)
+        # exit()
 
         xlsxreport = XLSXReport(filename=filename, datetime_format='M')
 
@@ -83,11 +82,59 @@ class GNUCashReport(GNUCashData):
             from_date = date(year, 1, 1)
             to_date = date(year, 12, 31)
             period = 'M'
-            glevel = 1
+            # glevel = 1
 
             self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
 
+
+
+        full_years = self._get_list_years(min_date, max_date, full_years=True)
+
+        if full_years:
+
+            from_date = date(full_years[0], 1, 1)
+            to_date = date(full_years[-1], 12, 31)
+            period = 'A'
+            xlsxreport.next_sheet(sheet_name='all', datetime_format=period)
+            self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+
         xlsxreport.save()
+
+    def _get_list_years(self, start_date, end_date, full_years=False):
+
+        if self._is_last_day_of_year(start_date):
+            start_date += timedelta(days=1)
+        if self._is_first_day_of_year(end_date):
+            end_date -= timedelta(days=1)
+
+        start_year = start_date.year
+        end_year = end_date.year
+        if full_years:
+            if not self._is_first_day_of_year(start_date):
+                start_year += 1
+            if not self._is_last_day_of_year(end_date):
+                end_year -= 1
+            if start_year > end_year:
+                return []
+            # return start_year, end_year
+
+
+
+        years = list(range(start_year, end_year + 1))
+
+        return years
+
+    def _is_first_day_of_year(self, a_date: date):
+        if a_date.month == 1 and a_date.day == 1:
+            return True
+        else:
+            return False
+
+    def _is_last_day_of_year(self, a_date: date):
+        if a_date.month == 12 and a_date.day == 31:
+            return True
+        else:
+            return False
 
     def complex_report_excel(self, filename, from_date, to_date, period, glevel=1):
         """
