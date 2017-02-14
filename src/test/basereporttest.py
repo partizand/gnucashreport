@@ -26,7 +26,7 @@ class BaseReportTest(BaseTest):
     def test_assets(self):
         # filename = 'assets.pkl'
         # account_types = GNUCashData.ALL_ASSET_TYPES
-        account_types = [GNUCashData.CASH, GNUCashData.BANK, GNUCashData.ASSET, GNUCashData.STOCK, GNUCashData.MUTUAL]
+        account_types = GNUCashData.ALL_ASSET_TYPES
         df = self.rep.balance_by_period(from_date=self.from_date, to_date=self.to_date,
                                         account_types=account_types, glevel=1)
         # XLSXReport.dataframe_to_excel(df, 'df-' + self.test_name)

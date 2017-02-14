@@ -8,6 +8,8 @@ from datetime import date, datetime
 
 from decimal import Decimal
 
+from copy import copy
+
 from gcreports.gcxmlreader import GNUCashXMLBook
 from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
 
@@ -512,7 +514,7 @@ class GNUCashData:
         :param glevel: group level
         :return: pivot DataFrame
         """
-        assets_and_liability = GNUCashData.ALL_ASSET_TYPES
+        assets_and_liability = copy(GNUCashData.ALL_ASSET_TYPES)
         assets_and_liability.append(GNUCashData.LIABILITY)
 
         # Группировка по периоду
@@ -650,71 +652,6 @@ class GNUCashData:
 
         group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
                                                   account_types=account_types, drop_null=drop_null)
-
-        # Отбираем нужные колонки (почти все и нужны)
-        # sel_df = pandas.DataFrame(self.df_splits,
-        #                           columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
-        #                                    'quantity', 'name', 'hidden', 'mnemonic'])
-        # # Отбираем нужные типы счетов
-        # if type(account_types) is str:
-        #     account_types = [account_types]
-        # sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
-        #
-        # # Список всех account_guid
-        # account_guids = sel_df['account_guid'].drop_duplicates().tolist()
-        #
-        # # Добавление колонки нарастающий итог по счетам
-        # # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
-        # sel_df.sort_values(by='post_date', inplace=True)
-        # sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
-        #
-        # # здесь подразумевается, что есть только одна цена за день
-        # # Поэтому отсекаем повторы
-        # sel_df.set_index(['account_guid', 'post_date'], inplace=True)
-        # # отсечение повторов по индексу
-        # sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
-        #
-        # # Индекс по периоду
-        # idx = pandas.date_range(from_date, to_date, freq=period)
-        #
-        # # цикл по всем commodity_guid
-        # group_acc = pandas.DataFrame()
-        # for account_guid in account_guids:
-        #
-        #     # DataFrame с датами и значениями
-        #     df_acc = sel_df.loc[account_guid]
-        #     if not df_acc.empty:
-        #
-        #         df_acc = df_acc.resample(period).ffill()
-        #
-        #         df_acc = df_acc.reindex(idx, method='ffill')
-        #         # Здесь теряются все колонки если начинается с пустой
-        #
-        #         if drop_null:
-        #             # Убрать если все значения 0
-        #             has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
-        #         else:
-        #             has_balances = True
-        #         # Берем только не пустые счета
-        #         if has_balances:
-        #             acc_info = self.df_accounts.loc[account_guid]
-        #             df_acc.index.name = 'post_date'
-        #             df_acc['account_guid'] = account_guid
-        #             df_acc['fullname'] = acc_info['fullname']
-        #             df_acc['commodity_guid'] = acc_info['commodity_guid']
-        #             df_acc['account_type'] = acc_info['account_type']
-        #             df_acc['name'] = acc_info['name']
-        #             df_acc['hidden'] = acc_info['hidden']
-        #             df_acc['mnemonic'] = acc_info['mnemonic']
-        #
-        #             df_acc.set_index('account_guid', append=True, inplace=True)
-        #             # Меняем местами индексы
-        #             df_acc = df_acc.swaplevel()
-        #
-        #             group_acc = group_acc.append(df_acc)
-        #
-        # # Сбрасываем один уровень индекса (post_date)
-        # group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
         group = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)

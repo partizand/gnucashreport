@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from gcreports.gnucashdata import GNUCashData
 from gcreports.margins import Margins
@@ -62,7 +62,52 @@ class GNUCashReport(GNUCashData):
 
         # print(df_itog)
 
-    def complex_report_excel(self, filename, from_date, to_date, period='M', glevel=1):
+    def complex_report_years(self, filename, glevel=1):
+
+        min_date = self.df_splits['post_date'].min()
+        max_date = self.df_splits['post_date'].max()
+
+        min_date += timedelta(days=1)
+        max_date -= timedelta(days=1)
+
+        # print(min_date.year)
+        # print(max_date.year)
+
+        years = list(range(min_date.year, max_date.year))
+
+        xlsxreport = XLSXReport(filename=filename, datetime_format='M')
+
+        for year in years:
+            xlsxreport.next_sheet(sheet_name=str(year))
+
+            from_date = date(year, 1, 1)
+            to_date = date(year, 12, 31)
+            period = 'M'
+            glevel = 1
+
+            self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+
+        xlsxreport.save()
+
+    def complex_report_excel(self, filename, from_date, to_date, period, glevel=1):
+        """
+        Saves complex report by period to excel file
+        Contains: income, expense, profit, assets, loans, equity and chart equity
+        :param filename: Excel file name
+        :param from_date:
+        :param to_date:
+        :param period:
+        :param glevel:
+        :return:
+        """
+
+        xlsxreport = XLSXReport(filename=filename, datetime_format=period)
+
+        self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+
+        xlsxreport.save()
+
+    def _complex_report_writer(self, xlsxreport:XLSXReport, from_date, to_date, period, glevel):
         """
         Saves complex report by period to excel file
         Contains: income, expense, profit, assets, loans, equity and chart equity
@@ -80,7 +125,7 @@ class GNUCashReport(GNUCashData):
         # filename = 'v:/tables/ex-test.xlsx'
         # glevel = 1
         # dateformat = self._dateformat_from_period(period)
-        xlsxreport = XLSXReport(filename=filename, datetime_format=period)
+        # xlsxreport = XLSXReport(filename=filename, datetime_format=period)
 
         # Income
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.INCOME,
@@ -109,25 +154,18 @@ class GNUCashReport(GNUCashData):
         # loans
         margins.total_row = False
         df_loans = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0,
-                                              account_types=GNUCashData.LIABILITY,
+                                              account_types=[GNUCashData.LIABILITY],
                                               margins=margins)
         xlsxreport.add_dataframe(df_loans, color='yellow', header=False, margins=margins)
         xlsxreport.add_empty_row()
 
         # equity
-        # margins.set_for_profit()
         df_profit = self.equity_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
         xlsxreport.add_dataframe(df_profit, color='green', header=False, margins=margins, addchart=True)
         xlsxreport.add_empty_row()
 
-        # xlsxreport.add_chart()
-
         margins.set_for_turnover()
         xlsxreport.add_header(df_income, row=0, margins=margins)
-        # xlsxreport.add_empty_row()
-        # xlsxreport.add_dataframe(df)
-        # xlsxreport.set_cell_format()
-        # xlsxreport.add_df_test(df)
 
-        xlsxreport.save()
+        # xlsxreport.save()
 
