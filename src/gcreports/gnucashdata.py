@@ -498,7 +498,7 @@ class GNUCashData:
             df_ret.loc[index] = dataframe.sum()
             return df_ret
 
-    def equity_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
+    def equity_by_period(self, from_date, to_date, period='M', glevel=1,
                            margins: Margins = None):
 
         """
@@ -513,80 +513,78 @@ class GNUCashData:
         """
         assets_and_liability = GNUCashData.ALL_ASSET_TYPES
         assets_and_liability.append(GNUCashData.LIABILITY)
-        # Фильтрация по времени
-        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-        #                         & (self.df_splits['post_date'] <= to_date)]
+
+        group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
+                                                  account_types=assets_and_liability, drop_null=False)
 
         # Очень большая таблица!!??
-        sel_df = self.df_splits.copy()
-
-        # Отбираем нужные типы счетов
-        sel_df = sel_df[(sel_df['account_type']).isin(assets_and_liability)]
-
-        # Список всех account_guid
-        account_guids = sel_df['account_guid'].drop_duplicates().tolist()
-
-        # Добавление колонки нарастающий итог по счетам
-        # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
-        sel_df.sort_values(by='post_date', inplace=True)
-        sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
-
-        # здесь подразумевается, что есть только одна цена за день
-        # Поэтому отсекаем повторы
-        sel_df.set_index(['account_guid', 'post_date'], inplace=True)
-        # отсечение повторов по индексу
-        sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
-
-        # Индекс по периоду
-        idx = pandas.date_range(from_date, to_date, freq=period)
-
-        # цикл по всем commodity_guid
-        drop_null = False
-        group_acc = pandas.DataFrame()
-        for account_guid in account_guids:
-
-            # DataFrame с датами и значениями
-            df_acc = sel_df.loc[account_guid]
-            if not df_acc.empty:
-
-                df_acc = df_acc.resample(period).ffill()
-
-                df_acc = df_acc.reindex(idx, method='ffill')
-                # Здесь теряются все колонки если начинается с пустой
-
-                if drop_null:
-                    # Убрать если все значения 0
-                    has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
-                else:
-                    has_balances = True
-                # Берем только не пустые счета
-                if has_balances:
-                    acc_info = self.df_accounts.loc[account_guid]
-                    df_acc.index.name = 'post_date'
-                    df_acc['account_guid'] = account_guid
-                    df_acc['fullname'] = acc_info['fullname']
-                    df_acc['commodity_guid'] = acc_info['commodity_guid']
-                    df_acc['account_type'] = acc_info['account_type']
-                    df_acc['name'] = acc_info['name']
-                    df_acc['hidden'] = acc_info['hidden']
-                    df_acc['mnemonic'] = acc_info['mnemonic']
-
-                    df_acc.set_index('account_guid', append=True, inplace=True)
-                    # Меняем местами индексы
-                    df_acc = df_acc.swaplevel()
-
-                    group_acc = group_acc.append(df_acc)
-
-        # Сбрасываем один уровень индекса (post_date)
-        group_acc = group_acc.reset_index()
+        # sel_df = self.df_splits.copy()
+        #
+        # # Отбираем нужные типы счетов
+        # sel_df = sel_df[(sel_df['account_type']).isin(assets_and_liability)]
+        #
+        # # Список всех account_guid
+        # account_guids = sel_df['account_guid'].drop_duplicates().tolist()
+        #
+        # # Добавление колонки нарастающий итог по счетам
+        # # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
+        # sel_df.sort_values(by='post_date', inplace=True)
+        # sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        #
+        # # здесь подразумевается, что есть только одна цена за день
+        # # Поэтому отсекаем повторы
+        # sel_df.set_index(['account_guid', 'post_date'], inplace=True)
+        # # отсечение повторов по индексу
+        # sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
+        #
+        # # Индекс по периоду
+        # idx = pandas.date_range(from_date, to_date, freq=period)
+        #
+        # # цикл по всем commodity_guid
+        # drop_null = False
+        # group_acc = pandas.DataFrame()
+        # for account_guid in account_guids:
+        #
+        #     # DataFrame с датами и значениями
+        #     df_acc = sel_df.loc[account_guid]
+        #     if not df_acc.empty:
+        #
+        #         df_acc = df_acc.resample(period).ffill()
+        #
+        #         df_acc = df_acc.reindex(idx, method='ffill')
+        #         # Здесь теряются все колонки если начинается с пустой
+        #
+        #         if drop_null:
+        #             # Убрать если все значения 0
+        #             has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
+        #         else:
+        #             has_balances = True
+        #         # Берем только не пустые счета
+        #         if has_balances:
+        #             acc_info = self.df_accounts.loc[account_guid]
+        #             df_acc.index.name = 'post_date'
+        #             df_acc['account_guid'] = account_guid
+        #             df_acc['fullname'] = acc_info['fullname']
+        #             df_acc['commodity_guid'] = acc_info['commodity_guid']
+        #             df_acc['account_type'] = acc_info['account_type']
+        #             df_acc['name'] = acc_info['name']
+        #             df_acc['hidden'] = acc_info['hidden']
+        #             df_acc['mnemonic'] = acc_info['mnemonic']
+        #
+        #             df_acc.set_index('account_guid', append=True, inplace=True)
+        #             # Меняем местами индексы
+        #             df_acc = df_acc.swaplevel()
+        #
+        #             group_acc = group_acc.append(df_acc)
+        #
+        # # Сбрасываем один уровень индекса (post_date)
+        # group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
         group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
 
         # Суммируем
         group = group_acc.groupby('post_date').value_currency.sum()
-
-
 
         # Переворот дат из строк в колонки
         df = pandas.DataFrame(group).T
@@ -614,17 +612,17 @@ class GNUCashData:
 
         return df
 
-    def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
-                          margins:Margins = None, drop_null=False):
+    def _balance_group_by_period(self, from_date, to_date, period, account_types, drop_null):
         """
-        Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
+        Группирует балансы по периоду у заданных типов счетов
+        Возвращает DataFrame со всеми счетами сгруппированными по периоду (суммирует за период)
+
         :param from_date:
         :param to_date:
         :param period:
         :param account_types:
-        :param glevel:
-        :param drop_null: Отбрасывать нулевые значения (итоги могут не содержать всех столбцов)
-        :return: DataFrame
+        :param drop_null:
+        :return:
         """
 
         # Отбираем нужные колонки (почти все и нужны)
@@ -691,6 +689,90 @@ class GNUCashData:
 
         # Сбрасываем один уровень индекса (post_date)
         group_acc = group_acc.reset_index()
+
+        return group_acc
+
+
+    def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
+                          margins:Margins = None, drop_null=False):
+        """
+        Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
+        :param from_date:
+        :param to_date:
+        :param period:
+        :param account_types:
+        :param glevel:
+        :param drop_null: Отбрасывать нулевые значения (итоги могут не содержать всех столбцов)
+        :return: DataFrame
+        """
+
+        group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
+                                                  account_types=account_types, drop_null=drop_null)
+
+        # Отбираем нужные колонки (почти все и нужны)
+        # sel_df = pandas.DataFrame(self.df_splits,
+        #                           columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
+        #                                    'quantity', 'name', 'hidden', 'mnemonic'])
+        # # Отбираем нужные типы счетов
+        # if type(account_types) is str:
+        #     account_types = [account_types]
+        # sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
+        #
+        # # Список всех account_guid
+        # account_guids = sel_df['account_guid'].drop_duplicates().tolist()
+        #
+        # # Добавление колонки нарастающий итог по счетам
+        # # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
+        # sel_df.sort_values(by='post_date', inplace=True)
+        # sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        #
+        # # здесь подразумевается, что есть только одна цена за день
+        # # Поэтому отсекаем повторы
+        # sel_df.set_index(['account_guid', 'post_date'], inplace=True)
+        # # отсечение повторов по индексу
+        # sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
+        #
+        # # Индекс по периоду
+        # idx = pandas.date_range(from_date, to_date, freq=period)
+        #
+        # # цикл по всем commodity_guid
+        # group_acc = pandas.DataFrame()
+        # for account_guid in account_guids:
+        #
+        #     # DataFrame с датами и значениями
+        #     df_acc = sel_df.loc[account_guid]
+        #     if not df_acc.empty:
+        #
+        #         df_acc = df_acc.resample(period).ffill()
+        #
+        #         df_acc = df_acc.reindex(idx, method='ffill')
+        #         # Здесь теряются все колонки если начинается с пустой
+        #
+        #         if drop_null:
+        #             # Убрать если все значения 0
+        #             has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
+        #         else:
+        #             has_balances = True
+        #         # Берем только не пустые счета
+        #         if has_balances:
+        #             acc_info = self.df_accounts.loc[account_guid]
+        #             df_acc.index.name = 'post_date'
+        #             df_acc['account_guid'] = account_guid
+        #             df_acc['fullname'] = acc_info['fullname']
+        #             df_acc['commodity_guid'] = acc_info['commodity_guid']
+        #             df_acc['account_type'] = acc_info['account_type']
+        #             df_acc['name'] = acc_info['name']
+        #             df_acc['hidden'] = acc_info['hidden']
+        #             df_acc['mnemonic'] = acc_info['mnemonic']
+        #
+        #             df_acc.set_index('account_guid', append=True, inplace=True)
+        #             # Меняем местами индексы
+        #             df_acc = df_acc.swaplevel()
+        #
+        #             group_acc = group_acc.append(df_acc)
+        #
+        # # Сбрасываем один уровень индекса (post_date)
+        # group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
         # Группировка по счетам
