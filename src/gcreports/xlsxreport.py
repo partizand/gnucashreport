@@ -29,57 +29,57 @@ class XLSXReport:
         self._add_charts()
         self.writer.save()
 
-    @classmethod
-    def dataframe_to_excel(cls, dataframe, filename, sheet='Sheet1', datetime_format=None):
-        """
-        Записывает dataFrame в excel. Указывать только имя файла без расширения!
-        :param dataframe:
-        :param filename: Указывать только имя файла без расширения
-        :return:
-        """
-        if not filename.endswith('.xlsx'):
-            filename = os.path.join(cls.default_dir_reports, filename + ".xlsx")
+    # @classmethod
+    # def dataframe_to_excel(cls, dataframe, filename, sheet='Sheet1', datetime_format=None):
+    #     """
+    #     Записывает dataFrame в excel. Указывать только имя файла без расширения!
+    #     :param dataframe:
+    #     :param filename: Указывать только имя файла без расширения
+    #     :return:
+    #     """
+    #     if not filename.endswith('.xlsx'):
+    #         filename = os.path.join(cls.default_dir_reports, filename + ".xlsx")
+    #
+    #     # Create a Pandas Excel writer using XlsxWriter as the engine.
+    #     writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+    #     # writer = pandas.ExcelWriter(filename, engine='openpyxl')
+    #     # writer = pandas.ExcelWriter(filename)
+    #     # workbook = writer.book
+    #     # worksheet_wr = workbook.add_worksheet(sheet)
+    #     # worksheet = workbook.create_sheet(title=sheet, index=0)
+    #
+    #     # Convert the dataframe to an XlsxWriter Excel object.
+    #     # dataframe.to_excel(writer, sheet_name=sheet)
+    #     dataframe.to_excel(writer, sheet_name=sheet)
+    #
+    #     # Get the xlsxwriter objects from the dataframe writer object.
+    #
+    #     # worksheet = writer.sheets[sheet] # Так работает
+    #     # worksheet = workbook.active # Так тоже работает
+    #
+    #     # worksheet['A1'] = 'A1'
+    #
+    #     # Close the Pandas Excel writer and output the Excel file.
+    #     writer.save()
 
-        # Create a Pandas Excel writer using XlsxWriter as the engine.
-        writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
-        # writer = pandas.ExcelWriter(filename, engine='openpyxl')
-        # writer = pandas.ExcelWriter(filename)
-        # workbook = writer.book
-        # worksheet_wr = workbook.add_worksheet(sheet)
-        # worksheet = workbook.create_sheet(title=sheet, index=0)
-
-        # Convert the dataframe to an XlsxWriter Excel object.
-        # dataframe.to_excel(writer, sheet_name=sheet)
-        dataframe.to_excel(writer, sheet_name=sheet)
-
-        # Get the xlsxwriter objects from the dataframe writer object.
-
-        # worksheet = writer.sheets[sheet] # Так работает
-        # worksheet = workbook.active # Так тоже работает
-
-        # worksheet['A1'] = 'A1'
-
-        # Close the Pandas Excel writer and output the Excel file.
-        writer.save()
-
-    @staticmethod
-    def dateformat_from_period(period:str):
-        """
-        Get Excel date format from period letter (D, M, Y ...)
-        :param period: D, M, Q, Y (day, month, quarter, year)
-        :return: datetime_format for excel
-        """
-
-        dateformat = 'dd-mm-yyyy'
-
-        if period:
-            if period.upper() == 'M':
-                dateformat = 'mmm yyyy'
-            if period.upper() == 'Y':
-                dateformat = 'yyyy'
-            if period.upper() == 'Q':
-                dateformat = 'Q YY'  # ???
-        return dateformat
+    # @staticmethod
+    # def dateformat_from_period(period:str):
+    #     """
+    #     Get Excel date format from period letter (D, M, Y ...)
+    #     :param period: D, M, Q, Y (day, month, quarter, year)
+    #     :return: datetime_format for excel
+    #     """
+    #
+    #     dateformat = 'dd-mm-yyyy'
+    #
+    #     if period:
+    #         if period.upper() == 'M':
+    #             dateformat = 'mmm yyyy'
+    #         if period.upper() == 'Y':
+    #             dateformat = 'yyyy'
+    #         if period.upper() == 'Q':
+    #             dateformat = 'Q YY'  # ???
+    #     return dateformat
 
 
     def complex_report(self, gcreport, from_date, to_date, period='M', glevel=1):
