@@ -514,97 +514,38 @@ class GNUCashData:
         assets_and_liability = GNUCashData.ALL_ASSET_TYPES
         assets_and_liability.append(GNUCashData.LIABILITY)
 
+        # Группировка по периоду
         group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
                                                   account_types=assets_and_liability, drop_null=False)
-
-        # Очень большая таблица!!??
-        # sel_df = self.df_splits.copy()
-        #
-        # # Отбираем нужные типы счетов
-        # sel_df = sel_df[(sel_df['account_type']).isin(assets_and_liability)]
-        #
-        # # Список всех account_guid
-        # account_guids = sel_df['account_guid'].drop_duplicates().tolist()
-        #
-        # # Добавление колонки нарастающий итог по счетам
-        # # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
-        # sel_df.sort_values(by='post_date', inplace=True)
-        # sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
-        #
-        # # здесь подразумевается, что есть только одна цена за день
-        # # Поэтому отсекаем повторы
-        # sel_df.set_index(['account_guid', 'post_date'], inplace=True)
-        # # отсечение повторов по индексу
-        # sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
-        #
-        # # Индекс по периоду
-        # idx = pandas.date_range(from_date, to_date, freq=period)
-        #
-        # # цикл по всем commodity_guid
-        # drop_null = False
-        # group_acc = pandas.DataFrame()
-        # for account_guid in account_guids:
-        #
-        #     # DataFrame с датами и значениями
-        #     df_acc = sel_df.loc[account_guid]
-        #     if not df_acc.empty:
-        #
-        #         df_acc = df_acc.resample(period).ffill()
-        #
-        #         df_acc = df_acc.reindex(idx, method='ffill')
-        #         # Здесь теряются все колонки если начинается с пустой
-        #
-        #         if drop_null:
-        #             # Убрать если все значения 0
-        #             has_balances = not (df_acc['value'].apply(lambda x: x == 0).all())
-        #         else:
-        #             has_balances = True
-        #         # Берем только не пустые счета
-        #         if has_balances:
-        #             acc_info = self.df_accounts.loc[account_guid]
-        #             df_acc.index.name = 'post_date'
-        #             df_acc['account_guid'] = account_guid
-        #             df_acc['fullname'] = acc_info['fullname']
-        #             df_acc['commodity_guid'] = acc_info['commodity_guid']
-        #             df_acc['account_type'] = acc_info['account_type']
-        #             df_acc['name'] = acc_info['name']
-        #             df_acc['hidden'] = acc_info['hidden']
-        #             df_acc['mnemonic'] = acc_info['mnemonic']
-        #
-        #             df_acc.set_index('account_guid', append=True, inplace=True)
-        #             # Меняем местами индексы
-        #             df_acc = df_acc.swaplevel()
-        #
-        #             group_acc = group_acc.append(df_acc)
-        #
-        # # Сбрасываем один уровень индекса (post_date)
-        # group_acc = group_acc.reset_index()
 
         # пересчет в нужную валюту
         group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
 
         # Суммируем
-        group = group_acc.groupby('post_date').value_currency.sum()
-
-        # Переворот дат из строк в колонки
-        df = pandas.DataFrame(group).T
         equity_name = EQUITY_NAME
         if margins:
             equity_name = margins.equity_name
-        df.index = [equity_name]
+        df = self._sum_all(group_acc, total_name=equity_name, glevel=glevel, inverse=False)
 
-        # print(df)
-
-        # Нужно добавить колонки если Multiindex
-        if type(glevel) is int:
-            glevel = [glevel]
-        idx_len = len(glevel)
-        new_indexes = [str(i) for i in range(1, idx_len)]
-        if new_indexes:
-            # Нужно добавить уровни
-            for col_name in new_indexes:
-                df[col_name] = ''
-            df.set_index(new_indexes, append=True, inplace=True)
+        # group = group_acc.groupby('post_date').value_currency.sum()
+        #
+        # # Переворот дат из строк в колонки
+        # df = pandas.DataFrame(group).T
+        # equity_name = EQUITY_NAME
+        # if margins:
+        #     equity_name = margins.equity_name
+        # df.index = [equity_name]
+        #
+        # # Нужно добавить колонки если Multiindex
+        # if type(glevel) is int:
+        #     glevel = [glevel]
+        # idx_len = len(glevel)
+        # new_indexes = [str(i) for i in range(1, idx_len)]
+        # if new_indexes:
+        #     # Нужно добавить уровни
+        #     for col_name in new_indexes:
+        #         df[col_name] = ''
+        #     df.set_index(new_indexes, append=True, inplace=True)
 
         # Добавление итогов
         df = self.add_margins(df, margins)
@@ -836,37 +777,73 @@ class GNUCashData:
 
         income_and_expense = [GNUCashData.INCOME, GNUCashData.EXPENSE]
 
+        # Группировка по периоду
         sel_df = self._turnover_group_by_period(from_date=from_date, to_date=to_date, period=period,
                                                 account_type=income_and_expense)
-
-        # Фильтрация по времени
-        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-        #                         & (self.df_splits['post_date'] <= to_date)]
-
-        # Отбираем нужные типы счетов
-        # sel_df = sel_df[(sel_df['account_type']).isin(income_and_expense)]
-
-        # Группировка по месяцу
-        # sel_df.set_index('post_date', inplace=True)
-        # sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
 
         # пересчет в нужную валюту
         group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
         # Группировка по счетам
 
-        # Суммируем
-        group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
 
-        # Переворот дат из строк в колонки
-        df = pandas.DataFrame(group).T
+
+        # Суммируем
         profit_name = PROFIT_NAME
         if margins:
             profit_name = margins.profit_name
-        df.index = [profit_name]
+        df = self._sum_all(group, total_name=profit_name, glevel=glevel, inverse=True)
+
+        # group = group.groupby('post_date').value_currency.sum().map(lambda x: x * -1)
+        #
+        # # Переворот дат из строк в колонки
+        # df = pandas.DataFrame(group).T
+        # profit_name = PROFIT_NAME
+        # if margins:
+        #     profit_name = margins.profit_name
+        # df.index = [profit_name]
+        #
+        # # Нужно добавить колонки если Multiindex
+        # if type(glevel) is int:
+        #     glevel = [glevel]
+        # idx_len = len(glevel)
+        # new_indexes = [str(i) for i in range(1, idx_len)]
+        # if new_indexes:
+        #     # Нужно добавить уровни
+        #     for col_name in new_indexes:
+        #         df[col_name] = ''
+        #     df.set_index(new_indexes, append=True, inplace=True)
+
+        # Добавление итогов
+        df = self.add_margins(df, margins)
+
+        return df
+
+    def _sum_all(self, dataframe, total_name, glevel, inverse):
+        """
+        Суммирует все значения DataFrame, возвращает итоговую строку с именем total_name
+
+        :param dataframe:
+        :param total_name:
+        :param glevel:
+        :param inverse:
+        :return:
+        """
+
+        # Суммируем
+        group = dataframe.groupby('post_date').value_currency.sum() #.map(lambda x: x * -1)
+
+        if inverse:
+            group = group.map(lambda x: x * -1)
+
+        # Переворот дат из строк в колонки
+        df = pandas.DataFrame(group).T
+
+        df.index = [total_name]
 
         # Нужно добавить колонки если Multiindex
         if type(glevel) is int:
             glevel = [glevel]
+        # idx_len = len(dataframe.index)
         idx_len = len(glevel)
         new_indexes = [str(i) for i in range(1, idx_len)]
         if new_indexes:
@@ -874,9 +851,6 @@ class GNUCashData:
             for col_name in new_indexes:
                 df[col_name] = ''
             df.set_index(new_indexes, append=True, inplace=True)
-
-        # Добавление итогов
-        df = self.add_margins(df, margins)
 
         return df
 
