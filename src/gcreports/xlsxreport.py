@@ -30,8 +30,38 @@ class XLSXReport:
         self._add_charts()
         self.writer.save()
 
-
-
+    # @classmethod
+    # def dataframe_to_excel(cls, dataframe, filename, sheet='Sheet1', datetime_format='dd-mm-yyyy'):
+    #     """
+    #     Записывает dataFrame в excel. Можно указывать только имя файла без расширения
+    #     :param dataframe:
+    #     :param filename: fullname of file or only basename ('file'), then writes to dir_excel
+    #     :param sheet:
+    #     :param datetime_format: May be date format, e.g. dd-mm-yyyy,
+    #                     or may be period letter: D, M, Q, Y (day, month, quarter, year)
+    #                     or may be None, then dd-mm-yyyy sets
+    #     :return:
+    #     """
+    #     if not filename.endswith('.xlsx'):
+    #         filename = os.path.join(cls.dir_excel, filename + ".xlsx")
+    #
+    #     # Create a Pandas Excel writer using XlsxWriter as the engine.
+    #     # writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+    #     dateformat = cls._dateformat_from_period(datetime_format)
+    #     writer = pandas.ExcelWriter(filename, datetime_format=dateformat)
+    #
+    #     # Convert the dataframe to an XlsxWriter Excel object.
+    #     dataframe.to_excel(writer, sheet_name=sheet)
+    #
+    #     # Get the xlsxwriter objects from the dataframe writer object.
+    #     workbook = writer.book
+    #     # worksheet = writer.sheets[sheet] # Так работает
+    #     # worksheet = workbook.active # Так тоже работает
+    #
+    #     # worksheet['A1'] = 'A1'
+    #
+    #     # Close the Pandas Excel writer and output the Excel file.
+    #     writer.save()
 
     # def complex_report(self, gcreport, from_date, to_date, period='M', glevel=1):
     #     # margins.set_for_profit()

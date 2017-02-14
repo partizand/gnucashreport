@@ -311,6 +311,8 @@ gcrep._open_pickle()
 # rep._open_pickle()
 # rep.profit_by_period(from_date=from_date, to_date=to_date)
 gcrep.complex_report_excel(filename, from_date=from_date, to_date=to_date, period='M', glevel=1)
+# gcrep.complex_report(from_date=from_date, to_date=to_date, period='M')
+gcrep.inflation()
 exit()
 # gcrep.
 # print(gcrep.gcdata.tu)

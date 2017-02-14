@@ -1010,103 +1010,40 @@ class GNUCashData:
         df_new = df_new.dropna()
         return df_new
 
-    def cashflow(self, from_date: date, to_date: date, period='M', glevel=[0,1]):
-        df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-                                            account_type=self.INCOME, glevel=glevel)
-        df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-                                            account_type=self.EXPENSE, glevel=glevel)
+    # @classmethod
+    # def dataframe_to_html(cls, dataframe, filename):
+    #     if not filename.endswith('.html'):
+    #         filename = os.path.join(cls.dir_excel, filename + ".html")
+    #     html = dataframe.to_html()
+    #     with open(filename, "w") as text_file:
+    #         text_file.write(html)
 
-
-
-        # Calculate Profit
-        profit = df_income.loc['Total'] - df_expense.loc['Total']
-        # empty column
-        # df_income['1'] = 1
-        # df_expense['1'] = 1
-        profit[0] = 'Profit'
-        idxcols = profit.index.names
-        idxcols = [0] + idxcols
-        profit.set_index(0, append=True, inplace=True)
-        profit = profit.reorder_levels(idxcols)
-
-        # empty line
-        df_empty = pandas.DataFrame(index=profit.index, columns=profit.columns)
-
-        df_empty = df_empty.drop('Profit')
-        df_empty.loc[' ',' '] = ' '
-        # self.dataframe_to_excel(df_empty, 'empty')
-        # print(empty.index)
-        # print(empty)
-        # return
-
-        # concatenate all
-        df_cashflow = df_income.append(df_empty)
-        df_cashflow = df_cashflow.append(df_expense)
-        df_cashflow = df_cashflow.append(df_empty)
-        df_cashflow = df_cashflow.append(profit)
-
-        self.dataframe_to_excel(df_cashflow, 'cashflow')
-
-        return df_cashflow
-
-    @classmethod
-    def dataframe_to_excel(cls, dataframe, filename, sheet='Sheet1', datetime_format='dd-mm-yyyy'):
-        """
-        Записывает dataFrame в excel. Можно указывать только имя файла без расширения
-        :param dataframe:
-        :param filename: fullname of file or only basename ('file'), then writes to dir_excel
-        :param sheet:
-        :param datetime_format: May be date format, e.g. dd-mm-yyyy,
-                        or may be period letter: D, M, Q, Y (day, month, quarter, year)
-                        or may be None, then dd-mm-yyyy sets
-        :return:
-        """
-        if not filename.endswith('.xlsx'):
-            filename = os.path.join(cls.dir_excel, filename + ".xlsx")
-
-        # Create a Pandas Excel writer using XlsxWriter as the engine.
-        # writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
-        dateformat = cls._dateformat_from_period(datetime_format)
-        writer = pandas.ExcelWriter(filename, datetime_format=dateformat)
-
-        # Convert the dataframe to an XlsxWriter Excel object.
-        dataframe.to_excel(writer, sheet_name=sheet)
-
-        # Get the xlsxwriter objects from the dataframe writer object.
-        workbook = writer.book
-        # worksheet = writer.sheets[sheet] # Так работает
-        # worksheet = workbook.active # Так тоже работает
-
-        # worksheet['A1'] = 'A1'
-
-        # Close the Pandas Excel writer and output the Excel file.
-        writer.save()
 
         # dataframe.to_excel(filename)
 
-    @staticmethod
-    def _dateformat_from_period(period: str):
-        """
-        Get Excel date format from period letter (D, M, Y ...)
-        :param period: May be date format, e.g. dd-mm-yyyy,
-                        or may be period letter: D, M, Q, Y (day, month, quarter, year)
-                        or may be None, then dd-mm-yyyy returns
-        :return: datetime_format for excel
-        """
-
-        if period:
-            dateformat = period
-        else:
-            dateformat = 'dd-mm-yyyy'
-
-        if period:
-            if period.upper() == 'M':
-                dateformat = 'mmm yyyy'
-            if period.upper() == 'Y':
-                dateformat = 'yyyy'
-            if period.upper() == 'Q':
-                dateformat = 'Q YY'  # ???
-        return dateformat
+    # @staticmethod
+    # def _dateformat_from_period(period: str):
+    #     """
+    #     Get Excel date format from period letter (D, M, Y ...)
+    #     :param period: May be date format, e.g. dd-mm-yyyy,
+    #                     or may be period letter: D, M, Q, Y (day, month, quarter, year)
+    #                     or may be None, then dd-mm-yyyy returns
+    #     :return: datetime_format for excel
+    #     """
+    #
+    #     if period:
+    #         dateformat = period
+    #     else:
+    #         dateformat = 'dd-mm-yyyy'
+    #
+    #     if period:
+    #         if period.upper() == 'M':
+    #             dateformat = 'mmm yyyy'
+    #         if period.upper() == 'A':
+    #             dateformat = 'yyyy'
+    #         if period.upper() == 'Q':
+    #             dateformat = 'Q YY'  # ???
+    #     return dateformat
 
     def _group_prices_by_period(self, from_date, to_date, period='M', guids=None):
         """
