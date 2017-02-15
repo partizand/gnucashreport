@@ -62,6 +62,58 @@ class BaseTest(object):
     def open_pickle(cls):
         cls.rep._open_book_pickle(folder=BaseTest.dir_testdata)
 
+    @classmethod
+    def get_assets(cls):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        df = cls.rep.balance_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
+                                        period=cls.test_period, glevel=cls.test_glevel)
+        return df
+
+    @classmethod
+    def get_loans(cls):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        df = cls.rep.balance_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
+                                       account_types=[GNUCashData.LIABILITY],  period=cls.test_period, glevel=0)
+        return df
+
+    @classmethod
+    def get_expense(cls):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        df = cls.rep.turnover_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
+                                         account_type=GNUCashData.EXPENSE,
+                                         glevel=cls.test_glevel)
+        return df
+
+    @classmethod
+    def get_income(cls):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        df = cls.rep.turnover_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
+                                         account_type=GNUCashData.INCOME,
+                                         glevel=cls.test_glevel)
+        return df
+
+    @classmethod
+    def get_profit(cls):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        df = cls.rep.profit_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
+                                       glevel=cls.test_glevel)
+        return df
+
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
         """
         Сверка dataframe c эталонным Pickle файлом

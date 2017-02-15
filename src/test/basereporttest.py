@@ -27,9 +27,10 @@ class BaseReportTest(BaseTest):
         # filename = 'assets.pkl'
         # account_types = GNUCashData.ALL_ASSET_TYPES
         account_types = GNUCashData.ALL_ASSET_TYPES
-        df = self.rep.balance_by_period(from_date=self.test_from_date, to_date=self.test_to_date,
-                                        account_types=account_types, glevel=1)
-        self.pickle_control(self.pickle_assets, df, 'Group assets')
+        # df = self.rep.balance_by_period(from_date=self.test_from_date, to_date=self.test_to_date,
+        #                                 account_types=account_types, glevel=1)
+        df = self.get_assets()
+        self.pickle_control(self.pickle_assets, df, 'Assets')
 
     def test_loans(self):
         # filename = 'assets.pkl'
