@@ -228,6 +228,9 @@ class GNUCashData:
             filename_splits = basename + str(year) + ext
         self.df_splits = self._dataframe_from_pickle(filename_splits, folder=folder)
 
+        # g = self.df_prices.index.values
+        # print(g)
+
     def _dataframe_from_pickle(self, filename, folder=None):
         """
         Читает dataframe из pickle файла
@@ -438,6 +441,16 @@ class GNUCashData:
         # Убрать время из даты проводки
         # self.df_splits['post_date'] = self.df_splits['post_date'].dt.date
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
+
+        # Оставляем только одну цену за день в df_prices
+        # Список всех commodity_guid для цен (запоминаем, т.к. поле станет индексом)
+        # self.all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
+        # Установка нового индекса
+        self.df_prices.set_index(['commodity_guid', 'date'], inplace=True)
+        # отсечение повторов по индексу
+        self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
+        # all_guids = set(self.df_prices.index.get_level_values('commodity_guid').drop_duplicates().tolist())
+        # print(all_guids)
 
     def _add_margins(self, dataframe, margins=None):
         """
@@ -996,8 +1009,13 @@ class GNUCashData:
         :return: DataFrame with grouped prices
         """
 
-        all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
+        # all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
+        # all_commodities_guids = set(self.df_prices.index.values)
+        all_commodities_guids = set(self.df_prices.index.get_level_values('commodity_guid').drop_duplicates().tolist())
 
+
+        # print(all_commodities_guids)
+        # g = self.df_prices.index.values
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
 
@@ -1012,11 +1030,12 @@ class GNUCashData:
 
         # здесь подразумевается, что есть только одна цена за день
         sel_df = pandas.DataFrame(self.df_prices,
-                                  columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
+                                  columns=['mnemonic', 'currency_guid', 'value'])
+                                  # columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
         # Поэтому отсекаем повторы
-        sel_df.set_index(['commodity_guid', 'date'], inplace=True)
+        # sel_df.set_index(['commodity_guid', 'date'], inplace=True)
         # отсечение повторов по индексу
-        sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
+        # sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
 
         # цикл по всем commodity_guid
         group_prices = pandas.DataFrame()

@@ -9,6 +9,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 from gcreports.gnucashreport import GNUCashReport
 from gcreports.margins import Margins
 # from gcreports.xlsxreport import OpenpyxlReport
+from gcreports.utils import dataframe_to_excel
 from gcreports.xlsxreport import XLSXReport
 
 
@@ -307,13 +308,15 @@ to_date = datetime.date(2016, 12, 31)
 # exit()
 filename = 'v:/tables/ex-test.xlsx'
 gcrep = GNUCashReport()
-gcrep._open_pickle()
+gcrep.open_book_sql()
+# df = gcrep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE)
+# dataframe_to_excel(df, 'expense')
 # rep._open_pickle()
 # rep.profit_by_period(from_date=from_date, to_date=to_date)
 # gcrep.complex_report_excel(filename, from_date=from_date, to_date=to_date, period='M', glevel=1)
 # gcrep.complex_report(from_date=from_date, to_date=to_date, period='M')
 # gcrep.inflation()
-gcrep.complex_report_years(filename)
+# gcrep.complex_report_years(filename)
 exit()
 # gcrep.
 # print(gcrep.gcdata.tu)
