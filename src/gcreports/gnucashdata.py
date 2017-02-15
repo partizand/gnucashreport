@@ -48,7 +48,7 @@ class GNUCashData:
 
     # Данные для генерации тестовых данных и тестирования
     dir_pickle = 'V:/pickle'
-    dir_testdata = 'v:/test_data'
+    # dir_testdata = 'v:/test_data'
 
     pickle_prices = 'prices.pkl'
     pickle_splits = 'splits.pkl'
@@ -56,23 +56,23 @@ class GNUCashData:
     pickle_tr = 'transactions.pkl'
     pickle_commodities = 'commodities.pkl'
 
-    pickle_assets = 'assets.pkl'
-    pickle_loans = 'loans.pkl'
-    pickle_expense = 'expense.pkl'
-    pickle_income = 'income.pkl'
-    pickle_profit = 'profit.pkl'
-    pickle_equity = 'equity.pkl'
+    # pickle_assets = 'assets.pkl'
+    # pickle_loans = 'loans.pkl'
+    # pickle_expense = 'expense.pkl'
+    # pickle_income = 'income.pkl'
+    # pickle_profit = 'profit.pkl'
+    # pickle_equity = 'equity.pkl'
 
-    test_glevel = 1
+    # test_glevel = 1
 
-    test_from_date = date(2016, 1, 1)
-    test_to_date = date(2016, 12, 31)
+    # test_from_date = date(2016, 1, 1)
+    # test_to_date = date(2016, 12, 31)
     # Конец тестовых данных
 
     dir_excel = "v:/tables"
 
-    bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
-    bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
+    # bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
+    # bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
 
     # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
     # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
@@ -146,7 +146,7 @@ class GNUCashData:
         self._after_read()
 
 
-    def _save_testdata(self):
+    def _save_testdata(self, folder):
         """
         Запись тестовых pickle для последующей проверки в тестах
         :return:
@@ -154,7 +154,7 @@ class GNUCashData:
         from_date = self.test_from_date # date(2016, 1, 1)
         to_date = self.test_to_date  #    date(2016, 12, 31)
 
-        self._save_pickle(folder=self.dir_testdata)
+        self._save_db_to_pickle(folder=self.dir_testdata)
 
         # filename = self.pickle_assets
         df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=self.test_glevel)
@@ -181,31 +181,26 @@ class GNUCashData:
         df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
         self._dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
 
-    def _save_pickle(self, year=None, folder=None):
+    def _save_db_to_pickle(self, folder=None, suffix=None):
         """
         For test purpose
-        Запись данных базы в pickle файлы каталога. Если указан год, записывается дополнительно этот год
-        :param year: дополнительный год для записи
+        Запись данных базы в pickle файлы каталога.
         :param folder: Каталог с файлами базы
         :return:
         """
+        self._dataframe_to_pickle(self.df_accounts, self._add_suffix(self.pickle_accounts, suffix), folder=folder)
+        self._dataframe_to_pickle(self.df_commodities, self._add_suffix(self.pickle_commodities, suffix), folder=folder)
+        self._dataframe_to_pickle(self.df_prices, self._add_suffix(self.pickle_prices, suffix), folder=folder)
+        self._dataframe_to_pickle(self.df_transactions, self._add_suffix(self.pickle_tr, suffix), folder=folder)
+        self._dataframe_to_pickle(self.df_splits, self._add_suffix(self.pickle_splits, suffix), folder=folder)
 
-        self._dataframe_to_pickle(self.df_accounts, self.pickle_accounts, folder=folder)
-        self._dataframe_to_pickle(self.df_commodities, self.pickle_commodities, folder=folder)
-        self._dataframe_to_pickle(self.df_prices, self.pickle_prices, folder=folder)
-        self._dataframe_to_pickle(self.df_transactions, self.pickle_tr, folder=folder)
-        self._dataframe_to_pickle(self.df_splits, self.pickle_splits, folder=folder)
-        if year:
-            df_splits = self.df_splits.copy()
-            filename_splits = self.pickle_splits
-            from_date = date(year,1,1)
-            to_date = date(year, 12, 31)
-            df_splits = df_splits[(df_splits['post_date'] >= from_date) & (self.df_splits['post_date'] <= to_date)]
-            basename, ext = os.path.splitext(self.pickle_splits)
-            filename_splits = basename+str(year)+ext
-            self._dataframe_to_pickle(df_splits, filename_splits, folder=folder)
+    @staticmethod
+    def _add_suffix(filename, suffix):
+        if not suffix:
+            return filename
+        return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
 
-    def _open_pickle(self, year=None, folder=None):
+    def _open_book_pickle(self, folder=None, suffix=None):
         """
         For test purpose
         Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
@@ -217,16 +212,13 @@ class GNUCashData:
         :param folder: Каталог с файлами базы
         :return:
         """
-        self.df_accounts=self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
-        self.df_commodities=self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
-        self.df_prices=self._dataframe_from_pickle(self.pickle_prices, folder=folder)
-        self.df_transactions=self._dataframe_from_pickle(self.pickle_tr, folder=folder)
+        self.df_accounts=self._dataframe_from_pickle(self._add_suffix(self.pickle_accounts, suffix), folder=folder)
+        self.df_commodities=self._dataframe_from_pickle(self._add_suffix(self.pickle_commodities, suffix), folder=folder)
+        self.df_prices=self._dataframe_from_pickle(self._add_suffix(self.pickle_prices, suffix), folder=folder)
+        self.df_transactions=self._dataframe_from_pickle(self._add_suffix(self.pickle_tr, suffix), folder=folder)
 
-        filename_splits = self.pickle_splits
-        if year:
-            basename, ext = os.path.splitext(self.pickle_splits)
-            filename_splits = basename + str(year) + ext
-        self.df_splits = self._dataframe_from_pickle(filename_splits, folder=folder)
+        # filename_splits = self._add_suffix(self.pickle_splits, suffix)
+        self.df_splits = self._dataframe_from_pickle(self._add_suffix(self.pickle_splits, suffix), folder=folder)
 
         # g = self.df_prices.index.values
         # print(g)

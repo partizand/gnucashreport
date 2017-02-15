@@ -1,5 +1,6 @@
 import unittest
 import os
+from datetime import date
 
 import pandas
 from pandas.util.testing import assert_frame_equal
@@ -11,26 +12,55 @@ class BaseTest(object):
     """
     Базовый шаблон для тестирования
     """
-    rep = GNUCashData()
+    # Данные для генерации тестовых данных и тестирования
+    # Test info, change before generate test data!
+    bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
+    bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
+    dir_testdata = 'v:/test_data'
+    test_from_date = date(2016, 1, 1)
+    test_to_date = date(2016, 12, 31)
+    test_period = 'M'
+    test_glevel = 1
+    # end test info
 
-    # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
-    # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
+    rep = GNUCashData()
 
     test_name = 'abstract_test'
 
-    dir_testdata = GNUCashData.dir_testdata
+    # dir_testdata = GNUCashData.dir_testdata
+
+    # pickle_prices = 'prices.pkl'
+    # pickle_splits = 'splits.pkl'
+    # pickle_accounts = 'accounts.pkl'
+    # pickle_tr = 'transactions.pkl'
+    # pickle_commodities = 'commodities.pkl'
+
+    pickle_prices = GNUCashData.pickle_prices  # 'prices.pkl'
+    pickle_splits = GNUCashData.pickle_splits  # 'splits.pkl'
+    pickle_accounts = GNUCashData.pickle_accounts  # 'accounts.pkl'
+    pickle_tr = GNUCashData.pickle_tr  # 'transactions.pkl'
+    pickle_commodities = GNUCashData.pickle_commodities  # 'commodities.pkl'
+
+    pickle_assets = 'assets.pkl'
+    pickle_loans = 'loans.pkl'
+    pickle_expense = 'expense.pkl'
+    pickle_income = 'income.pkl'
+    pickle_profit = 'profit.pkl'
+    pickle_equity = 'equity.pkl'
+
+    # Конец тестовых данных
 
     @classmethod
     def open_sql(cls):
-        cls.rep.open_book_sql(GNUCashData.bookfile_sql, open_if_lock=True)
+        cls.rep.open_book_sql(BaseTest.bookfile_sql, open_if_lock=True)
 
     @classmethod
     def open_xml(cls):
-        cls.rep.open_book_xml(GNUCashData.bookfile_xml)
+        cls.rep.open_book_xml(BaseTest.bookfile_xml)
 
     @classmethod
     def open_pickle(cls):
-        cls.rep._open_pickle()
+        cls.rep._open_book_pickle(folder=BaseTest.dir_testdata)
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
         """
@@ -56,3 +86,5 @@ class BaseTest(object):
         cols = df.columns.values.tolist()
         for field in etalon_fields:
             self.assertIn(field, cols, 'DataFrame {} contain field {}. {}'.format(df_name, field, self.test_name))
+
+
