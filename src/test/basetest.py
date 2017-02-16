@@ -79,23 +79,47 @@ class BaseTest(object):
         filename = cls._add_suffix(cls.pickle_loans, cls.test_level2_suffix)
         cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
+        # Expense
+        filename = cls.pickle_expense
         df = cls.get_expense()
-        cls._dataframe_to_pickle(df, filename=cls.pickle_expense, folder=cls.dir_testdata)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
+        # Expense multi
+        df = cls.get_expense(glevel=cls.test_glevel2)
+        filename = cls._add_suffix(filename, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
+        # Income
+        filename = cls.pickle_income
         df = cls.get_income()
-        cls._dataframe_to_pickle(df, filename=cls.pickle_income, folder=cls.dir_testdata)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
+        # Income multi
+        df = cls.get_income(glevel=cls.test_glevel2)
+        filename = cls._add_suffix(filename, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
+        # Profit
+        filename = cls.pickle_profit
         df = cls.get_profit()
-        cls._dataframe_to_pickle(df, filename=cls.pickle_profit, folder=cls.dir_testdata)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
+        # Profit multi
+        df = cls.get_profit(glevel=cls.test_glevel2)
+        filename = cls._add_suffix(filename, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
+        # Equity
+        filename = cls.pickle_equity
         df = cls.get_equity()
-        cls._dataframe_to_pickle(df, filename=cls.pickle_equity, folder=cls.dir_testdata)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
+        # Equity multi
+        df = cls.get_equity(glevel=cls.test_glevel2)
+        filename = cls._add_suffix(filename, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
         # save sql to pickle book
         cls._save_db_to_pickle(folder=cls.dir_testdata)
 
         # save xml to pickle book
-        cls.open_xml() # TODO Будет ли перезапись данных или дозапись?
+        cls.open_xml()  # Вроде по тестам перезапись данных и все ок
         cls._save_db_to_pickle(folder=cls.dir_testdata, suffix='-xml')
 
     @classmethod
@@ -174,45 +198,53 @@ class BaseTest(object):
         return df
 
     @classmethod
-    def get_expense(cls):
+    def get_expense(cls, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
         """
+        if not glevel:
+            glevel = cls.test_glevel
         df = cls.rep.turnover_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
                                          account_type=GNUCashData.EXPENSE,
-                                         glevel=cls.test_glevel)
+                                         glevel=glevel)
         return df
 
     @classmethod
-    def get_income(cls):
+    def get_income(cls, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
         """
+        if not glevel:
+            glevel = cls.test_glevel
         df = cls.rep.turnover_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
                                          account_type=GNUCashData.INCOME,
-                                         glevel=cls.test_glevel)
+                                         glevel=glevel)
         return df
 
     @classmethod
-    def get_profit(cls):
+    def get_profit(cls, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
         """
+        if not glevel:
+            glevel = cls.test_glevel
         df = cls.rep.profit_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                       glevel=cls.test_glevel)
+                                       glevel=glevel)
         return df
 
     @classmethod
-    def get_equity(cls):
+    def get_equity(cls, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
         """
+        if not glevel:
+            glevel = cls.test_glevel
         df = cls.rep.equity_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                       glevel=cls.test_glevel)
+                                       glevel=glevel)
         return df
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
