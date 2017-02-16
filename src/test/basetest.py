@@ -21,6 +21,8 @@ class BaseTest(object):
     test_to_date = date(2016, 12, 31)
     test_period = 'M'
     test_glevel = 1
+    test_glevel2 = [0, 1]
+    test_level2_suffix = '-2'
     # end test info
 
     rep = GNUCashData()
@@ -57,54 +59,42 @@ class BaseTest(object):
         :return:
         """
 
-        # from_date = BaseTest.test_from_date  # date(2016, 1, 1)
-        # to_date = BaseTest.test_to_date  # date(2016, 12, 31)
-        # glevel = BaseTest.test_glevel
-        # period = BaseTest.test_period
-        # dir_testdata = BaseTest.dir_testdata
-
-        # open sql book
-        # gcdata = GNUCashData()
-        # gcdata.open_book_sql(BaseTest.bookfile_sql, open_if_lock=True)
-
         cls.open_sql()
 
-        # btest.open_sql()
-
         # save reports
-        # df = gcdata.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
-        df = BaseTest.get_assets()
-        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_assets, folder=cls.dir_testdata)
+        # Assets
+        df = cls.get_assets()
+        cls._dataframe_to_pickle(df, filename=cls.pickle_assets, folder=cls.dir_testdata)
+        # Assets multi
+        df = cls.get_assets(glevel=cls.test_glevel2)
+        filename = cls._add_suffix(cls.pickle_assets, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
-        # df = gcdata.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY],
-        #                               period=period, glevel=0)
-        df = BaseTest.get_loans()
-        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_loans, folder=cls.dir_testdata)
-        # df = gcdata.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-        #                                account_type=GNUCashData.EXPENSE, glevel=glevel)
-        df = BaseTest.get_expense()
-        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_expense, folder=cls.dir_testdata)
+        # Loans
+        df = cls.get_loans()
+        cls._dataframe_to_pickle(df, filename=cls.pickle_loans, folder=cls.dir_testdata)
+        # Loans multi
+        df = cls.get_loans(glevel=cls.test_glevel2)
+        filename = cls._add_suffix(cls.pickle_loans, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
-        # df = gcdata.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-        #                                account_type=GNUCashData.INCOME, glevel=glevel)
-        df = BaseTest.get_income()
-        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_income, folder=cls.dir_testdata)
+        df = cls.get_expense()
+        cls._dataframe_to_pickle(df, filename=cls.pickle_expense, folder=cls.dir_testdata)
 
-        # df = gcdata.profit_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0)
-        df = BaseTest.get_profit()
-        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_profit, folder=cls.dir_testdata)
+        df = cls.get_income()
+        cls._dataframe_to_pickle(df, filename=cls.pickle_income, folder=cls.dir_testdata)
 
-        # df = gcdata.equity_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0)
-        df = BaseTest.get_equity()
-        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_equity, folder=cls.dir_testdata)
+        df = cls.get_profit()
+        cls._dataframe_to_pickle(df, filename=cls.pickle_profit, folder=cls.dir_testdata)
+
+        df = cls.get_equity()
+        cls._dataframe_to_pickle(df, filename=cls.pickle_equity, folder=cls.dir_testdata)
+
         # save sql to pickle book
-
-
         cls._save_db_to_pickle(folder=cls.dir_testdata)
-        # gcdata = GNUCashData()
-        # open xml book
-        cls.open_xml() # TODO Будет ли перезапись данных или дозапись?
+
         # save xml to pickle book
+        cls.open_xml() # TODO Будет ли перезапись данных или дозапись?
         cls._save_db_to_pickle(folder=cls.dir_testdata, suffix='-xml')
 
     @classmethod
@@ -148,28 +138,38 @@ class BaseTest(object):
 
     @staticmethod
     def _add_suffix(filename, suffix):
+        """
+        Adds suffix to filename
+        :param filename:
+        :param suffix:
+        :return:
+        """
         if not suffix:
             return filename
         return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
 
     @classmethod
-    def get_assets(cls):
+    def get_assets(cls, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
         """
+        if not glevel:
+            glevel = cls.test_glevel
         df = cls.rep.balance_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                        period=cls.test_period, glevel=cls.test_glevel)
+                                        period=cls.test_period, glevel=glevel)
         return df
 
     @classmethod
-    def get_loans(cls):
+    def get_loans(cls, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
         """
+        if not glevel:
+            glevel = 0
         df = cls.rep.balance_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                       account_types=[GNUCashData.LIABILITY],  period=cls.test_period, glevel=0)
+                                       account_types=[GNUCashData.LIABILITY],  period=cls.test_period, glevel=glevel)
         return df
 
     @classmethod

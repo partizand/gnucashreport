@@ -24,19 +24,21 @@ class BaseReportTest(BaseTest):
     # pickle_equity = GNUCashData.pickle_equity
 
     def test_assets(self):
-        # filename = 'assets.pkl'
-        # account_types = GNUCashData.ALL_ASSET_TYPES
-        account_types = GNUCashData.ALL_ASSET_TYPES
-        # df = self.rep.balance_by_period(from_date=self.test_from_date, to_date=self.test_to_date,
-        #                                 account_types=account_types, glevel=1)
         df = self.get_assets()
         self.pickle_control(self.pickle_assets, df, 'Assets')
 
+    def test_assets_multi(self):
+        df = self.get_assets(glevel=self.test_glevel2)
+        filename = self._add_suffix(self.pickle_assets, self.test_level2_suffix)
+        self.pickle_control(self.pickle_assets, df, 'Assets multiindex')
+
     def test_loans(self):
-        # filename = 'assets.pkl'
-        # df = self.rep.balance_by_period(from_date=self.test_from_date, to_date=self.test_to_date,
-        #                                  account_types=[GNUCashData.LIABILITY], glevel=0)
         df = self.get_loans()
+        self.pickle_control(self.pickle_loans, df, 'Loans')
+
+    def test_loans_multi(self):
+        df = self.get_loans(glevel=self.test_glevel2)
+        filename = self._add_suffix(self.pickle_loans, self.test_level2_suffix)
         self.pickle_control(self.pickle_loans, df, 'Loans')
 
     def test_expense(self):
