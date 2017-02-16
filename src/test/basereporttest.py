@@ -30,7 +30,7 @@ class BaseReportTest(BaseTest):
     def test_assets_multi(self):
         df = self.get_assets(glevel=self.test_glevel2)
         filename = self._add_suffix(self.pickle_assets, self.test_level2_suffix)
-        self.pickle_control(self.pickle_assets, df, 'Assets multiindex')
+        self.pickle_control(filename, df, 'Assets multiindex')
 
     def test_loans(self):
         df = self.get_loans()
@@ -39,7 +39,7 @@ class BaseReportTest(BaseTest):
     def test_loans_multi(self):
         df = self.get_loans(glevel=self.test_glevel2)
         filename = self._add_suffix(self.pickle_loans, self.test_level2_suffix)
-        self.pickle_control(self.pickle_loans, df, 'Loans')
+        self.pickle_control(filename, df, 'Loans multiindex')
 
     def test_expense(self):
         # filename = 'expense.pkl'
