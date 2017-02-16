@@ -87,10 +87,14 @@ class GNUCashReport(GNUCashData):
 
     @staticmethod
     def _split_by_years(from_date: date, to_date: date):
-
-       end_year = from_date.replace(month=12, day=31)
-       if end_year > to_date:
-           end_year = to_date
+        dates = []
+        first_date = from_date
+        end_date = from_date.replace(month=12, day=31)
+        while end_date < to_date:
+            dates.append({'start': first_date, 'end': end_date})
+            first_date
+        if end_year > to_date:
+            end_year = to_date
 
 
     def complex_report_years(self, filename, glevel=1):
