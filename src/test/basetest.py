@@ -17,13 +17,14 @@ class BaseTest(object):
     bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
     bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
     dir_testdata = 'v:/test_data'
+    # end folder options---------------------------------------
     test_from_date = date(2016, 1, 1)
     test_to_date = date(2016, 12, 31)
     test_period = 'M'
     test_glevel = 1
     test_glevel2 = [0, 1]
     test_level2_suffix = '-2'
-    # end test info
+    # end test info--------------------------------------------
 
     rep = GNUCashData()
 
