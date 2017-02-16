@@ -5,6 +5,7 @@ import pandas
 import numpy
 from operator import attrgetter
 from datetime import date, datetime
+import time
 
 from decimal import Decimal
 
@@ -12,6 +13,8 @@ from copy import copy
 
 from gcreports.gcxmlreader import GNUCashXMLBook
 from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
+from gcreports.utils import dataframe_to_excel
+
 
 class GNUCashData:
     """
@@ -47,7 +50,7 @@ class GNUCashData:
     # MEAN_NAME = 'Среднее'
 
     # Данные для генерации тестовых данных и тестирования
-    dir_pickle = 'V:/pickle'
+    dir_pickle = 'V:/test_data'
     # dir_testdata = 'v:/test_data'
 
     pickle_prices = 'prices.pkl'
@@ -145,42 +148,6 @@ class GNUCashData:
                                **kwargs)
         self._after_read()
 
-
-    # def _save_testdata(self, folder):
-    #     """
-    #     Запись тестовых pickle для последующей проверки в тестах
-    #     :return:
-    #     """
-    #     from_date = self.test_from_date # date(2016, 1, 1)
-    #     to_date = self.test_to_date  #    date(2016, 12, 31)
-    #
-    #     self._save_db_to_pickle(folder=self.dir_testdata)
-    #
-    #     # filename = self.pickle_assets
-    #     df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=self.test_glevel)
-    #     self._dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
-    #
-    #     # filename = 'loans.pkl'
-    #     df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY], glevel=0)
-    #     self._dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
-    #
-    #     # filename = 'expense.pkl'
-    #     df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE, glevel=self.test_glevel)
-    #     self._dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
-    #
-    #     # filename = 'income.pkl'
-    #     df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.INCOME,
-    #                                  glevel=self.test_glevel)
-    #     self._dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
-    #
-    #     # filename = 'profit.pkl'
-    #     df = self.profit_by_period(from_date=from_date, to_date=to_date, glevel=0)
-    #     self._dataframe_to_pickle(df, filename=self.pickle_profit, folder=self.dir_testdata)
-    #
-    #     # filename = 'equity.pkl'
-    #     df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
-    #     self._dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
-
     def _open_book_pickle(self, folder=None):
         """
         For test purpose
@@ -193,16 +160,29 @@ class GNUCashData:
         :param folder: Каталог с файлами базы
         :return:
         """
-        self.df_accounts=self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
-        self.df_commodities=self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
-        self.df_prices=self._dataframe_from_pickle(self.pickle_prices, folder=folder)
-        self.df_transactions=self._dataframe_from_pickle(self.pickle_tr, folder=folder)
 
-        # filename_splits = self._add_suffix(self.pickle_splits, suffix)
+        self._read_book_pickle(folder=folder)
+        self._after_read()
+
+    def _read_book_pickle(self, folder=None):
+        self.df_accounts = self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
+        # dataframe_to_excel(self.df_accounts, 'accounts-source')
+        self.df_commodities = self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
+        self.df_prices = self._dataframe_from_pickle(self.pickle_prices, folder=folder)
+        self.df_transactions = self._dataframe_from_pickle(self.pickle_tr, folder=folder)
         self.df_splits = self._dataframe_from_pickle(self.pickle_splits, folder=folder)
+        self._get_guid_rootaccount()
+        # print(guid)
+        # self.root_account_guid = gnucash_book.root_account.guid
 
-        # g = self.df_prices.index.values
-        # print(g)
+    def _get_guid_rootaccount(self):
+        """
+        Get root account guid from df_accounts
+        :return:
+        """
+        df_root = self.df_accounts[(self.df_accounts['account_type'] == self.ROOT) &
+                                   (self.df_accounts['name'] == 'Root Account')]
+        self.root_account_guid = df_root.index.values[0]
 
     def _dataframe_from_pickle(self, filename, folder=None):
         """
@@ -360,9 +340,9 @@ class GNUCashData:
                       "date", "source", "type", "value"]
             self.df_prices = self._object_to_dataframe(t_prices, fields)
 
-            #---------------------------------------------------
-            # After load
+            # dataframe_to_excel(self.df_accounts, 'accounts-source-sql')
 
+        # BaseTest._save_db_to_pickle(BaseTest.dir_testdata)
 
 
     def _after_read(self):
@@ -404,14 +384,22 @@ class GNUCashData:
         # self.df_splits['post_date'] = pandas.to_datetime(self.df_splits['post_date'])
 
         # Оставляем только одну цену за день в df_prices
-        # Список всех commodity_guid для цен (запоминаем, т.к. поле станет индексом)
-        # self.all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
         # Установка нового индекса
         self.df_prices.set_index(['commodity_guid', 'date'], inplace=True)
         # отсечение повторов по индексу
         self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
-        # all_guids = set(self.df_prices.index.get_level_values('commodity_guid').drop_duplicates().tolist())
-        # print(all_guids)
+
+        # Сворачиваем df_splits до дней
+
+        # start_time = time.time()
+        # Подсчитываем нарастающий итог
+        # print('Start calculating cum sum')
+        self.df_splits.sort_values(by='post_date', inplace=True)
+        # self.df_splits['cum_sum'] = self.df_splits.quantity.cumsum()
+        self.df_splits['cum_sum'] = self.df_splits.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
+        # dataframe_to_excel(self.df_splits, 'all-splits2')
+
 
     def _add_margins(self, dataframe, margins=None):
         """
@@ -546,7 +534,7 @@ class GNUCashData:
         # Отбираем нужные колонки (почти все и нужны)
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
-                                           'quantity', 'name', 'hidden', 'mnemonic'])
+                                           'cum_sum', 'name', 'hidden', 'mnemonic'])
         # Отбираем нужные типы счетов
         if type(account_types) is str:
             account_types = [account_types]
@@ -557,8 +545,9 @@ class GNUCashData:
 
         # Добавление колонки нарастающий итог по счетам
         # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
-        sel_df.sort_values(by='post_date', inplace=True)
-        sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        # sel_df.sort_values(by='post_date', inplace=True)
+        # sel_df['value'] = sel_df.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        sel_df.rename(columns={'cum_sum': 'value'}, inplace=True)
 
         # здесь подразумевается, что есть только одна цена за день
         # Поэтому отсекаем повторы

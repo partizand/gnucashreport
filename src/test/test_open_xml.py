@@ -18,7 +18,8 @@ class SQLOpenTest(unittest.TestCase, BaseOpenTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.open_xml()
+        # cls.open_xml()
+        cls.rep._read_book_xml(cls.bookfile_xml)
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,7 +12,8 @@ class SQLOpenTest(unittest.TestCase, BaseOpenTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.open_sql()
+        # cls.open_sql()
+        cls.rep._read_book_sql(cls.bookfile_sql)
 
 
 if __name__ == '__main__':

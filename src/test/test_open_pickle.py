@@ -9,7 +9,7 @@ class PickleOpenTest(unittest.TestCase, BaseOpenTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.open_pickle()
+        cls.rep._read_book_pickle(folder=cls.dir_testdata)
 
 
 if __name__ == '__main__':

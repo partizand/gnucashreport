@@ -116,10 +116,11 @@ class BaseTest(object):
         cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
         # save sql to pickle book
+        cls.rep._read_book_sql(BaseTest.bookfile_sql) # Получаем сырые данные
         cls._save_db_to_pickle(folder=cls.dir_testdata)
 
         # save xml to pickle book
-        cls.open_xml()  # Вроде по тестам перезапись данных и все ок
+        cls.rep._read_book_xml(BaseTest.bookfile_xml)  # Вроде по тестам перезапись данных и все ок
         cls._save_db_to_pickle(folder=cls.dir_testdata, suffix='-xml')
 
     @classmethod
