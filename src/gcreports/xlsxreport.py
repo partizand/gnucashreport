@@ -144,33 +144,6 @@ class XLSXReport:
             self._worksheet.write(row, col, col_name, frmt_date)
             col += 1
 
-
-
-    # def add_header(self, dataframe, row=-1, margins=None):
-    #     # Заголовок таблицы
-    #     if row <= -1:
-    #         row = self._cur_row
-    #     frmt_date = self._workbook.add_format()
-    #     frmt_date.set_num_format(self._datetime_format)
-    #     frmt_date.set_bold()
-    #     frmt_date.set_align('center')
-    #     cols = dataframe.columns.tolist()
-    #
-    #     i = len(dataframe.index.names)
-    #     start_col = xl_col_to_name(i)
-    #
-    #     for col_name in cols:
-    #         self._worksheet.write(row, i, col_name, frmt_date)
-    #         i += 1
-    #
-    #     count_vtotals = 0
-    #     if margins:
-    #         count_vtotals = margins.get_counts_vtotals()
-    #
-    #     end_col = xl_col_to_name(i-1-count_vtotals)
-    #     self.common_categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, start_col, end_col, row + 1)
-    #     self._update_cur_row(row + 1)
-
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None):
         # income_start_row = 2
         # income_height = len(dataframe)
