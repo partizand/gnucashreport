@@ -15,14 +15,16 @@ class XLSXReport:
 
     def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
         # self.filename = filename
-        self._sheet = sheet
-        self._worksheet = None
+        # self._sheet = sheet
+        # self._worksheet = None
         self._datetime_format = dateformat_from_period(datetime_format)
         self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
         self._workbook = self._writer.book
-        self._cur_row = start_row
-        self._charts = []
-        self._headers = []
+        # self._cur_row = start_row
+        # self._charts = []
+        # self._headers = []
+        # self.common_categories = None
+        self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
 
     def save(self):
         """
@@ -33,20 +35,34 @@ class XLSXReport:
         self._add_charts()
         self._writer.save()
 
-    def next_sheet(self, sheet_name, start_row=0, datetime_format=None):
+    def next_sheet(self, sheet, start_row=0, datetime_format=None):
         """
         Next data will be on this new sheet
-        :param sheet_name:
+        :param sheet:
         :param start_row:
         :return:
         """
         self._add_headers()
         self._add_charts()
-        self._sheet = sheet_name
-        self._cur_row = start_row
+        # self._sheet = sheet
+        # self._cur_row = start_row
+        # self._worksheet = None
+        # self.common_categories = None
+        # if datetime_format:
+        #     self._datetime_format = dateformat_from_period(datetime_format)
+        self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
+
+    def _some_init(self, sheet, start_row, datetime_format):
+        self._sheet = sheet
         self._worksheet = None
         if datetime_format:
             self._datetime_format = dateformat_from_period(datetime_format)
+        # self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+        # self._workbook = self._writer.book
+        self._cur_row = start_row
+        self._charts = []
+        self._headers = []
+        self.common_categories = None
 
     def add_empty_row(self):
         """
@@ -73,9 +89,9 @@ class XLSXReport:
 
             ex_chart = self._workbook.add_chart({'type': 'column'})
             ex_chart.add_series(chart)
-            ex_chart.set_size({'x_scale': 2, 'y_scale': 2})
+            ex_chart.set_size({'x_scale': 2, 'y_scale': 1.5})
             self._worksheet.insert_chart(row=self._cur_row, col=1, chart=ex_chart)
-            self._update_cur_row(self._cur_row + 10)
+            self._update_cur_row(self._cur_row + 23)
 
         self._charts = []
 
@@ -109,7 +125,7 @@ class XLSXReport:
 
         if self._headers:
             for header in self._headers:
-                self._add_header()
+                self._add_header(header)
             self._headers = []
 
     def _add_header(self, header):
@@ -130,30 +146,30 @@ class XLSXReport:
 
 
 
-    def add_header(self, dataframe, row=-1, margins=None):
-        # Заголовок таблицы
-        if row <= -1:
-            row = self._cur_row
-        frmt_date = self._workbook.add_format()
-        frmt_date.set_num_format(self._datetime_format)
-        frmt_date.set_bold()
-        frmt_date.set_align('center')
-        cols = dataframe.columns.tolist()
-
-        i = len(dataframe.index.names)
-        start_col = xl_col_to_name(i)
-
-        for col_name in cols:
-            self._worksheet.write(row, i, col_name, frmt_date)
-            i += 1
-
-        count_vtotals = 0
-        if margins:
-            count_vtotals = margins.get_counts_vtotals()
-
-        end_col = xl_col_to_name(i-1-count_vtotals)
-        self.common_categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, start_col, end_col, row + 1)
-        self._update_cur_row(row + 1)
+    # def add_header(self, dataframe, row=-1, margins=None):
+    #     # Заголовок таблицы
+    #     if row <= -1:
+    #         row = self._cur_row
+    #     frmt_date = self._workbook.add_format()
+    #     frmt_date.set_num_format(self._datetime_format)
+    #     frmt_date.set_bold()
+    #     frmt_date.set_align('center')
+    #     cols = dataframe.columns.tolist()
+    #
+    #     i = len(dataframe.index.names)
+    #     start_col = xl_col_to_name(i)
+    #
+    #     for col_name in cols:
+    #         self._worksheet.write(row, i, col_name, frmt_date)
+    #         i += 1
+    #
+    #     count_vtotals = 0
+    #     if margins:
+    #         count_vtotals = margins.get_counts_vtotals()
+    #
+    #     end_col = xl_col_to_name(i-1-count_vtotals)
+    #     self.common_categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, start_col, end_col, row + 1)
+    #     self._update_cur_row(row + 1)
 
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None):
         # income_start_row = 2
@@ -163,18 +179,19 @@ class XLSXReport:
 
         df_start_row = row
         if name:
-            df_start_row = row + 1
+            df_start_row += 1
 
         height = len(dataframe)
         if header:
             height += 1
+            df_start_row += 1
             self._header_to_list(dataframe, row, margins)
-            header = False
+            # header = False
 
         itog_row = df_start_row + height - 1
         col_count = len(dataframe.columns)
 
-        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=df_start_row, header=header)
+        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=df_start_row, header=False)
         # Get the xlsxwriter objects from the dataframe writer object.
         if not self._worksheet:
             self._worksheet = self._writer.sheets[self._sheet]
@@ -188,7 +205,7 @@ class XLSXReport:
             frmt_head.set_bg_color(color)
 
         if name:
-            self._worksheet.write(row, 0, name, frmt_head)
+            self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
 
         # Выделение итогов
         width_totals_col = 0
@@ -215,15 +232,23 @@ class XLSXReport:
                                                    options={'type': 'no_blanks',
                                                            'format': frmt_bold})
 
-        # Ширина первой колонки
+
         index_len = len(dataframe.index.names)
+        # Ширина первой колонки
         self._worksheet.set_column(firstcol=0, lastcol=index_len - 1, width=25)
+        # Ширина колонок до итогов
         self._worksheet.set_column(firstcol=index_len, lastcol=col_count, cell_format=frmt_money, width=12)
 
         if margins:
+            # Ширина пустой колонки
             if margins.empty_col:
                 empty_col = col_count-width_totals_col
                 self._worksheet.set_column(firstcol=empty_col, lastcol=empty_col, width=1)
+                width_totals_col -= 1
+            # Ширина колонк с итогами
+            if width_totals_col > 0:
+                self._worksheet.set_column(firstcol=col_count-width_totals_col , lastcol=col_count, width=18)
+
 
         if addchart:
             chart_prop = self._get_chart_prop(dataframe, name=name, header=header, margins=margins, row=row)

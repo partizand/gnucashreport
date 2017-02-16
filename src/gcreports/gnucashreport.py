@@ -77,7 +77,7 @@ class GNUCashReport(GNUCashData):
         xlsxreport = XLSXReport(filename=filename, datetime_format='M')
 
         for year in years:
-            xlsxreport.next_sheet(sheet_name=str(year))
+            xlsxreport.next_sheet(sheet=str(year))
 
             from_date = date(year, 1, 1)
             to_date = date(year, 12, 31)
@@ -95,7 +95,7 @@ class GNUCashReport(GNUCashData):
             from_date = date(full_years[0], 1, 1)
             to_date = date(full_years[-1], 12, 31)
             period = 'A'
-            xlsxreport.next_sheet(sheet_name='all', datetime_format=period)
+            xlsxreport.next_sheet(sheet='all', datetime_format=period)
             self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
 
         xlsxreport.save()
@@ -177,7 +177,7 @@ class GNUCashReport(GNUCashData):
         # Income
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.INCOME,
                                                 glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_income, name='Доходы', color='green', header=False, margins=margins, row=1)
+        xlsxreport.add_dataframe(df_income, name='Доходы', color='green', header=True, margins=margins)
         xlsxreport.add_empty_row()
 
         # expense
@@ -195,7 +195,7 @@ class GNUCashReport(GNUCashData):
         # assets
         margins.set_for_balances()
         df_assets = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_assets, color='green', name='Активы', header=False, margins=margins)
+        xlsxreport.add_dataframe(df_assets, color='green', name='Активы', header=False, margins=margins, addchart=True)
         xlsxreport.add_empty_row()
 
         # loans
@@ -211,8 +211,8 @@ class GNUCashReport(GNUCashData):
         xlsxreport.add_dataframe(df_profit, color='green', header=False, margins=margins, addchart=True)
         xlsxreport.add_empty_row()
 
-        margins.set_for_turnover()
-        xlsxreport.add_header(df_income, row=0, margins=margins)
+        # margins.set_for_turnover()
+        # xlsxreport.add_header(df_income, row=0, margins=margins)
 
         # xlsxreport.save()
 
