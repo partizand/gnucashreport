@@ -91,14 +91,14 @@ class GNUCashData:
         self.book_name = None
         self.root_account_guid = None
 
-    def open_book_xml(self, xml_file=None):
+    def open_book_xml(self, xml_file):
         """
         Opens gnucash book from xml file
         :param xml_file:
         :return:
         """
-        if not xml_file:
-            xml_file = self.bookfile_xml
+        # if not xml_file:
+        #     xml_file = self.bookfile_xml
         self._read_book_xml(xml_file)
         self._after_read()
         # print(self.df_prices)
@@ -129,8 +129,8 @@ class GNUCashData:
         :raises GnucashException: if there is a lock on the file and open_if_lock is False
         :return:
         """
-        if not sqlite_file:
-            sqlite_file = self.bookfile_sql
+        # if not sqlite_file:
+        #     sqlite_file = self.bookfile_sql
         self._read_book_sql(sqlite_file=sqlite_file,
                                uri_conn=uri_conn,
                                readonly=readonly,
@@ -146,59 +146,40 @@ class GNUCashData:
         self._after_read()
 
 
-    def _save_testdata(self, folder):
-        """
-        Запись тестовых pickle для последующей проверки в тестах
-        :return:
-        """
-        from_date = self.test_from_date # date(2016, 1, 1)
-        to_date = self.test_to_date  #    date(2016, 12, 31)
-
-        self._save_db_to_pickle(folder=self.dir_testdata)
-
-        # filename = self.pickle_assets
-        df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=self.test_glevel)
-        self._dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
-
-        # filename = 'loans.pkl'
-        df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY], glevel=0)
-        self._dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
-
-        # filename = 'expense.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE, glevel=self.test_glevel)
-        self._dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
-
-        # filename = 'income.pkl'
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.INCOME,
-                                     glevel=self.test_glevel)
-        self._dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
-
-        # filename = 'profit.pkl'
-        df = self.profit_by_period(from_date=from_date, to_date=to_date, glevel=0)
-        self._dataframe_to_pickle(df, filename=self.pickle_profit, folder=self.dir_testdata)
-
-        # filename = 'equity.pkl'
-        df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
-        self._dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
-
-    def _save_db_to_pickle(self, folder=None, suffix=None):
-        """
-        For test purpose
-        Запись данных базы в pickle файлы каталога.
-        :param folder: Каталог с файлами базы
-        :return:
-        """
-        self._dataframe_to_pickle(self.df_accounts, self._add_suffix(self.pickle_accounts, suffix), folder=folder)
-        self._dataframe_to_pickle(self.df_commodities, self._add_suffix(self.pickle_commodities, suffix), folder=folder)
-        self._dataframe_to_pickle(self.df_prices, self._add_suffix(self.pickle_prices, suffix), folder=folder)
-        self._dataframe_to_pickle(self.df_transactions, self._add_suffix(self.pickle_tr, suffix), folder=folder)
-        self._dataframe_to_pickle(self.df_splits, self._add_suffix(self.pickle_splits, suffix), folder=folder)
-
-    @staticmethod
-    def _add_suffix(filename, suffix):
-        if not suffix:
-            return filename
-        return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
+    # def _save_testdata(self, folder):
+    #     """
+    #     Запись тестовых pickle для последующей проверки в тестах
+    #     :return:
+    #     """
+    #     from_date = self.test_from_date # date(2016, 1, 1)
+    #     to_date = self.test_to_date  #    date(2016, 12, 31)
+    #
+    #     self._save_db_to_pickle(folder=self.dir_testdata)
+    #
+    #     # filename = self.pickle_assets
+    #     df = self.balance_by_period(from_date=from_date, to_date=to_date, glevel=self.test_glevel)
+    #     self._dataframe_to_pickle(df, filename=self.pickle_assets, folder=self.dir_testdata)
+    #
+    #     # filename = 'loans.pkl'
+    #     df = self.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY], glevel=0)
+    #     self._dataframe_to_pickle(df, filename=self.pickle_loans, folder=self.dir_testdata)
+    #
+    #     # filename = 'expense.pkl'
+    #     df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE, glevel=self.test_glevel)
+    #     self._dataframe_to_pickle(df, filename=self.pickle_expense, folder=self.dir_testdata)
+    #
+    #     # filename = 'income.pkl'
+    #     df = self.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.INCOME,
+    #                                  glevel=self.test_glevel)
+    #     self._dataframe_to_pickle(df, filename=self.pickle_income, folder=self.dir_testdata)
+    #
+    #     # filename = 'profit.pkl'
+    #     df = self.profit_by_period(from_date=from_date, to_date=to_date, glevel=0)
+    #     self._dataframe_to_pickle(df, filename=self.pickle_profit, folder=self.dir_testdata)
+    #
+    #     # filename = 'equity.pkl'
+    #     df = self.equity_by_period(from_date=from_date, to_date=to_date, glevel=0)
+    #     self._dataframe_to_pickle(df, filename=self.pickle_equity, folder=self.dir_testdata)
 
     def _open_book_pickle(self, folder=None, suffix=None):
         """
@@ -236,18 +217,6 @@ class GNUCashData:
         df = pandas.read_pickle(fullfilename)
         return df
 
-    def _dataframe_to_pickle(self, dataframe, filename, folder=None):
-        """
-        Записаывает DataFrame в pickle файл
-        :param dataframe:
-        :param filename:
-        :param folder:
-        :return:
-        """
-        if not folder:
-            folder = self.dir_pickle
-        fullfilename = os.path.join(folder, filename)
-        dataframe.to_pickle(fullfilename)
 
     def _read_book_xml(self, xml_file):
 

@@ -51,6 +51,63 @@ class BaseTest(object):
     # Конец тестовых данных
 
     @classmethod
+    def save_testdata(cls):
+        """
+        Запись тестовых pickle для последующей проверки в тестах
+        :return:
+        """
+
+        # from_date = BaseTest.test_from_date  # date(2016, 1, 1)
+        # to_date = BaseTest.test_to_date  # date(2016, 12, 31)
+        # glevel = BaseTest.test_glevel
+        # period = BaseTest.test_period
+        # dir_testdata = BaseTest.dir_testdata
+
+        # open sql book
+        # gcdata = GNUCashData()
+        # gcdata.open_book_sql(BaseTest.bookfile_sql, open_if_lock=True)
+
+        cls.open_sql()
+
+        # btest.open_sql()
+
+        # save reports
+        # df = gcdata.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        df = BaseTest.get_assets()
+        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_assets, folder=cls.dir_testdata)
+
+        # df = gcdata.balance_by_period(from_date=from_date, to_date=to_date, account_types=[GNUCashData.LIABILITY],
+        #                               period=period, glevel=0)
+        df = BaseTest.get_loans()
+        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_loans, folder=cls.dir_testdata)
+        # df = gcdata.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
+        #                                account_type=GNUCashData.EXPENSE, glevel=glevel)
+        df = BaseTest.get_expense()
+        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_expense, folder=cls.dir_testdata)
+
+        # df = gcdata.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
+        #                                account_type=GNUCashData.INCOME, glevel=glevel)
+        df = BaseTest.get_income()
+        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_income, folder=cls.dir_testdata)
+
+        # df = gcdata.profit_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0)
+        df = BaseTest.get_profit()
+        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_profit, folder=cls.dir_testdata)
+
+        # df = gcdata.equity_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0)
+        df = BaseTest.get_equity()
+        cls._dataframe_to_pickle(df, filename=BaseTest.pickle_equity, folder=cls.dir_testdata)
+        # save sql to pickle book
+
+
+        cls._save_db_to_pickle(folder=cls.dir_testdata)
+        # gcdata = GNUCashData()
+        # open xml book
+        cls.open_xml() # TODO Будет ли перезапись данных или дозапись?
+        # save xml to pickle book
+        cls._save_db_to_pickle(folder=cls.dir_testdata, suffix='-xml')
+
+    @classmethod
     def open_sql(cls):
         cls.rep.open_book_sql(BaseTest.bookfile_sql, open_if_lock=True)
 
@@ -61,6 +118,39 @@ class BaseTest(object):
     @classmethod
     def open_pickle(cls):
         cls.rep._open_book_pickle(folder=BaseTest.dir_testdata)
+
+    @classmethod
+    def _save_db_to_pickle(cls, folder, suffix=None):
+        """
+        For test purpose
+        Save book to pickle files
+        Запись данных базы в pickle файлы каталога.
+        :param folder: Каталог с файлами базы
+        :return:
+        """
+        cls._dataframe_to_pickle(cls.rep.df_accounts, cls._add_suffix(cls.pickle_accounts, suffix), folder=folder)
+        cls._dataframe_to_pickle(cls.rep.df_commodities, cls._add_suffix(cls.pickle_commodities, suffix), folder=folder)
+        cls._dataframe_to_pickle(cls.rep.df_prices, cls._add_suffix(cls.pickle_prices, suffix), folder=folder)
+        cls._dataframe_to_pickle(cls.rep.df_transactions, cls._add_suffix(cls.pickle_tr, suffix), folder=folder)
+        cls._dataframe_to_pickle(cls.rep.df_splits, cls._add_suffix(cls.pickle_splits, suffix), folder=folder)
+
+    @classmethod
+    def _dataframe_to_pickle(cls, dataframe, filename, folder):
+        """
+        Записаывает DataFrame в pickle файл
+        :param dataframe:
+        :param filename:
+        :return:
+        """
+        fullfilename = os.path.join(folder, filename)
+        dataframe.to_pickle(fullfilename)
+
+
+    @staticmethod
+    def _add_suffix(filename, suffix):
+        if not suffix:
+            return filename
+        return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
 
     @classmethod
     def get_assets(cls):
@@ -111,6 +201,16 @@ class BaseTest(object):
         :return:
         """
         df = cls.rep.profit_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
+                                       glevel=cls.test_glevel)
+        return df
+
+    @classmethod
+    def get_equity(cls):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        df = cls.rep.equity_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
                                        glevel=cls.test_glevel)
         return df
 

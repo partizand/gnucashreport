@@ -34,29 +34,34 @@ class BaseReportTest(BaseTest):
 
     def test_loans(self):
         # filename = 'assets.pkl'
-        df = self.rep.balance_by_period(from_date=self.test_from_date, to_date=self.test_to_date,
-                                         account_types=[GNUCashData.LIABILITY], glevel=0)
+        # df = self.rep.balance_by_period(from_date=self.test_from_date, to_date=self.test_to_date,
+        #                                  account_types=[GNUCashData.LIABILITY], glevel=0)
+        df = self.get_loans()
         self.pickle_control(self.pickle_loans, df, 'Loans')
 
     def test_expense(self):
         # filename = 'expense.pkl'
-        df = self.rep.turnover_by_period(from_date=self.test_from_date, to_date=self.test_to_date, account_type=GNUCashData.EXPENSE,
-                                         glevel=self.test_glevel)
+        # df = self.rep.turnover_by_period(from_date=self.test_from_date, to_date=self.test_to_date, account_type=GNUCashData.EXPENSE,
+        #                                  glevel=self.test_glevel)
+        df = self.get_expense()
         self.pickle_control(self.pickle_expense, df, 'Group expenses')
 
     def test_income(self):
         # filename = 'income.pkl'
-        df = self.rep.turnover_by_period(from_date=self.test_from_date, to_date=self.test_to_date, account_type=GNUCashData.INCOME,
-                                         glevel=self.test_glevel)
+        # df = self.rep.turnover_by_period(from_date=self.test_from_date, to_date=self.test_to_date, account_type=GNUCashData.INCOME,
+        #                                  glevel=self.test_glevel)
+        df = self.get_income()
         self.pickle_control(self.pickle_income, df, 'Group income')
 
     def test_profit(self):
         # filename = 'profit.pkl'
-        df = self.rep.profit_by_period(from_date=self.test_from_date, to_date=self.test_to_date, glevel=self.test_glevel)
+        # df = self.rep.profit_by_period(from_date=self.test_from_date, to_date=self.test_to_date, glevel=self.test_glevel)
+        df = self.get_profit()
         self.pickle_control(self.pickle_profit, df, 'profit')
 
     def test_equity(self):
         # filename = 'profit.pkl'
-        df = self.rep.equity_by_period(from_date=self.test_from_date, to_date=self.test_to_date, glevel=self.test_glevel)
+        # df = self.rep.equity_by_period(from_date=self.test_from_date, to_date=self.test_to_date, glevel=self.test_glevel)
+        df = self.get_equity()
         self.pickle_control(self.pickle_equity, df, 'equity')
 
