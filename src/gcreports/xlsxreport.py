@@ -17,16 +17,12 @@ class XLSXReport:
         self.filename = filename
         self.sheet = sheet
         self.worksheet = None
+        self.datetime_format = dateformat_from_period(datetime_format)
         self.writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
         self.workbook = self.writer.book
         self.cur_row = start_row
         self.charts = []
-        self.datetime_format = dateformat_from_period(datetime_format)
-        # self.datetime_format = datetime_format
-        # if datetime_format:
-        #     self.datetime_format = datetime_format
-        # else:
-        #     self.datetime_format = 'dd-mm-yyyy'
+        self.headers = []
 
     def save(self):
         """
@@ -84,7 +80,7 @@ class XLSXReport:
     def add_header(self, dataframe, row=-1, margins=None):
         # Заголовок таблицы
         if row <= -1:
-            row=self.cur_row
+            row = self.cur_row
         frmt_date = self.workbook.add_format()
         frmt_date.set_num_format(self.datetime_format)
         frmt_date.set_bold()
@@ -95,9 +91,8 @@ class XLSXReport:
         start_col = xl_col_to_name(i)
 
         for col_name in cols:
-            # self.worksheet.write(0, i, col, frmt_date)
             self.worksheet.write(row, i, col_name, frmt_date)
-            i = i + 1
+            i += 1
 
         count_vtotals = 0
         if margins:
@@ -105,10 +100,7 @@ class XLSXReport:
 
         end_col = xl_col_to_name(i-1-count_vtotals)
         self.common_categories = '={0}!${1}${3}:${2}${3}'.format(self.sheet, start_col, end_col, row+1)
-        # self.worksheet.write(0, col_count + 2, 'Всего', frmt_bold)
-        # self.worksheet.write(0, col_count + 3, 'Среднее', frmt_bold)
         self._update_cur_row(row + 1)
-        # self.cur_row = row + 1
 
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None):
         # income_start_row = 2
