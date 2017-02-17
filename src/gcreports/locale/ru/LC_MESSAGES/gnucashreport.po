@@ -1,0 +1,43 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2017-02-17 16:14+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+
+#: src/gcreports\gnucashreport.py:10
+msgid "Assets"
+msgstr "Активы"
+
+#: src/gcreports\gnucashreport.py:12
+msgid "Expense"
+msgstr "Расходы"
+
+#: src/gcreports\gnucashreport.py:14
+msgid "Income"
+msgstr "Доходы"
+
+#: src/gcreports\margins.py:2
+msgid "Total"
+msgstr "Всего"
+
+#: src/gcreports\margins.py:3
+msgid "Average"
+msgstr "Среднее"
+
+#: src/gcreports\margins.py:4
+msgid "Profit"
+msgstr "Прибыль"
+
+#: src/gcreports\margins.py:5
+msgid "Equity"
+msgstr "Капитал"
+
