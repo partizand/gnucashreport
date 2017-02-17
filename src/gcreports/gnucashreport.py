@@ -7,6 +7,12 @@ from gcreports.xlsxreport import XLSXReport
 
 from gcreports.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
 
+COLOR_GREEN = '#92D050'
+COLOR_GREEN_DARK = '#00B050'
+COLOR_BLUE = '#00B0F0'
+COLOR_YELLOW = '#FFFF00'
+COLOR_ORANGE_LIGHT = '#FDE9D9'
+
 
 class GNUCashReport(GNUCashData):
     """
@@ -76,10 +82,22 @@ class GNUCashReport(GNUCashData):
 
         from_date, to_date = self._complete_month(min_date, max_date)
 
-        # years = self._get_list_years(min_date, max_date)
+        years = self._split_by_years(from_date, to_date)
 
         xlsxreport = XLSXReport(filename=filename, datetime_format='M')
-        self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period='M', glevel=glevel)
+        # sheet on each year
+        for start_date, end_date in years:
+            xlsxreport.next_sheet(sheet=str(start_date.year))
+            self._complex_report_writer(xlsxreport, start_date, end_date, period='M', glevel=glevel)
+
+        # sheet by years
+        full_years = self._complete_years(from_date, to_date)
+        if full_years:
+            start_year, end_year = full_years
+            y_start_date = date(start_year, 1, 1)
+            y_end_date = date(end_year, 12, 31)
+            xlsxreport.next_sheet(sheet='All', datetime_format='A')
+            self._complex_report_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A', glevel=glevel)
         xlsxreport.save()
         return
 
@@ -87,15 +105,37 @@ class GNUCashReport(GNUCashData):
 
     @staticmethod
     def _split_by_years(from_date: date, to_date: date):
-        dates = []
-        first_date = from_date
-        end_date = from_date.replace(month=12, day=31)
-        while end_date < to_date:
-            dates.append({'start': first_date, 'end': end_date})
-            first_date
-        if end_year > to_date:
-            end_year = to_date
+        """
+        Splits two dates interval on array of intervals by years
 
+        >>> GNUCashReport._split_by_years(date(2014,1,2), date(2017, 1, 20))
+        [[datetime.date(2014, 2, 1), datetime.date(2014, 12, 31)],\
+ [datetime.date(2015, 1, 1), datetime.date(2015, 12, 31)],\
+ [datetime.date(2016, 1, 1), datetime.date(2016, 12, 31)]]
+
+        :param from_date:
+        :param to_date:
+        :return: Array of tuples date
+        """
+        dates = []
+        from_date, to_date = GNUCashReport._complete_month(from_date, to_date)
+        cur_year = from_date.year
+        not_end_cycle = True
+        while not_end_cycle:
+            first_date = date(cur_year, 1, 1)
+            end_date = date(cur_year, 12, 31)
+            if first_date < from_date:
+                first_date = from_date
+            if end_date > to_date:
+                end_date = to_date
+                # end cycle
+                not_end_cycle = False
+            if first_date >= end_date:
+                break
+            dates.append([first_date, end_date])
+            cur_year += 1
+
+        return dates
 
     def complex_report_years(self, filename, glevel=1):
 
@@ -214,6 +254,8 @@ class GNUCashReport(GNUCashData):
         (datetime.date(2016, 2, 1), datetime.date(2016, 11, 30))
         >>> GNUCashReport._complete_month(date(2008,12,31), date(2017, 2, 15))
         (datetime.date(2009, 1, 1), datetime.date(2017, 1, 31))
+        >>> GNUCashReport._complete_month(date(2008,12,31), date(2017, 1, 15))
+        (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
 
         :param from_date:
         :param to_date:
@@ -310,25 +352,25 @@ class GNUCashReport(GNUCashData):
         # Income
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.INCOME,
                                                 glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_income, name='Доходы', color='green', header=True, margins=margins)
+        xlsxreport.add_dataframe(df_income, name='Доходы', color=COLOR_GREEN, header=True, margins=margins)
         xlsxreport.add_empty_row()
 
         # expense
         df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.EXPENSE,
                                                  glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_expense, name='Расходы', color='yellow', header=False, margins=margins)
+        xlsxreport.add_dataframe(df_expense, name='Расходы', color=COLOR_YELLOW, header=False, margins=margins)
         xlsxreport.add_empty_row()
 
         # profit
         margins.set_for_profit()
         df_profit = self.profit_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_profit, color='red', header=False, margins=margins)
+        xlsxreport.add_dataframe(df_profit, color=COLOR_GREEN_DARK, header=False, margins=margins)
         xlsxreport.add_empty_row()
 
         # assets
         margins.set_for_balances()
         df_assets = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_assets, color='green', name='Активы', header=False, margins=margins)
+        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name='Активы', header=False, margins=margins)
         xlsxreport.add_empty_row()
 
         # loans
@@ -336,12 +378,14 @@ class GNUCashReport(GNUCashData):
         df_loans = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=0,
                                               account_types=[GNUCashData.LIABILITY],
                                               margins=margins)
-        xlsxreport.add_dataframe(df_loans, color='yellow', header=False, margins=margins)
-        xlsxreport.add_empty_row()
+        has_loans = not (df_loans.isnull().values.all())
+        if has_loans:
+            xlsxreport.add_dataframe(df_loans, color=COLOR_ORANGE_LIGHT, header=False, margins=margins)
+            xlsxreport.add_empty_row()
 
         # equity
         df_profit = self.equity_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_profit, color='green', header=False, margins=margins, addchart=True)
+        xlsxreport.add_dataframe(df_profit, color=COLOR_BLUE, header=False, margins=margins, addchart=True)
         xlsxreport.add_empty_row()
 
         # margins.set_for_turnover()

@@ -148,7 +148,7 @@ class GNUCashData:
                                **kwargs)
         self._after_read()
 
-    def _open_book_pickle(self, folder=None):
+    def _open_book_pickle(self, folder):
         """
         For test purpose
         Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)

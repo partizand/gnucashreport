@@ -9,6 +9,7 @@ from gcreports.margins import Margins
 from gcreports.utils import dateformat_from_period
 
 
+
 class XLSXReport:
 
     default_dir_reports = 'V:/tables'
@@ -156,7 +157,7 @@ class XLSXReport:
 
         height = len(dataframe)
         if header:
-            height += 1
+            # height += 1
             df_start_row += 1
             self._header_to_list(dataframe, row, margins)
             # header = False
@@ -220,7 +221,7 @@ class XLSXReport:
                 width_totals_col -= 1
             # Ширина колонк с итогами
             if width_totals_col > 0:
-                self._worksheet.set_column(firstcol=col_count-width_totals_col , lastcol=col_count, width=18)
+                self._worksheet.set_column(firstcol=col_count-width_totals_col , lastcol=col_count, width=15)
 
 
         if addchart:
