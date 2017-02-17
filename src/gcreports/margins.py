@@ -1,4 +1,3 @@
-import pandas
 
 TOTAL_NAME = 'Всего'
 MEAN_NAME = 'Среднее'

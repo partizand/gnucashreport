@@ -7,6 +7,12 @@ from gcreports.xlsxreport import XLSXReport
 
 from gcreports.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
 
+ASSETS_NAME = _('Assets')
+
+EXPENSE_NAME = 'Расходы'
+
+INCOME_NAME = 'Доходы'
+
 COLOR_GREEN = '#92D050'
 COLOR_GREEN_DARK = '#00B050'
 COLOR_BLUE = '#00B0F0'
@@ -352,13 +358,13 @@ class GNUCashReport(GNUCashData):
         # Income
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.INCOME,
                                                 glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_income, name='Доходы', color=COLOR_GREEN, header=True, margins=margins)
+        xlsxreport.add_dataframe(df_income, name=INCOME_NAME, color=COLOR_GREEN, header=True, margins=margins)
         xlsxreport.add_empty_row()
 
         # expense
         df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.EXPENSE,
                                                  glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_expense, name='Расходы', color=COLOR_YELLOW, header=False, margins=margins)
+        xlsxreport.add_dataframe(df_expense, name=EXPENSE_NAME, color=COLOR_YELLOW, header=False, margins=margins)
         xlsxreport.add_empty_row()
 
         # profit
@@ -370,7 +376,7 @@ class GNUCashReport(GNUCashData):
         # assets
         margins.set_for_balances()
         df_assets = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name='Активы', header=False, margins=margins)
+        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name=ASSETS_NAME, header=False, margins=margins)
         xlsxreport.add_empty_row()
 
         # loans
