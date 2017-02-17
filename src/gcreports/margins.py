@@ -1,8 +1,8 @@
 
-TOTAL_NAME = 'Всего'
-MEAN_NAME = 'Среднее'
-PROFIT_NAME = 'Прибыль'
-EQUITY_NAME = 'Капитал'
+TOTAL_NAME = _('Total')
+MEAN_NAME = _('Average')
+PROFIT_NAME = _('Profit')
+EQUITY_NAME = _('Equity')
 
 class Margins:
 

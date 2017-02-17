@@ -1,3 +1,6 @@
+import gettext
+
+import locale
 import os
 
 import piecash
@@ -93,6 +96,10 @@ class GNUCashData:
 
         self.book_name = None
         self.root_account_guid = None
+
+        current_locale, encoding = locale.getdefaultlocale()
+        lang = gettext.translation('messages', localedir='./gcreports/locale', languages=[current_locale])
+        lang.install()
 
     def open_book_xml(self, xml_file):
         """
