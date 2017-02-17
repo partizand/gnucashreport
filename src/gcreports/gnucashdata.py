@@ -15,7 +15,8 @@ from decimal import Decimal
 from copy import copy
 
 from gcreports.gcxmlreader import GNUCashXMLBook
-from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
+# from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
+from gcreports.margins import Margins
 from gcreports.utils import dataframe_to_excel
 
 
@@ -97,14 +98,20 @@ class GNUCashData:
         self.book_name = None
         self.root_account_guid = None
 
-        current_locale, encoding = locale.getdefaultlocale()
+
         # internalization
+        current_locale, encoding = locale.getdefaultlocale()
+        os.environ['LANGUAGE'] = current_locale
+
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
         dir_locale = os.path.join(dir_path, 'locale')
-        current_locale = 'en'
-        lang = gettext.translation('gnucashreport', localedir=dir_locale, languages=[current_locale])
-        lang.install()
+        # current_locale = 'en'
+        # is_locale = gettext.find('gnucashreport', localedir=dir_locale, languages=current_locale)
+
+        # lang = gettext.translation('gnucashreport', localedir=dir_locale, languages=[current_locale])
+        # lang.install()
+        gettext.install('gnucashreport', localedir=dir_locale)
 
     def open_book_xml(self, xml_file):
         """
@@ -447,7 +454,7 @@ class GNUCashData:
 
     def _add_row_total(self, dataframe, margins=None):
 
-        total_name = TOTAL_NAME
+        total_name = _('Total')
         if margins:
             total_name = margins.total_name
         if isinstance(dataframe.index, pandas.core.index.MultiIndex):
@@ -499,7 +506,7 @@ class GNUCashData:
         group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
 
         # Суммируем
-        equity_name = EQUITY_NAME
+        equity_name = _('Equity')
         if margins:
             equity_name = margins.equity_name
         df = self._sum_all(group_acc, total_name=equity_name, glevel=glevel, inverse=False)
@@ -711,7 +718,7 @@ class GNUCashData:
 
 
         # Суммируем
-        profit_name = PROFIT_NAME
+        profit_name = _('Profit')
         if margins:
             profit_name = margins.profit_name
         df = self._sum_all(group, total_name=profit_name, glevel=glevel, inverse=True)
