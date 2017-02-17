@@ -1,18 +1,19 @@
 
-TOTAL_NAME = _('Total')
-MEAN_NAME = _('Average')
-PROFIT_NAME = _('Profit')
-EQUITY_NAME = _('Equity')
+TOTAL_NAME = 'Total'
+MEAN_NAME = 'Average'
+PROFIT_NAME = 'Profit'
+EQUITY_NAME = 'Equity'
 
 class Margins:
 
     def __init__(self, total_row=False, total_col=False, mean_col=False,
                  total_name=TOTAL_NAME, mean_name=MEAN_NAME, profit_name=PROFIT_NAME, equity_name=EQUITY_NAME,
                  empty_col=False):
-        self.total_name = total_name
-        self.mean_name = mean_name
-        self.profit_name = profit_name
-        self.equity_name = equity_name
+        # self.total_name = total_name
+        self.total_name = _(total_name)
+        self.mean_name = _(mean_name)
+        self.profit_name = _(profit_name)
+        self.equity_name = _(equity_name)
         self.total_row = total_row
         self.total_col = total_col
         self.mean_col = mean_col

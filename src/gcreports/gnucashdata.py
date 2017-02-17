@@ -98,7 +98,12 @@ class GNUCashData:
         self.root_account_guid = None
 
         current_locale, encoding = locale.getdefaultlocale()
-        lang = gettext.translation('messages', localedir='./gcreports/locale', languages=[current_locale])
+        # internalization
+        path = os.path.abspath(__file__)
+        dir_path = os.path.dirname(path)
+        dir_locale = os.path.join(dir_path, 'locale')
+        current_locale = 'en'
+        lang = gettext.translation('gnucashreport', localedir=dir_locale, languages=[current_locale])
         lang.install()
 
     def open_book_xml(self, xml_file):

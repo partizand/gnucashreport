@@ -37,8 +37,8 @@ gcrep = GNUCashReport()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
 # gcrep.open_book_sql(bookfile_sql)
-# gcrep._open_book_pickle(gcrep.dir_pickle)
-gcrep.open_book_sql(bookfile_sql)
+gcrep._open_book_pickle(gcrep.dir_pickle)
+# gcrep.open_book_sql(bookfile_sql)
 
 # rep.open_book_xml('U:/xml_book/GnuCash-base.gnucash')
 # rep.save_pickle()

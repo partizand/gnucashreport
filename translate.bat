@@ -9,3 +9,4 @@ python.exe "%pygettext%" --output-dir="%out-dir%" --default-domain=%domain% src/
 python.exe "%msgfmt%" "%out-dir%\%domain%.po"
 
 copy "%out-dir%\%domain%.mo" "%out-dir%\%locale%\LC_MESSAGES\%domain%.mo"
+copy "%out-dir%\%domain%.po" "%out-dir%\%locale%\LC_MESSAGES\%domain%.po"
