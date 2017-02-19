@@ -23,6 +23,18 @@ COLOR_ORANGE_LIGHT = '#FDE9D9'
 class GNUCashReport(GNUCashData):
     """
     High level reports from GnuCash to Excel
+
+    Example
+
+    >>> import gnucashreport
+    >>> gcrep = GNUCashReport()
+
+    open sql book
+    >>> gcrep.open_book_sql('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
+
+    save reports by years in xlsx file
+    >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
+
     """
 
     def __init__(self):
@@ -142,82 +154,6 @@ class GNUCashReport(GNUCashData):
             cur_year += 1
 
         return dates
-
-    def complex_report_years(self, filename, glevel=1):
-
-        min_date = self.df_splits['post_date'].min()
-        max_date = self.df_splits['post_date'].max()
-
-        years = self._get_list_years(min_date, max_date)
-
-        # print(list(range(1,10)))
-
-        # print(years)
-        # exit()
-
-        xlsxreport = XLSXReport(filename=filename, datetime_format='M')
-
-        for year in years:
-            xlsxreport.next_sheet(sheet=str(year))
-
-            from_date = date(year, 1, 1)
-            to_date = date(year, 12, 31)
-            period = 'M'
-            # glevel = 1
-
-            self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
-
-
-
-        full_years = self._get_list_years(min_date, max_date, full_years=True)
-
-        if full_years:
-
-            from_date = date(full_years[0], 1, 1)
-            to_date = date(full_years[-1], 12, 31)
-            period = 'A'
-            xlsxreport.next_sheet(sheet='all', datetime_format=period)
-            self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
-
-        xlsxreport.save()
-
-    def _get_list_years(self, start_date, end_date, full_years=False):
-
-        if self._is_last_day_of_year(start_date):
-            start_date += timedelta(days=1)
-        if self._is_first_day_of_year(end_date):
-            end_date -= timedelta(days=1)
-
-        start_year = start_date.year
-        end_year = end_date.year
-        if full_years:
-            if not self._is_first_day_of_year(start_date):
-                start_year += 1
-            if not self._is_last_day_of_year(end_date):
-                end_year -= 1
-            if start_year > end_year:
-                return []
-            # return start_year, end_year
-
-
-
-        years = list(range(start_year, end_year + 1))
-
-        return years
-
-    @staticmethod
-    def _is_first_day_of_year(self, a_date: date):
-        if a_date.month == 1 and a_date.day == 1:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def _is_last_day_of_year(self, a_date: date):
-        if a_date.month == 12 and a_date.day == 31:
-            return True
-        else:
-            return False
 
     @staticmethod
     def _complete_years(from_date: date, to_date: date):

@@ -10,7 +10,7 @@ import gnucashreport
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
-setup(name='bankparser',
+setup(name='gnucashreport',
       version=gnucashreport.__version__, # version,
       author="Partizand",
       author_email="",
