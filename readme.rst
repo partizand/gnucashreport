@@ -48,7 +48,7 @@ Testing
 All my testing data is real. Then all testing function use external folder.
 For create test data, save sql book file and xml book file into any folder. Use the same data for sql and xml.
 Create empty folder for test data.
-Set this options in src/test/basetest
+Set this options in src/test/basetest.py
 
 .. code-block:: python
 
