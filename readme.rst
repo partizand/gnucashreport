@@ -31,13 +31,16 @@ Examples
 >>> gcrep = GNUCashReport()
 
 open sql book
+
 >>> gcrep.open_book_sql('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
 
 save all splits to Excel (with account name, decription, currency mnemonic and other)
+
 >>> from gnucashreport.utils import dataframe_to_excel
 >>> dataframe_to_excel(gcrep.df_splits, 'v:/tables/splits.xlsx')
 
 save reports by years in xlsx file
+
 >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
 
 
