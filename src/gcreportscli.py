@@ -47,6 +47,8 @@ gcrep._open_book_pickle(gcrep.dir_pickle)
 # XLSXReport.dataframe_to_excel(df, 'asset-sql')
 # exit()
 
+gcrep.df_splits
+
 # df = gcrep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE)
 # dataframe_to_excel(df, 'expense')
 # rep._open_pickle()
