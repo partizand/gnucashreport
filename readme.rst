@@ -5,10 +5,8 @@ Sorry for my English!
 
 Library for get reports from `GnuCash <http://gnucash.org>`_ to excel.
 
-Connect direct to GnuCash book (xml or sql) and use `Pandas <http://pandas.pydata.org/>`_ for calculation reports.
+Connect directly to GnuCash book (xml or sql) and use `Pandas <http://pandas.pydata.org/>`_ for calculation reports.
 No cycles for calculation, less errors, less code.
-
-Попытка получить отчеты из `GnuCash <http://gnucash.org>`_
 
 Install
 -------
@@ -52,11 +50,11 @@ For create test data, save sql book file and xml book file into any folder. Use 
 Create empty folder for test data.
 Set this options in src/test/basetest
 
-    ```Python
-    bookfile_sql = your_sql_base
-    bookfile_xml = your_xml_base
-    dir_testdata = folder_for_test_data
-    ```
+```Python
+bookfile_sql = your_sql_base
+bookfile_xml = your_xml_base
+dir_testdata = folder_for_test_data
+```
 
 Run the script src/test/savetestdata.py. Run only on working branch version!
 
