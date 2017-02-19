@@ -28,7 +28,7 @@ Examples
 --------
 
 >>> import gnucashreport
->>> gcrep = GNUCashReport()
+>>> gcrep = gnucashreport.GNUCashReport()
 
 open sql book
 
@@ -52,7 +52,7 @@ For create test data, save sql book file and xml book file into any folder. Use 
 Create empty folder for test data.
 Set this options in src/test/basetest
 
-    ::Python
+    ```Python
     bookfile_sql = your_sql_base
     bookfile_xml = your_xml_base
     dir_testdata = folder_for_test_data
