@@ -217,7 +217,7 @@ class XLSXReport:
             # Ширина пустой колонки
             if margins.empty_col:
                 empty_col = col_count-width_totals_col
-                self._worksheet.set_column(firstcol=empty_col, lastcol=empty_col, width=1)
+                self._worksheet.set_column(firstcol=empty_col+1, lastcol=empty_col+1, width=1)
                 width_totals_col -= 1
             # Ширина колонк с итогами
             if width_totals_col > 0:
