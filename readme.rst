@@ -15,7 +15,7 @@ To install
 
     python setup.py install
 
-You my use virtualenv.
+You may use virtualenv.
 
 depending on (install automatically)
 
@@ -50,11 +50,12 @@ For create test data, save sql book file and xml book file into any folder. Use 
 Create empty folder for test data.
 Set this options in src/test/basetest
 
-```
+.. code-block:: python
+
 bookfile_sql = your_sql_base
 bookfile_xml = your_xml_base
 dir_testdata = folder_for_test_data
-```
+
 
 Run the script src/test/savetestdata.py. Run only on working branch version!
 
