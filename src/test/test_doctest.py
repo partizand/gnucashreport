@@ -5,13 +5,13 @@ Doctest implementation into unittest
 import unittest
 import doctest
 
-import gcreports
-import gcreports.gnucashreport
+import gnucashreport
+import gnucashreport.gnucashreport
 
 
 def load_tests(*args, **kwargs):
     test_all_doctests = unittest.TestSuite()
-    test_all_doctests.addTest(doctest.DocTestSuite(gcreports.gnucashreport))
+    test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.gnucashreport))
     return test_all_doctests
 
 

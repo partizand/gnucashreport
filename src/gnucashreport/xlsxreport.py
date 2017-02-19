@@ -4,9 +4,9 @@ import pandas
 
 from xlsxwriter.utility import xl_col_to_name
 
-from gcreports.gnucashdata import GNUCashData
-from gcreports.margins import Margins
-from gcreports.utils import dateformat_from_period
+from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.margins import Margins
+from gnucashreport.utils import dateformat_from_period
 
 
 

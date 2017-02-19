@@ -2,10 +2,10 @@ import pandas
 import numpy
 import pytz
 from decimal import Decimal
-# import gcreports
+# import gnucashreport
 
 
-from gcreports.gnucashdata import GNUCashData
+from gnucashreport.gnucashdata import GNUCashData
 
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},

@@ -1,11 +1,11 @@
 import calendar
 from datetime import date, datetime, timedelta
 
-from gcreports.gnucashdata import GNUCashData
-from gcreports.margins import Margins
-from gcreports.xlsxreport import XLSXReport
+from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.margins import Margins
+from gnucashreport.xlsxreport import XLSXReport
 
-from gcreports.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
+from gnucashreport.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
 
 # ASSETS_NAME = 'Assets'
 

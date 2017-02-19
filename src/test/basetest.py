@@ -5,7 +5,7 @@ from datetime import date
 import pandas
 from pandas.util.testing import assert_frame_equal
 
-from gcreports.gnucashdata import GNUCashData
+from gnucashreport.gnucashdata import GNUCashData
 
 
 class BaseTest(object):

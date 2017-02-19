@@ -14,10 +14,10 @@ from decimal import Decimal
 
 from copy import copy
 
-from gcreports.gcxmlreader import GNUCashXMLBook
-# from gcreports.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
-from gcreports.margins import Margins
-from gcreports.utils import dataframe_to_excel
+from gnucashreport.gcxmlreader import GNUCashXMLBook
+# from gnucashreport.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
+from gnucashreport.margins import Margins
+from gnucashreport.utils import dataframe_to_excel
 
 
 class GNUCashData:

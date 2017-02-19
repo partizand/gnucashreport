@@ -3,14 +3,14 @@ import datetime
 import os
 import time
 import pandas
-from gcreports.gnucashdata import GNUCashData
+from gnucashreport.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
 
-from gcreports.gnucashreport import GNUCashReport
-from gcreports.margins import Margins
-# from gcreports.xlsxreport import OpenpyxlReport
-from gcreports.utils import dataframe_to_excel
-from gcreports.xlsxreport import XLSXReport
+from gnucashreport.gnucashreport import GNUCashReport
+from gnucashreport.margins import Margins
+# from gnucashreport.xlsxreport import OpenpyxlReport
+from gnucashreport.utils import dataframe_to_excel
+from gnucashreport.xlsxreport import XLSXReport
 
 bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
 bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'

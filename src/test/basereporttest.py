@@ -1,7 +1,7 @@
 import datetime
 
-from gcreports.gnucashdata import GNUCashData
-from gcreports.xlsxreport import XLSXReport
+from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.xlsxreport import XLSXReport
 from test.basetest import BaseTest
 
 
