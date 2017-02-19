@@ -18,7 +18,7 @@ class SQLOpenTest(unittest.TestCase, BaseOpenTest):
 
     @classmethod
     def setUpClass(cls):
-        # cls.open_xml()
+        cls.set_locale()
         cls.rep._read_book_xml(cls.bookfile_xml)
 
 if __name__ == '__main__':

@@ -54,6 +54,10 @@ class BaseTest(object):
     # Конец тестовых данных
 
     @classmethod
+    def set_locale(cls):
+        GNUCashData.set_locale()
+
+    @classmethod
     def save_testdata(cls):
         """
         Запись тестовых pickle для последующей проверки в тестах

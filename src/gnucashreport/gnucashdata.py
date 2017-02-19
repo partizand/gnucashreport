@@ -113,6 +113,18 @@ class GNUCashData:
         # lang.install()
         gettext.install('gnucashreport', localedir=dir_locale)
 
+    @staticmethod
+    def set_locale():
+        # internalization
+        if os.name == 'nt':
+            current_locale, encoding = locale.getdefaultlocale()
+            os.environ['LANGUAGE'] = current_locale
+
+        path = os.path.abspath(__file__)
+        dir_path = os.path.dirname(path)
+        dir_locale = os.path.join(dir_path, 'locale')
+        gettext.install('gnucashreport', localedir=dir_locale)
+
     def open_book_xml(self, xml_file):
         """
         Opens gnucash book from xml file
