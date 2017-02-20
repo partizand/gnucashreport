@@ -37,7 +37,12 @@ save all splits to Excel (with account name, decription, currency mnemonic and o
 >>> from gnucashreport.utils import dataframe_to_excel
 >>> dataframe_to_excel(gcrep.df_splits, 'v:/tables/splits.xlsx')
 
-save reports by years in xlsx file
+Save reports by years in xlsx file:
+This report contain:
+- Income, expense, profit, assets, loans, equity by months each year (sheet on each year)
+- Income, expense, profit, assets, loans, equity by years on each full year
+- Inflation (annual expenditure growth)
+- Some charts
 
 >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
 
