@@ -272,14 +272,14 @@ class GNUCashReport(GNUCashData):
         margins.set_for_inflation(cumulative=False)
         df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
                                           glevel=glevel, cumulative=False)
-        xlsxreport.add_dataframe(df_inf, name=_('Inflation by year'), margins=margins,
+        xlsxreport.add_dataframe(df_inf, name=_('Inflation annual'), margins=margins, color=COLOR_YELLOW,
                                  num_format=XLSXReport.PERCENTAGE_FORMAT, addchart='line')
         xlsxreport.add_empty_row()
 
         margins.set_for_inflation(cumulative=True)
         df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
                                           glevel=glevel, cumulative=True)
-        xlsxreport.add_dataframe(df_inf, name=_('Inflation cumulative'), margins=margins,
+        xlsxreport.add_dataframe(df_inf, name=_('Inflation cumulative'), margins=margins, color=COLOR_YELLOW,
                                  num_format=XLSXReport.PERCENTAGE_FORMAT, addchart='line')
 
 
