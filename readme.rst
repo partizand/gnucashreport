@@ -51,7 +51,7 @@ This report contain:
 Explain glevel
 --------------
 
-glevel - group level of accounts: array of levels or single int level
+glevel - how group accounts by levels: array of levels or single int level
 
 Examples:
 
