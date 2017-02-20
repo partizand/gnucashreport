@@ -14,6 +14,9 @@ class XLSXReport:
 
     default_dir_reports = 'V:/tables'
 
+    MONEY_FORMAT = 0x08
+    PERCENTAGE_FORMAT = 0x0a
+
     def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
         # self.filename = filename
         # self._sheet = sheet
@@ -145,7 +148,8 @@ class XLSXReport:
             self._worksheet.write(row, col, col_name, frmt_date)
             col += 1
 
-    def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None):
+    def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
+                      num_format=MONEY_FORMAT):
         # income_start_row = 2
         # income_height = len(dataframe)
         if not row:
@@ -158,8 +162,8 @@ class XLSXReport:
         height = len(dataframe)
         if header:
             # height += 1
+            self._header_to_list(dataframe, df_start_row, margins)
             df_start_row += 1
-            self._header_to_list(dataframe, row, margins)
             # header = False
 
         itog_row = df_start_row + height - 1
@@ -172,14 +176,15 @@ class XLSXReport:
 
         frmt_bold = self._workbook.add_format({'bold': True})
         frmt_money = self._workbook.add_format()
-        frmt_money.set_num_format(0x08)
+        frmt_money.set_num_format(num_format)
         frmt_head = self._workbook.add_format({'bold': True})
         frmt_head.set_align('center')
         if color:
             frmt_head.set_bg_color(color)
 
         if name:
-            self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
+            # self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
+            self._worksheet.write(row, 0, name, frmt_head)
 
         # Выделение итогов
         width_totals_col = 0
@@ -262,8 +267,8 @@ class XLSXReport:
             count_vtotals = margins.get_counts_vtotals()
         str_end_col = xl_col_to_name(col_count - count_vtotals)
         if header:
-            categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, row + 1)
-            chart_prop.categories = categories
+            categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, df_start_row + 1)
+            chart_prop['categories'] = categories
         # values Последняя строка dataframe
         # 'values': '=Sheet1!$B$37:$M$37'
         values = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, itog_row + 1)

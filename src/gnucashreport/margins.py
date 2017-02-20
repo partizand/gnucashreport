@@ -38,6 +38,10 @@ class Margins:
         self.total_col = False
         self.mean_col = False
 
+    def set_for_inflation(self, cumulative=False):
+        self.total_row = True
+        self.total_col = not cumulative
+
     def get_counts_vtotals(self):
         """
         Возвращает количество итоговых колонок

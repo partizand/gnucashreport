@@ -41,21 +41,6 @@ class GNUCashReport(GNUCashData):
         super(GNUCashReport, self).__init__()
         # self.dataframe_to_excel = XLSXReport.dataframe_to_excel
 
-    def inflation(self):
-        # test only
-        # expense
-        from_date = date(2009,1,1)
-        to_date = date(2016,12,31)
-        period = 'A'
-        glevel = 1
-        margins = Margins()
-        margins.set_for_turnover()
-        df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-                                             account_type=GNUCashData.EXPENSE,
-                                             glevel=glevel, margins=margins)
-        dataframe_to_excel(df_expense, 'inflation', datetime_format=period)
-
-
     def cashflow_report_html(self, from_date, to_date, period='M', glevel=[0, 1]):
         """
         Test only
@@ -252,6 +237,14 @@ class GNUCashReport(GNUCashData):
 
         return date(year, month, day)
 
+    def inflation_excel(self, filename, from_date, to_date, period, glevel=1):
+
+
+        xlsxreport = XLSXReport(filename=filename, datetime_format=period)
+
+        self._inflation_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+
+        xlsxreport.save()
 
     def complex_report_excel(self, filename, from_date, to_date, period, glevel=1):
         """
@@ -270,6 +263,22 @@ class GNUCashReport(GNUCashData):
         self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
 
         xlsxreport.save()
+
+    def _inflation_writer(self, xlsxreport:XLSXReport, from_date, to_date, period, glevel):
+        margins = Margins()
+        margins.set_for_inflation(cumulative=False)
+        df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
+                                          glevel=glevel, cumulative=False)
+        xlsxreport.add_dataframe(df_inf, name=_('Inflation by year'), margins=margins,
+                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart=True)
+        xlsxreport.add_empty_row()
+
+        margins.set_for_inflation(cumulative=True)
+        df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
+                                          glevel=glevel, cumulative=True)
+        xlsxreport.add_dataframe(df_inf, name=_('Inflation cumulative'), margins=margins,
+                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart=True)
+
 
     def _complex_report_writer(self, xlsxreport:XLSXReport, from_date, to_date, period, glevel):
         """
