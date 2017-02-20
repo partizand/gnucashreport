@@ -41,6 +41,55 @@ save reports by years in xlsx file
 
 >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
 
+Explain glevel
+--------------
+
+glevel - group level of accounts: array of levels or single int level
+
+Examples:
+
+Accounts structure:
+
+======= =============== ========
+account levels
+------- --------------- --------
+0       1               2
+======= =============== ========
+Assets: Current assets: Cash
+Assets: Current assets: Card
+Assets: reserve:        Deposite
+Assets: reserve:        Cash
+======= =============== ========
+
+Example 1::
+
+    glevel=[0, 1]
+
+Group accounts for 0 and 1 level, into 2 rows and 2 columns (Multiindex dataframe):
+
++------------+----------------+
+| 0          | 1              |
++============+================+
+| Assets     | Current assets |
++            +----------------+
+|            | Reserve        |
++------------+----------------+
+
+Example 2::
+
+    glevel=1
+
+Groups only 1 level, into 2 rows and 1 column:
+
++----------------+
+| 1              |
++================+
+| Current assets |
++----------------+
+| reserve        |
++----------------+
+
+
 
 Testing
 -------
