@@ -98,23 +98,15 @@ class GNUCashData:
         self.book_name = None
         self.root_account_guid = None
 
-
         # internalization
-        current_locale, encoding = locale.getdefaultlocale()
-        os.environ['LANGUAGE'] = current_locale
-
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        dir_locale = os.path.join(dir_path, 'locale')
-        # current_locale = 'en'
-        # is_locale = gettext.find('gnucashreport', localedir=dir_locale, languages=current_locale)
-
-        # lang = gettext.translation('gnucashreport', localedir=dir_locale, languages=[current_locale])
-        # lang.install()
-        gettext.install('gnucashreport', localedir=dir_locale)
+        self.set_locale()
 
     @staticmethod
     def set_locale():
+        """
+        Set current os locale for gettext
+        :return:
+        """
         # internalization
         if os.name == 'nt':
             current_locale, encoding = locale.getdefaultlocale()
