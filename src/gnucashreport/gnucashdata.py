@@ -938,63 +938,48 @@ class GNUCashData:
 
         return group
 
-    def inflation_by_period(self, from_date, to_date, period='A', glevel=1):
-        df = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-                                     account_type=self.EXPENSE, glevel=glevel)
-
-
+    def inflation_by_period(self, from_date, to_date, period='A', glevel=1, cumulative=False):
+        """
+        Calcs inflation by periods. Return DataFrame with percent of inflation
+        :param from_date:
+        :param to_date:
+        :param period:
+        :param glevel:
+        :param cumulative: in each column calculate cumulative inflation to the first column (True)
+         or inflation to the previous column (False)
+        :return: DataFrame
+        """
+        # Calculate expenses
         margins = Margins()
         margins.total_row = True
-        df = self._add_margins(df, margins)
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
+                                     account_type=self.EXPENSE, glevel=glevel, margins=margins)
+
+        # Empty Dataframe with same columns and index
         df_inf = pandas.DataFrame(index=df.index, columns=df.columns[1:])
-        # print(df_inf)
-        # return
-        # dataframe_to_excel(df, 'df')
-        # df['value'] = 1
-        # new_idx = pandas.MultiIndex(df.columns)
-        # df.columns = df.columns.s
-        # df[:]['value'] = 1
+
         cols = df.columns
-        tuples = []
-        for col in df.columns:
-            tup = (col, 'value')
-            tuples.append(tup)
 
-        idx = pandas.MultiIndex.from_tuples(tuples,
-                                     names=['post_date', 'value'])
-        # df.columns = idx
-
-        # df_inf[cols[0]] = 1
-        # print(df_inf)
-        # return
         for i in range(1, len(cols)):
-            # df_inf[cols[i]] = ((df[cols[i], 'value']).astype('float64') - (df[cols[i-1], 'value']).astype('float64')).divide((df[cols[i-1], 'value']).astype('float64'))
-            # Процент к предыдущему
-            # df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).divide((df[cols[i-1]]).astype('float64'))
-            # Процент к началу
-            df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
-                                (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
-        # df = df.sort_index(axis=1)
-        i2 = len(cols) - 1
-        # Суммарный процент
-        # df['Total', 'z_perc'] = (
-        # (df[cols[i2], 'value']).astype('float64') - (df[cols[0], 'value']).astype('float64')).divide(
-        #     (df[cols[0], 'value']).astype('float64'))
-        # Средний процент
-        # df_inf['Total'] = (((df[cols[i2], 'value']).astype('float64')).divide(
-        #     (df[cols[0], 'value']).astype('float64'))).pow(1/i2) - 1
 
-        df_inf['Total'] = (((df[cols[i2]]).astype('float64')).divide(
-            (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
-        # Суммарное изменение
-        # df['Total', 'increase'] = df[cols[i2], 'value'] - df[cols[0], 'value']
+            if not cumulative:
+                # Процент к предыдущему
+                df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).divide((df[cols[i-1]]).astype('float64'))
+            else:
+                # Процент к началу
+                df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
+                                    (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
 
-        # drop
-        # df = df.drop([cols[0], 'value'], axis=1)
 
-        # print(df)
-        dataframe_to_excel(df_inf, 'df_inf2', datetime_format=period)
-        # print(df_inf)
+        # Average by period
+        if not cumulative:
+            i2 = len(cols) - 1
+            df_inf[_('Total')] = (((df[cols[i2]]).astype('float64')).divide(
+                (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
+
+        # dataframe_to_excel(df_inf, 'df_inf2', datetime_format=period)
+
+        return df_inf
 
 
     def get_empty_dataframe(self, dataframe):
