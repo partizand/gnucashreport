@@ -3,7 +3,7 @@ GnuCash reports
 
 Sorry for my English!
 
-Library for get reports from `GnuCash <http://gnucash.org>`_ to excel.
+Python library for get reports from `GnuCash <http://gnucash.org>`_ to excel.
 
 Connect directly to GnuCash book (xml or sql) and use `Pandas <http://pandas.pydata.org/>`_ for calculation reports.
 No cycles for calculation, less errors, less code.
@@ -51,8 +51,8 @@ Examples:
 Accounts structure:
 
 ======= =============== ========
-account levels
-------- --------------- --------
+ account levels
+--------------------------------
 0       1               2
 ======= =============== ========
 Assets: Current assets: Cash
