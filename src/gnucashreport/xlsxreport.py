@@ -91,7 +91,7 @@ class XLSXReport:
             if (not 'categories' in chart) and self.common_categories:
                 chart['categories'] = self.common_categories
 
-            ex_chart = self._workbook.add_chart({'type': 'column'})
+            ex_chart = self._workbook.add_chart({'type': chart['type']})
             ex_chart.add_series(chart)
             ex_chart.set_size({'x_scale': 2, 'y_scale': 1.5})
             self._worksheet.insert_chart(row=self._cur_row, col=1, chart=ex_chart)
@@ -156,8 +156,8 @@ class XLSXReport:
             row = self._cur_row
 
         df_start_row = row
-        if name:
-            df_start_row += 1
+        # if name:
+        #     df_start_row += 1
 
         height = len(dataframe)
         if header:
@@ -230,12 +230,13 @@ class XLSXReport:
 
 
         if addchart:
-            chart_prop = self._get_chart_prop(dataframe, name=name, header=header, margins=margins, row=row)
+            chart_prop = self._get_chart_prop(dataframe, name=name, header=header, margins=margins, row=row,
+                                              chart_type=addchart)
             self._charts.append(chart_prop)
 
         self._update_cur_row(itog_row + 1)
 
-    def _get_chart_prop(self, dataframe, name, header, margins, row):
+    def _get_chart_prop(self, dataframe, name, header, margins, row, chart_type='column'):
         """
         Возвращает текст-ссылку на categories для chart
         :param dataframe:
@@ -249,8 +250,8 @@ class XLSXReport:
         #     row = self.cur_row
 
         df_start_row = row
-        if name:
-            df_start_row = row + 1
+        # if name:
+        #     df_start_row = row + 1
 
         height = len(dataframe)
         if header:
@@ -283,10 +284,9 @@ class XLSXReport:
 
         chart_prop['name'] = chart_name
 
-
-
-
-
+        # Show values on chart
+        # chart_prop['data_labels'] = {'value': True}
+        chart_prop['type'] = chart_type
         return chart_prop
 
 

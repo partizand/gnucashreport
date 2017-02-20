@@ -99,8 +99,11 @@ class GNUCashReport(GNUCashData):
             start_year, end_year = full_years
             y_start_date = date(start_year, 1, 1)
             y_end_date = date(end_year, 12, 31)
-            xlsxreport.next_sheet(sheet='All', datetime_format='A')
+            xlsxreport.next_sheet(sheet=_('All'), datetime_format='A')
             self._complex_report_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A', glevel=glevel)
+            # inflation
+            xlsxreport.next_sheet(sheet=_('Inflation'), datetime_format='A')
+            self._inflation_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A', glevel=glevel)
         xlsxreport.save()
         return
 
@@ -270,14 +273,14 @@ class GNUCashReport(GNUCashData):
         df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
                                           glevel=glevel, cumulative=False)
         xlsxreport.add_dataframe(df_inf, name=_('Inflation by year'), margins=margins,
-                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart=True)
+                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart='line')
         xlsxreport.add_empty_row()
 
         margins.set_for_inflation(cumulative=True)
         df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
                                           glevel=glevel, cumulative=True)
         xlsxreport.add_dataframe(df_inf, name=_('Inflation cumulative'), margins=margins,
-                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart=True)
+                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart='line')
 
 
     def _complex_report_writer(self, xlsxreport:XLSXReport, from_date, to_date, period, glevel):
@@ -309,7 +312,7 @@ class GNUCashReport(GNUCashData):
         # expense
         df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period, account_type=GNUCashData.EXPENSE,
                                                  glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_expense, name=_('Expense'), color=COLOR_YELLOW, header=False, margins=margins)
+        xlsxreport.add_dataframe(df_expense, name=_('Expense'), color=COLOR_YELLOW, header=True, margins=margins)
         xlsxreport.add_empty_row()
 
         # profit
@@ -321,7 +324,7 @@ class GNUCashReport(GNUCashData):
         # assets
         margins.set_for_balances()
         df_assets = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name=_('Assets'), header=False, margins=margins)
+        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name=_('Assets'), header=True, margins=margins)
         xlsxreport.add_empty_row()
 
         # loans
@@ -336,7 +339,7 @@ class GNUCashReport(GNUCashData):
 
         # equity
         df_profit = self.equity_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_profit, color=COLOR_BLUE, header=False, margins=margins, addchart=True)
+        xlsxreport.add_dataframe(df_profit, color=COLOR_BLUE, header=False, margins=margins, addchart='column')
         xlsxreport.add_empty_row()
 
         # margins.set_for_turnover()
