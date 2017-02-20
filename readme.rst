@@ -38,7 +38,9 @@ save all splits to Excel (with account name, decription, currency mnemonic and o
 >>> dataframe_to_excel(gcrep.df_splits, 'v:/tables/splits.xlsx')
 
 Save reports by years in xlsx file:
+
 This report contain:
+
 - Income, expense, profit, assets, loans, equity by months each year (sheet on each year)
 - Income, expense, profit, assets, loans, equity by years on each full year
 - Inflation (annual expenditure growth)
