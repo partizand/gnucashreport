@@ -686,6 +686,8 @@ class GNUCashData:
         # пересчет в нужную валюту
         group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
 
+        # dataframe_to_excel(group, 'after-curcalc')
+
         # Группировка по счетам
         group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
 
@@ -811,7 +813,7 @@ class GNUCashData:
         :param period:
         :return: DataFrame с добавленными колонками
         """
-        # Тут нужно добавить пересчет в нужную валюту
+
         df = dataframe.copy()
         # Получаем список всех нужных mnemonic
         commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
@@ -913,15 +915,87 @@ class GNUCashData:
 
         # Переворот дат из строк в колонки
         unst = sel_df.unstack(level='post_date', fill_value=0)
+
+
+
+        # df_test = unst.copy()
+
+
+        # df_test.columns = df_test.columns.swaplevel()
+        # cols = df_test.columns.get_level_values('post_date')
+        # cols = df_test.columns.get_level_values(0)
+        # print(cols[0])
+        # df_test[cols[0], 'z_perc'] = 1
+        # df_test[cols[1], 'z_perc'] = (df_test[cols[1], 'value_currency'] - df_test[cols[0], 'value_currency'])/df_test[cols[0], 'value_currency']
+        # df_test[cols[1], 'z_perc'] = ((df_test[cols[1], 'value_currency']).astype('float64') - (df_test[cols[0], 'value_currency']).astype('float64')).divide((df_test[cols[0], 'value_currency']).astype('float64'))
+        # df_test = df_test.sort_index(axis=1)
+        # dataframe_to_excel(df_test, 'df_test')
+
         unst.columns = unst.columns.droplevel()
 
         # Группировка по нужному уровню
         group = unst.groupby(level=glevel).sum()
 
-        # Добавление итогов
-        # group = self.add_margins(group, margins)
-
         return group
+
+    def inflation_by_period(self, from_date, to_date, period='A', glevel=1):
+        df = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
+                                     account_type=self.EXPENSE, glevel=glevel)
+
+
+        margins = Margins()
+        margins.total_row = True
+        df = self._add_margins(df, margins)
+        df_inf = pandas.DataFrame(index=df.index, columns=df.columns[1:])
+        # print(df_inf)
+        # return
+        # dataframe_to_excel(df, 'df')
+        # df['value'] = 1
+        # new_idx = pandas.MultiIndex(df.columns)
+        # df.columns = df.columns.s
+        # df[:]['value'] = 1
+        cols = df.columns
+        tuples = []
+        for col in df.columns:
+            tup = (col, 'value')
+            tuples.append(tup)
+
+        idx = pandas.MultiIndex.from_tuples(tuples,
+                                     names=['post_date', 'value'])
+        # df.columns = idx
+
+        # df_inf[cols[0]] = 1
+        # print(df_inf)
+        # return
+        for i in range(1, len(cols)):
+            # df_inf[cols[i]] = ((df[cols[i], 'value']).astype('float64') - (df[cols[i-1], 'value']).astype('float64')).divide((df[cols[i-1], 'value']).astype('float64'))
+            # Процент к предыдущему
+            # df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).divide((df[cols[i-1]]).astype('float64'))
+            # Процент к началу
+            df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
+                                (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
+        # df = df.sort_index(axis=1)
+        i2 = len(cols) - 1
+        # Суммарный процент
+        # df['Total', 'z_perc'] = (
+        # (df[cols[i2], 'value']).astype('float64') - (df[cols[0], 'value']).astype('float64')).divide(
+        #     (df[cols[0], 'value']).astype('float64'))
+        # Средний процент
+        # df_inf['Total'] = (((df[cols[i2], 'value']).astype('float64')).divide(
+        #     (df[cols[0], 'value']).astype('float64'))).pow(1/i2) - 1
+
+        df_inf['Total'] = (((df[cols[i2]]).astype('float64')).divide(
+            (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
+        # Суммарное изменение
+        # df['Total', 'increase'] = df[cols[i2], 'value'] - df[cols[0], 'value']
+
+        # drop
+        # df = df.drop([cols[0], 'value'], axis=1)
+
+        # print(df)
+        dataframe_to_excel(df_inf, 'df_inf2', datetime_format=period)
+        # print(df_inf)
+
 
     def get_empty_dataframe(self, dataframe):
         """

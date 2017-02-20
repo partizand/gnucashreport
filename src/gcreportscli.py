@@ -47,14 +47,16 @@ gcrep._open_book_pickle(gcrep.dir_pickle)
 # XLSXReport.dataframe_to_excel(df, 'asset-sql')
 # exit()
 
-gcrep.df_splits
 
 # df = gcrep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE)
+from_date = datetime.date(2009, 1, 1)
+to_date = datetime.date(2016, 12, 31)
+df = gcrep.inflation_by_period(from_date=from_date, to_date=to_date)
 # dataframe_to_excel(df, 'expense')
 # rep._open_pickle()
 # rep.profit_by_period(from_date=from_date, to_date=to_date)
 # gcrep.complex_report_excel(filename, from_date=from_date, to_date=to_date, period='M', glevel=1)
-gcrep.all_reports_excel(filename, glevel=1)
+# gcrep.all_reports_excel(filename, glevel=1)
 # gcrep.complex_report(from_date=from_date, to_date=to_date, period='M')
 # gcrep.inflation()
 # gcrep.complex_report_years(filename)
