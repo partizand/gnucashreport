@@ -20,6 +20,8 @@ class BaseTest(object):
     # end folder options---------------------------------------
     test_from_date = date(2016, 1, 1)
     test_to_date = date(2016, 12, 31)
+    test_from_date_y = date(2009, 1, 1)
+    test_to_date_y = date(2016, 12, 31)
     test_period = 'M'
     test_glevel = 1
     test_glevel2 = [0, 1]
@@ -50,6 +52,7 @@ class BaseTest(object):
     pickle_income = 'income.pkl'
     pickle_profit = 'profit.pkl'
     pickle_equity = 'equity.pkl'
+    pickle_inflation = 'inflation.pkl'
 
     # Конец тестовых данных
 
@@ -117,6 +120,11 @@ class BaseTest(object):
         # Equity multi
         df = cls.get_equity(glevel=cls.test_glevel2)
         filename = cls._add_suffix(filename, cls.test_level2_suffix)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
+
+        # Inflation
+        filename = cls.pickle_inflation
+        df = cls.get_inflation()
         cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
         # save sql to pickle book
@@ -250,6 +258,18 @@ class BaseTest(object):
             glevel = cls.test_glevel
         df = cls.rep.equity_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
                                        glevel=glevel)
+        return df
+
+    @classmethod
+    def get_inflation(cls, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = cls.test_glevel
+        df = cls.rep.inflation_by_period(from_date=cls.test_from_date_y, to_date=cls.test_to_date_y, period='A',
+                                      glevel=glevel)
         return df
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
