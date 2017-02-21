@@ -155,6 +155,8 @@ class XLSXReport:
         if not row:
             row = self._cur_row
 
+        self._get_points(dataframe=dataframe, header=header, margins=margins, row=row)
+
         df_start_row = row
         # if name:
         #     df_start_row += 1
@@ -236,6 +238,32 @@ class XLSXReport:
 
         self._update_cur_row(itog_row + 1)
 
+    def _get_points(self, dataframe, header, margins, row):
+        # Строка с началом данных после заголовка
+        self.df_start_row = row
+        if header:
+            self.df_start_row += 1
+
+        # Высота данных без заголовка
+        height = len(dataframe)
+
+        # Строка с итоговыми значениями
+        self.itog_row = self.df_start_row + height - 1
+        # Кол-во колонок с данными (без колонок названий)
+        col_count = len(dataframe.columns)
+        # Кол-во колонок названий
+        len_index = len(dataframe.index.names)
+        # Буква колонки с началом данных
+        self.str_start_col = xl_col_to_name(len_index)
+
+        count_vtotals = 0
+        if margins:
+            count_vtotals = margins.get_counts_vtotals()
+        # Буква колонки с концом данных
+        self.str_end_col = xl_col_to_name(col_count - count_vtotals)
+
+
+
     def _get_chart_prop(self, dataframe, name, header, margins, row, chart_type='column'):
         """
         Возвращает текст-ссылку на categories для chart
@@ -255,9 +283,11 @@ class XLSXReport:
 
         height = len(dataframe)
         if header:
-            height += 1
+            df_start_row += 1
 
         itog_row = df_start_row + height - 1
+        # if margins.total_row:
+        #     itog_row += 1
         col_count = len(dataframe.columns)
 
         len_index = len(dataframe.index.names)
@@ -268,14 +298,14 @@ class XLSXReport:
             count_vtotals = margins.get_counts_vtotals()
         str_end_col = xl_col_to_name(col_count - count_vtotals)
         if header:
-            categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, df_start_row + 1)
+            categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, df_start_row)
             chart_prop['categories'] = categories
         # values Последняя строка dataframe
         # 'values': '=Sheet1!$B$37:$M$37'
         values = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, itog_row + 1)
         chart_prop['values'] = values
 
-        chart_name = ''
+        # chart_name = ''
         if name:
             chart_name = name
         else:

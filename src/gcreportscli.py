@@ -21,8 +21,8 @@ to_date = datetime.date(2016, 12, 31)
 
 filename = 'v:/tables/ex-test.xlsx'
 gcrep = GNUCashReport()
-gcrep._detect_filebook_type(bookfile_xml)
-exit()
+# gcrep._detect_filebook_type(bookfile_xml)
+# exit()
 # start_time_sql = time.time()
 # rep.open_book_xml()
 # rep.save_pickle()
