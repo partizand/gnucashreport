@@ -477,29 +477,8 @@ class GNUCashData:
             equity_name = margins.equity_name
         df = self._sum_all(group_acc, total_name=equity_name, glevel=glevel, inverse=False)
 
-        # group = group_acc.groupby('post_date').value_currency.sum()
-        #
-        # # Переворот дат из строк в колонки
-        # df = pandas.DataFrame(group).T
-        # equity_name = EQUITY_NAME
-        # if margins:
-        #     equity_name = margins.equity_name
-        # df.index = [equity_name]
-        #
-        # # Нужно добавить колонки если Multiindex
-        # if type(glevel) is int:
-        #     glevel = [glevel]
-        # idx_len = len(glevel)
-        # new_indexes = [str(i) for i in range(1, idx_len)]
-        # if new_indexes:
-        #     # Нужно добавить уровни
-        #     for col_name in new_indexes:
-        #         df[col_name] = ''
-        #     df.set_index(new_indexes, append=True, inplace=True)
-
         # Добавление итогов
         df = self._add_margins(df, margins)
-
 
         return df
 
