@@ -50,6 +50,8 @@ gcrep._open_book_pickle(gcrep.dir_pickle)
 
 
 # df = gcrep.turnover_by_period(from_date=from_date, to_date=to_date, account_type=GNUCashData.EXPENSE)
+# gcrep.complex_report_excel(filename, from_date=from_date, to_date=to_date, period='M', glevel=1)
+# exit()
 from_date = datetime.date(2009, 1, 1)
 to_date = datetime.date(2016, 12, 31)
 # gcrep.inflation_excel(filename=filename, from_date=from_date, to_date=to_date, period='A', glevel=1)
