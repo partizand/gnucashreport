@@ -8,6 +8,81 @@ from gnucashreport.gnucashdata import GNUCashData
 from gnucashreport.margins import Margins
 from gnucashreport.utils import dateformat_from_period
 
+class TablePoints:
+
+    def __init__(self, dataframe, header, margins, row):
+        """
+        Calculate positions for table in excel file
+        All positions are 0-started
+
++--------------------------------------------------------------------------------------------------------------------+
+| Account header                |  Data                                | totals                                      |
+|--------------------------------------------------------------------------------------------------------------------+
+| col_begin |   | col_head_end  | col_data_begin | | |  | col_data_end | col_empty | col_total_begin | col_total_end |
+| row_begin |   |               |                | | |  |              |           |                 |               |
++-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
+|row_data_begin |               |                | | |  |              |           |                 |               |
++-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
+|           |   |               |                | | |  |              |           |                 |               |
++-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
+|           |   |               |                | | |  |              |           |                 |               |
++-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
+| row_itog  |   |               |                | | |  |              |           |                 |               |
++-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
+
+
+        :param dataframe:
+        :param header:
+        :param margins:
+        :param row:
+        """
+
+        # Кол-во колонок названий
+        len_index = len(dataframe.index.names)
+        # Высота данных без заголовка
+        height = len(dataframe)
+        # Кол-во колонок с данными (без колонок названий)
+        col_count = len(dataframe.columns)
+
+        self.col_empty = None
+        self.col_totals_begin = None
+        self.col_totals_end = None
+
+        self.col_begin = 0
+        self.row_begin = row
+        self.row_data_begin = row
+        if header:
+            self.row_data_begin += 1
+
+        # Номер колонки с окончанием заголовка для счетов
+        self.col_head_end = self.col_begin + len_index - 1
+
+        self.col_data_begin = self.col_head_end + 1
+        self.col_data_end = self.col_data_begin + col_count - 1
+
+        # Строка с итоговыми значениями
+        self.row_itog = self.row_data_begin + height - 1
+
+        # self.count_vtotals = 0
+        # self.count_vtotals_without_empty = 0
+        if margins:
+            count_vtotals = margins.get_counts_vtotals()
+            if count_vtotals:
+                self.col_totals_begin = self.col_data_end + 1
+                self.col_totals_end = self.col_data_end + count_vtotals
+                if margins.empty_col:
+                    self.col_empty = self.col_data_end + 1
+                    self.col_totals_begin = self.col_data_end + 2
+                    self.col_empty_l = xl_col_to_name(self.col_empty)
+                self.col_totals_begin_l = xl_col_to_name(self.col_totals_begin)
+                self.col_totals_end_l = xl_col_to_name(self.col_totals_end)
+
+        # Буквы для колонок
+        self.col_begin_l = xl_col_to_name(self.col_begin)
+        self.col_data_begin_l = xl_col_to_name(self.col_data_begin)
+        self.col_data_end_l = xl_col_to_name(self.col_data_end)
+        self.col_head_end_l = xl_col_to_name(self.col_head_end)
+
 
 
 class XLSXReport:
@@ -155,23 +230,24 @@ class XLSXReport:
         if not row:
             row = self._cur_row
 
-        self._get_points(dataframe=dataframe, header=header, margins=margins, row=row)
+        points = TablePoints(dataframe=dataframe, header=header, margins=margins, row=row)
+        # self._get_points(dataframe=dataframe, header=header, margins=margins, row=row)
 
-        df_start_row = row
+        # df_start_row = row
         # if name:
         #     df_start_row += 1
 
-        height = len(dataframe)
+        # height = len(dataframe)
         if header:
             # height += 1
-            self._header_to_list(dataframe, df_start_row, margins)
-            df_start_row += 1
+            self._header_to_list(dataframe, row, margins)
+            # df_start_row += 1
             # header = False
 
-        itog_row = df_start_row + height - 1
-        col_count = len(dataframe.columns)
+        # itog_row = df_start_row + height - 1
+        # col_count = len(dataframe.columns)
 
-        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=df_start_row, header=False)
+        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.df_start_row, header=False)
         # Get the xlsxwriter objects from the dataframe writer object.
         if not self._worksheet:
             self._worksheet = self._writer.sheets[self._sheet]
@@ -189,27 +265,31 @@ class XLSXReport:
             self._worksheet.write(row, 0, name, frmt_head)
 
         # Выделение итогов
-        width_totals_col = 0
+        # width_totals_col = 0
 
         if margins:
-
-
+            # Выделение строки с итогами
             if (margins.total_row) or (len(dataframe) == 1 and color):
-                self._worksheet.conditional_format(first_row=itog_row, last_row=itog_row, first_col=0, last_col=col_count,
+                self._worksheet.conditional_format(first_row=points.itog_row,
+                                                   last_row=points.itog_row,
+                                                   first_col=0,
+                                                   last_col=points.col_count,
                                                    options={'type': 'no_blanks',
                                                   'format': frmt_head})
-                self._worksheet.conditional_format(first_row=itog_row, last_row=itog_row, first_col=0,
-                                                   last_col=col_count,
+                self._worksheet.conditional_format(first_row=points.itog_row,
+                                                   last_row=points.itog_row,
+                                                   first_col=0,
+                                                   last_col=points.col_count,
                                                    options={'type': 'blanks',
                                                            'format': frmt_head})
             if margins.total_col or margins.mean_col:
-                if margins.total_col:
-                    width_totals_col += 1
-                if margins.mean_col:
-                    width_totals_col += 1
-                start_col = col_count
-                self._worksheet.conditional_format(first_row=df_start_row, last_row=itog_row, first_col=col_count - width_totals_col + 1,
-                                                   last_col=col_count,
+                # if margins.total_col:
+                #     width_totals_col += 1
+                # if margins.mean_col:
+                #     width_totals_col += 1
+                # start_col = col_count
+                self._worksheet.conditional_format(first_row=points.df_start_row, last_row=points.itog_row, first_col=col_count - width_totals_col + 1,
+                                                   last_col=self.col_count,
                                                    options={'type': 'no_blanks',
                                                            'format': frmt_bold})
 
@@ -218,12 +298,12 @@ class XLSXReport:
         # Ширина первой колонки
         self._worksheet.set_column(firstcol=0, lastcol=index_len - 1, width=25)
         # Ширина колонок до итогов
-        self._worksheet.set_column(firstcol=index_len, lastcol=col_count, cell_format=frmt_money, width=12)
+        self._worksheet.set_column(firstcol=index_len, lastcol=self.col_count, cell_format=frmt_money, width=12)
 
         if margins:
             # Ширина пустой колонки
             if margins.empty_col:
-                empty_col = col_count-width_totals_col
+                empty_col = self.col_count-width_totals_col
                 self._worksheet.set_column(firstcol=empty_col+1, lastcol=empty_col+1, width=1)
                 width_totals_col -= 1
             # Ширина колонк с итогами
@@ -236,7 +316,7 @@ class XLSXReport:
                                               chart_type=addchart)
             self._charts.append(chart_prop)
 
-        self._update_cur_row(itog_row + 1)
+        self._update_cur_row(self.itog_row + 1)
 
     def _get_points(self, dataframe, header, margins, row):
         # Строка с началом данных после заголовка
@@ -250,17 +330,19 @@ class XLSXReport:
         # Строка с итоговыми значениями
         self.itog_row = self.df_start_row + height - 1
         # Кол-во колонок с данными (без колонок названий)
-        col_count = len(dataframe.columns)
+        self.col_count = len(dataframe.columns)
         # Кол-во колонок названий
         len_index = len(dataframe.index.names)
         # Буква колонки с началом данных
         self.str_start_col = xl_col_to_name(len_index)
 
-        count_vtotals = 0
+        self.count_vtotals = 0
         if margins:
-            count_vtotals = margins.get_counts_vtotals()
+            self.count_vtotals = margins.get_counts_vtotals()
         # Буква колонки с концом данных
-        self.str_end_col = xl_col_to_name(col_count - count_vtotals)
+        self.str_end_col = xl_col_to_name(self.col_count - self.count_vtotals)
+
+
 
 
 
