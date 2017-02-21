@@ -27,7 +27,7 @@ class TablePoints:
 +-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
 |           |   |               |                | | |  |              |           |                 |               |
 +-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
-| row_itog  |   |               |                | | |  |              |           |                 |               |
+| row_itog  |   |               |                | | |  |              |           |                 | col_all_end   |
 +-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
 
 
@@ -59,6 +59,7 @@ class TablePoints:
 
         self.col_data_begin = self.col_head_end + 1
         self.col_data_end = self.col_data_begin + col_count - 1
+        self.col_all_end = self.col_data_begin + col_count - 1
 
         # Строка с итоговыми значениями
         self.row_itog = self.row_data_begin + height - 1
@@ -68,6 +69,7 @@ class TablePoints:
         if margins:
             count_vtotals = margins.get_counts_vtotals()
             if count_vtotals:
+                self.col_data_end -= count_vtotals
                 self.col_totals_begin = self.col_data_end + 1
                 self.col_totals_end = self.col_data_end + count_vtotals
                 if margins.empty_col:
@@ -142,6 +144,105 @@ class XLSXReport:
         self._charts = []
         self._headers = []
         self.common_categories = None
+
+    def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
+                      num_format=MONEY_FORMAT):
+        # income_start_row = 2
+        # income_height = len(dataframe)
+        if not row:
+            row = self._cur_row
+
+        points = TablePoints(dataframe=dataframe, header=header, margins=margins, row=row)
+        # self._get_points(dataframe=dataframe, header=header, margins=margins, row=row)
+
+        # df_start_row = row
+        # if name:
+        #     df_start_row += 1
+
+        # height = len(dataframe)
+        if header:
+            # height += 1
+            self._header_to_list(dataframe, row, margins)
+            # df_start_row += 1
+            # header = False
+
+        # itog_row = df_start_row + height - 1
+        # col_count = len(dataframe.columns)
+
+        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.row_data_begin, header=False)
+        # Get the xlsxwriter objects from the dataframe writer object.
+        if not self._worksheet:
+            self._worksheet = self._writer.sheets[self._sheet]
+
+        frmt_bold = self._workbook.add_format({'bold': True})
+        frmt_money = self._workbook.add_format()
+        frmt_money.set_num_format(num_format)
+        frmt_head = self._workbook.add_format({'bold': True})
+        frmt_head.set_align('center')
+        if color:
+            frmt_head.set_bg_color(color)
+
+        if name:
+            # self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
+            self._worksheet.write(row, 0, name, frmt_head)
+
+        # Выделение итогов
+        # width_totals_col = 0
+
+        if margins:
+            # Выделение строки с итогами
+            if (margins.total_row) or (len(dataframe) == 1 and color):
+                self._worksheet.conditional_format(first_row=points.row_itog,
+                                                   last_row=points.row_itog,
+                                                   first_col=points.col_begin,
+                                                   last_col=points.col_all_end,
+                                                   options={'type': 'no_blanks',
+                                                  'format': frmt_head})
+                self._worksheet.conditional_format(first_row=points.row_itog,
+                                                   last_row=points.row_itog,
+                                                   first_col=points.col_begin,
+                                                   last_col=points.col_all_end,
+                                                   options={'type': 'blanks',
+                                                           'format': frmt_head})
+            if margins.total_col or margins.mean_col:
+                # if margins.total_col:
+                #     width_totals_col += 1
+                # if margins.mean_col:
+                #     width_totals_col += 1
+                # start_col = col_count
+                self._worksheet.conditional_format(first_row=points.row_data_begin,
+                                                   last_row=points.row_itog,
+                                                   first_col=points.col_totals_begin, #  col_count - width_totals_col + 1,
+                                                   last_col=points.col_totals_end,
+                                                   options={'type': 'no_blanks',
+                                                           'format': frmt_bold})
+
+
+        # index_len = len(dataframe.index.names)
+        # Ширина первой колонки
+        self._worksheet.set_column(firstcol=points.col_begin, lastcol=points.col_head_end, width=25)
+        # Ширина колонок до итогов
+        self._worksheet.set_column(firstcol=points.col_data_begin,
+                                   lastcol=points.col_data_end,
+                                   cell_format=frmt_money, width=12)
+
+        if margins:
+            # Ширина пустой колонки
+            if margins.empty_col:
+                # empty_col = self.col_count-width_totals_col
+                self._worksheet.set_column(firstcol=points.col_empty, lastcol=points.col_empty, width=1)
+                # width_totals_col -= 1
+            # Ширина колонк с итогами
+            if points.col_totals_begin and points.col_totals_end:
+                self._worksheet.set_column(firstcol=points.col_totals_begin, lastcol=points.col_totals_end, width=15)
+
+
+        if addchart:
+            chart_prop = self._get_chart_prop(dataframe, name=name, header=header, margins=margins, row=row,
+                                              chart_type=addchart)
+            self._charts.append(chart_prop)
+
+        self._update_cur_row(self.itog_row + 1)
 
     def add_empty_row(self):
         """
@@ -223,100 +324,7 @@ class XLSXReport:
             self._worksheet.write(row, col, col_name, frmt_date)
             col += 1
 
-    def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
-                      num_format=MONEY_FORMAT):
-        # income_start_row = 2
-        # income_height = len(dataframe)
-        if not row:
-            row = self._cur_row
 
-        points = TablePoints(dataframe=dataframe, header=header, margins=margins, row=row)
-        # self._get_points(dataframe=dataframe, header=header, margins=margins, row=row)
-
-        # df_start_row = row
-        # if name:
-        #     df_start_row += 1
-
-        # height = len(dataframe)
-        if header:
-            # height += 1
-            self._header_to_list(dataframe, row, margins)
-            # df_start_row += 1
-            # header = False
-
-        # itog_row = df_start_row + height - 1
-        # col_count = len(dataframe.columns)
-
-        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.df_start_row, header=False)
-        # Get the xlsxwriter objects from the dataframe writer object.
-        if not self._worksheet:
-            self._worksheet = self._writer.sheets[self._sheet]
-
-        frmt_bold = self._workbook.add_format({'bold': True})
-        frmt_money = self._workbook.add_format()
-        frmt_money.set_num_format(num_format)
-        frmt_head = self._workbook.add_format({'bold': True})
-        frmt_head.set_align('center')
-        if color:
-            frmt_head.set_bg_color(color)
-
-        if name:
-            # self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
-            self._worksheet.write(row, 0, name, frmt_head)
-
-        # Выделение итогов
-        # width_totals_col = 0
-
-        if margins:
-            # Выделение строки с итогами
-            if (margins.total_row) or (len(dataframe) == 1 and color):
-                self._worksheet.conditional_format(first_row=points.itog_row,
-                                                   last_row=points.itog_row,
-                                                   first_col=0,
-                                                   last_col=points.col_count,
-                                                   options={'type': 'no_blanks',
-                                                  'format': frmt_head})
-                self._worksheet.conditional_format(first_row=points.itog_row,
-                                                   last_row=points.itog_row,
-                                                   first_col=0,
-                                                   last_col=points.col_count,
-                                                   options={'type': 'blanks',
-                                                           'format': frmt_head})
-            if margins.total_col or margins.mean_col:
-                # if margins.total_col:
-                #     width_totals_col += 1
-                # if margins.mean_col:
-                #     width_totals_col += 1
-                # start_col = col_count
-                self._worksheet.conditional_format(first_row=points.df_start_row, last_row=points.itog_row, first_col=col_count - width_totals_col + 1,
-                                                   last_col=self.col_count,
-                                                   options={'type': 'no_blanks',
-                                                           'format': frmt_bold})
-
-
-        index_len = len(dataframe.index.names)
-        # Ширина первой колонки
-        self._worksheet.set_column(firstcol=0, lastcol=index_len - 1, width=25)
-        # Ширина колонок до итогов
-        self._worksheet.set_column(firstcol=index_len, lastcol=self.col_count, cell_format=frmt_money, width=12)
-
-        if margins:
-            # Ширина пустой колонки
-            if margins.empty_col:
-                empty_col = self.col_count-width_totals_col
-                self._worksheet.set_column(firstcol=empty_col+1, lastcol=empty_col+1, width=1)
-                width_totals_col -= 1
-            # Ширина колонк с итогами
-            if width_totals_col > 0:
-                self._worksheet.set_column(firstcol=col_count-width_totals_col , lastcol=col_count, width=15)
-
-
-        if addchart:
-            chart_prop = self._get_chart_prop(dataframe, name=name, header=header, margins=margins, row=row,
-                                              chart_type=addchart)
-            self._charts.append(chart_prop)
-
-        self._update_cur_row(self.itog_row + 1)
 
     def _get_points(self, dataframe, header, margins, row):
         # Строка с началом данных после заголовка
