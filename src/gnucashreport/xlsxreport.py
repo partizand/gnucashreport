@@ -158,17 +158,15 @@ class XLSXReport:
 
         points = TablePoints(dataframe=dataframe, header=header, margins=margins, row=row)
 
+        chart_prop = self._get_chart_prop(points=points, name=name, header=header, addchart=addchart)
+
         if header:
             self._header_to_list(dataframe, row, margins)
             if not self.common_categories:
-                categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
-                    format(sheet=self._sheet,
-                           start_col=points.col_data_begin_l,
-                           end_col=points.col_data_end_l,
-                           start_row=points.row_begin + 1,
-                           end_row=points.row_begin + 1)
-                self.common_categories = categories
+                self.common_categories = chart_prop['categories']
 
+        if addchart:
+            self._charts.append(chart_prop)
 
         dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.row_data_begin, header=False)
         # Get the xlsxwriter objects from the dataframe writer object.
@@ -232,37 +230,39 @@ class XLSXReport:
                                    cell_format=frmt_money, width=12)
 
 
-        if addchart:
-            # chart_prop = self._get_chart_prop(dataframe, name=name, header=header, margins=margins, row=row,
-            #                                   chart_type=addchart)
-            chart_prop = {}
 
-            if header:
-                categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
-                    format(sheet=self._sheet,
-                           start_col=points.col_data_begin_l,
-                           end_col=points.col_data_end_l,
-                           start_row=points.row_begin + 1,
-                           end_row=points.row_begin + 1)
-                chart_prop['categories'] = categories
-                # if not self.common_categories:
-                #     self.common_categories = copy(categories)
 
-            values = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
+        self._update_cur_row(points.row_itog + 1)
+
+    def _get_chart_prop(self, points:TablePoints, name, header, addchart):
+        chart_prop = {}
+
+        if header:
+            categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
                 format(sheet=self._sheet,
                        start_col=points.col_data_begin_l,
                        end_col=points.col_data_end_l,
-                       start_row=points.row_itog + 1,
-                       end_row=points.row_itog + 1)
-            chart_prop['values'] = values
-            chart_name = "='{sheet}'!${col}${row}".format(sheet=self._sheet, col=points.col_begin_l, row=points.row_itog + 1)
-            if name:
-                chart_name = name
-            chart_prop['name'] = chart_name
-            chart_prop['type'] = addchart
-            self._charts.append(chart_prop)
+                       start_row=points.row_begin + 1,
+                       end_row=points.row_begin + 1)
+            chart_prop['categories'] = categories
+            if not self.common_categories:
+                self.common_categories = categories
 
-        self._update_cur_row(points.row_itog + 1)
+        values = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
+            format(sheet=self._sheet,
+                   start_col=points.col_data_begin_l,
+                   end_col=points.col_data_end_l,
+                   start_row=points.row_itog + 1,
+                   end_row=points.row_itog + 1)
+        chart_prop['values'] = values
+        chart_name = "='{sheet}'!${col}${row}".format(sheet=self._sheet, col=points.col_begin_l,
+                                                      row=points.row_itog + 1)
+        if name:
+            chart_name = name
+        chart_prop['name'] = chart_name
+        chart_prop['type'] = addchart
+
+        return chart_prop
 
     def add_empty_row(self):
         """
