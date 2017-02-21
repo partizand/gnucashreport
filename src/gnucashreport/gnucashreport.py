@@ -90,7 +90,7 @@ class GNUCashReport(GNUCashData):
         xlsxreport = XLSXReport(filename=filename, datetime_format='M')
         # sheet on each year
         for start_date, end_date in years:
-            xlsxreport.next_sheet(sheet=str(start_date.year))
+            xlsxreport.next_sheet(sheet="{year}".format(year=str(start_date.year)))
             self._complex_report_writer(xlsxreport, start_date, end_date, period='M', glevel=glevel)
 
         # sheet by years

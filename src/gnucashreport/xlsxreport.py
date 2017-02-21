@@ -1,6 +1,7 @@
 import os
 
 import pandas
+from copy import copy
 
 from xlsxwriter.utility import xl_col_to_name
 
@@ -159,6 +160,14 @@ class XLSXReport:
 
         if header:
             self._header_to_list(dataframe, row, margins)
+            if not self.common_categories:
+                categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
+                    format(sheet=self._sheet,
+                           start_col=points.col_data_begin_l,
+                           end_col=points.col_data_end_l,
+                           start_row=points.row_begin + 1,
+                           end_row=points.row_begin + 1)
+                self.common_categories = categories
 
 
         dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.row_data_begin, header=False)
@@ -229,24 +238,24 @@ class XLSXReport:
             chart_prop = {}
 
             if header:
-                categories = '={sheet}!${start_col}${start_row}:${end_col}${end_row}'. \
+                categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
                     format(sheet=self._sheet,
                            start_col=points.col_data_begin_l,
                            end_col=points.col_data_end_l,
                            start_row=points.row_begin + 1,
                            end_row=points.row_begin + 1)
                 chart_prop['categories'] = categories
-                if not self.common_categories:
-                    self.common_categories = categories
+                # if not self.common_categories:
+                #     self.common_categories = copy(categories)
 
-            values = '={sheet}!${start_col}${start_row}:${end_col}${end_row}'. \
+            values = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
                 format(sheet=self._sheet,
                        start_col=points.col_data_begin_l,
                        end_col=points.col_data_end_l,
                        start_row=points.row_itog + 1,
                        end_row=points.row_itog + 1)
             chart_prop['values'] = values
-            chart_name = '={sheet}!${col}${row}'.format(sheet=self._sheet, col=points.col_begin_l, row=points.row_itog + 1)
+            chart_name = "='{sheet}'!${col}${row}".format(sheet=self._sheet, col=points.col_begin_l, row=points.row_itog + 1)
             if name:
                 chart_name = name
             chart_prop['name'] = chart_name
@@ -273,9 +282,7 @@ class XLSXReport:
 
     def _add_charts(self):
         for chart in self._charts:
-            name = chart['name']
-            values = chart['values']
-            if (not 'categories' in chart) and self.common_categories:
+            if ('categories' not in chart) and self.common_categories:
                 chart['categories'] = self.common_categories
 
             ex_chart = self._workbook.add_chart({'type': chart['type']})
@@ -304,14 +311,14 @@ class XLSXReport:
         self._headers.append(header)
 
 
-        if not self.common_categories:
-            start_col_letter = xl_col_to_name(idx_len)
-            count_vtotals = 0
-            if margins:
-                count_vtotals = margins.get_counts_vtotals()
-
-            end_col = xl_col_to_name(idx_len + len(columns) - 1 - count_vtotals)
-            self.common_categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, start_col_letter, end_col, row + 1)
+        # if not self.common_categories:
+        #     start_col_letter = xl_col_to_name(idx_len)
+        #     count_vtotals = 0
+        #     if margins:
+        #         count_vtotals = margins.get_counts_vtotals()
+        #
+        #     end_col = xl_col_to_name(idx_len + len(columns) - 1 - count_vtotals)
+        #     self.common_categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, start_col_letter, end_col, row + 1)
 
     def _add_headers(self):
 
@@ -362,153 +369,6 @@ class XLSXReport:
         # Буква колонки с концом данных
         self.str_end_col = xl_col_to_name(self.col_count - self.count_vtotals)
 
-    def _get_chart_prop(self, points: TablePoints, dataframe, name, header, margins, row, chart_type='column'):
-        """
-        Возвращает текст-ссылку на categories для chart
-        :param dataframe:
-        :param margins:
-        :param row:
-        :return:
-        """
-        chart_prop = {}
 
-        if header:
-            categories = '={sheet}!${start_col}${start_row}:${end_col}${end_row}'. \
-                format(sheet=self._sheet,
-                       start_col=points.col_data_begin_l,
-                       end_col=points.col_data_end_l,
-                       start_row=points.row_begin,
-                       end_row=points.row_begin)
-            chart_prop['categories'] = categories
-
-        values = '={sheet}!${start_col}${start_row}:${end_col}${end_row}'. \
-            format(sheet=self._sheet,
-                   start_col=points.col_data_begin_l,
-                   end_col=points.col_data_end_l,
-                   start_row=points.row_itog,
-                   end_row=points.row_itog)
-        chart_prop['values'] = values
-        chart_name = '={sheet}!${col}${row}'.format(sheet=self._sheet, col=points.col_begin_l, row=points.row_itog)
-        chart_prop['name'] = chart_name
-        # if row == -1:
-        #     row = self.cur_row
-
-        df_start_row = row
-        # if name:
-        #     df_start_row = row + 1
-
-        height = len(dataframe)
-        if header:
-            df_start_row += 1
-
-        itog_row = df_start_row + height - 1
-        # if margins.total_row:
-        #     itog_row += 1
-        col_count = len(dataframe.columns)
-
-        len_index = len(dataframe.index.names)
-        str_start_col = xl_col_to_name(len_index)
-
-        count_vtotals = 0
-        if margins:
-            count_vtotals = margins.get_counts_vtotals()
-        str_end_col = xl_col_to_name(col_count - count_vtotals)
-        if header:
-            categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, df_start_row)
-            chart_prop['categories'] = categories
-        # values Последняя строка dataframe
-        # 'values': '=Sheet1!$B$37:$M$37'
-        values = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, itog_row + 1)
-        chart_prop['values'] = values
-
-        # chart_name = ''
-        if name:
-            chart_name = name
-        else:
-            # Ссылка на начало последней строчки
-            chart_name = '={}!$A${}'.format(self._sheet, itog_row + 1)
-
-        chart_prop['name'] = chart_name
-
-        # Show values on chart
-        # chart_prop['data_labels'] = {'value': True}
-        chart_prop['type'] = chart_type
-        return chart_prop
-
-    def _get_series(self, points: TablePoints, chart_type='column'):
-        """
-        Возвращает текст-ссылку на categories для chart
-        :param dataframe:
-        :param margins:
-        :param row:
-        :return:
-        """
-        chart_prop = {}
-        
-        if header:
-            categories = '={sheet}!${start_col}${start_row}:${end_col}${end_row}'.\
-                            format(sheet=self._sheet,
-                                   start_col=points.col_data_begin_l,
-                                   end_col=points.col_data_end_l,
-                                   start_row=points.row_begin,
-                                   end_row=points.row_begin)
-            chart_prop['categories'] = categories
-        
-        values = '={sheet}!${start_col}${start_row}:${end_col}${end_row}'.\
-                            format(sheet=self._sheet,
-                                   start_col=points.col_data_begin_l,
-                                   end_col=points.col_data_end_l,
-                                   start_row=points.row_itog,
-                                   end_row=points.row_itog)
-        chart_prop['values'] = values
-        chart_name = '={sheet}!${col}${row}'.format(sheet=self._sheet, col=points.col_begin_l, row=points.row_itog)
-        if name:
-            chart_name = name
-        chart_prop['name'] = chart_name
-        chart_prop['type'] = chart_type
-        # if row == -1:
-        #     row = self.cur_row
-
-        df_start_row = row
-        # if name:
-        #     df_start_row = row + 1
-
-        height = len(dataframe)
-        if header:
-            df_start_row += 1
-
-        itog_row = df_start_row + height - 1
-        # if margins.total_row:
-        #     itog_row += 1
-        col_count = len(dataframe.columns)
-
-        len_index = len(dataframe.index.names)
-        str_start_col = xl_col_to_name(len_index)
-
-        count_vtotals = 0
-        if margins:
-            count_vtotals = margins.get_counts_vtotals()
-        str_end_col = xl_col_to_name(col_count - count_vtotals)
-        if header:
-            categories = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, df_start_row)
-            chart_prop['categories'] = categories
-        # values Последняя строка dataframe
-        # 'values': '=Sheet1!$B$37:$M$37'
-        values = '={0}!${1}${3}:${2}${3}'.format(self._sheet, str_start_col, str_end_col, itog_row + 1)
-        chart_prop['values'] = values
-
-        # chart_name = ''
-        if name:
-            chart_name = name
-        else:
-            # Ссылка на начало последней строчки
-            chart_name = '={}!$A${}'.format(self._sheet, itog_row + 1)
-
-        chart_prop['name'] = chart_name
-
-        # Show values on chart
-        # chart_prop['data_labels'] = {'value': True}
-        chart_prop['type'] = chart_type
-        return chart_prop
 
 
