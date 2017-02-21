@@ -117,7 +117,29 @@ class GNUCashData:
         dir_locale = os.path.join(dir_path, 'locale')
         gettext.install('gnucashreport', localedir=dir_locale)
 
-    def open_book_xml(self, xml_file):
+    def open_book_file(self, filename, readonly=True, open_if_lock=False,):
+        """
+        Open GnuCash database file. Autodetect type: sqlite or xml
+        :param filename:
+        :param readonly: only for sqlite
+        :param open_if_lock: only for sqlite
+        :return:
+        """
+        # Detect version - sql or xml
+
+        # Every valid SQLite database file begins with the following 16 bytes (in hex):
+        #  53 51 4c 69 74 65 20 66 6f 72 6d 61 74 20 33 00.
+        # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
+        # including the nul terminator character at the end.
+        # Read sqllite signature
+        with open(filename, "rb") as f:
+            bytes = f.read(16)
+        if bytes == b'SQLite format 3\x00':
+            self.open_book_sql(sqlite_file=filename, readonly=readonly, open_if_lock=open_if_lock)
+        else:
+            self._open_book_xml(filename)
+
+    def _open_book_xml(self, xml_file):
         """
         Opens gnucash book from xml file
         :param xml_file:
@@ -186,6 +208,23 @@ class GNUCashData:
 
         self._read_book_pickle(folder=folder)
         self._after_read()
+
+    def _detect_filebook_type(self, filename):
+        # Read sqllite signature
+        # Every valid SQLite database file begins with the following 16 bytes (in hex):
+        #  53 51 4c 69 74 65 20 66 6f 72 6d 61 74 20 33 00.
+        # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
+        # including the nul terminator character at the end.
+        with open(filename, "rb") as f:
+            bytes = f.read(16)
+        # sqlite_signature = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x20, 0x33, 0x00]
+        # str = bytes.decode('utf-8')
+        print(bytes)
+        if bytes == b'SQLite format 3\x00':
+            print('sql file')
+        else:
+            print('xml file')
+
 
     def _read_book_pickle(self, folder=None):
         self.df_accounts = self._dataframe_from_pickle(self.pickle_accounts, folder=folder)

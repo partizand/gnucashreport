@@ -141,7 +141,7 @@ class BaseTest(object):
 
     @classmethod
     def open_xml(cls):
-        cls.rep.open_book_xml(BaseTest.bookfile_xml)
+        cls.rep._open_book_xml(BaseTest.bookfile_xml)
 
     @classmethod
     def open_pickle(cls):
