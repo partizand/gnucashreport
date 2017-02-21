@@ -448,9 +448,7 @@ class GNUCashData:
             df_ret.loc[index] = dataframe.sum()
             return df_ret
 
-    def equity_by_period(self, from_date, to_date, period='M', glevel=1,
-                           margins: Margins = None):
-
+    def equity_by_period(self, from_date, to_date, period='M', glevel=1, margins: Margins = None):
         """
         Получение капитала за период (активы минус пассивы)
         Возвращает DataFrame
@@ -459,6 +457,7 @@ class GNUCashData:
         :param to_date: Finish date
         :param period: "M" for month, "D" for day...
         :param glevel: group level
+        :param margins:
         :return: pivot DataFrame
         """
         assets_and_liability = copy(GNUCashData.ALL_ASSET_TYPES)
@@ -563,7 +562,6 @@ class GNUCashData:
 
         return group_acc
 
-
     def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
                           margins:Margins = None, drop_null=False):
         """
@@ -573,6 +571,7 @@ class GNUCashData:
         :param period:
         :param account_types:
         :param glevel:
+        :param margins:
         :param drop_null: Отбрасывать нулевые значения (итоги могут не содержать всех столбцов)
         :return: DataFrame
         """
@@ -611,23 +610,12 @@ class GNUCashData:
         sel_df = self._turnover_group_by_period(from_date=from_date, to_date=to_date, period=period,
                                                 account_type=account_type)
 
-        # Фильтрация по времени
-        # sel_df = self.df_splits[(self.df_splits['post_date'] >= from_date)
-        #                         & (self.df_splits['post_date'] <= to_date)
-        #                         & (self.df_splits['account_type'] == account_type)]
-
-        # Группировка по месяцу
-        # sel_df.set_index('post_date', inplace=True)
-        # sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
-
         # inverse income
         if account_type == self.INCOME:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # пересчет в нужную валюту
         group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
-
-        # dataframe_to_excel(group, 'after-curcalc')
 
         # Группировка по счетам
         group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
@@ -637,9 +625,7 @@ class GNUCashData:
 
         return group
 
-    def profit_by_period(self, from_date: date, to_date: date, period='M', glevel=1,
-                           margins: Margins = None):
-
+    def profit_by_period(self, from_date: date, to_date: date, period='M', glevel=1, margins: Margins = None):
         """
         Получение прибыли за период
         Возвращает DataFrame
@@ -649,6 +635,7 @@ class GNUCashData:
         :param period: "M" for month, "D" for day...
         :param account_type: INCOME or EXPENSE
         :param glevel: group level
+        :param margins:
         :return: pivot DataFrame
         """
 
@@ -661,8 +648,6 @@ class GNUCashData:
         # пересчет в нужную валюту
         group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
         # Группировка по счетам
-
-
 
         # Суммируем
         profit_name = _('Profit')
@@ -778,8 +763,7 @@ class GNUCashData:
         # Конец пересчета в нужную валюту
         return df
 
-    def _group_by_accounts(self, dataframe, glevel=1,
-                           drop_null=False):
+    def _group_by_accounts(self, dataframe, glevel=1, drop_null=False):
         """
         Group dataframe by accounts, add totals
         glevel - group level of accounts: array of levels or single int level
@@ -857,21 +841,6 @@ class GNUCashData:
         # Переворот дат из строк в колонки
         unst = sel_df.unstack(level='post_date', fill_value=0)
 
-
-
-        # df_test = unst.copy()
-
-
-        # df_test.columns = df_test.columns.swaplevel()
-        # cols = df_test.columns.get_level_values('post_date')
-        # cols = df_test.columns.get_level_values(0)
-        # print(cols[0])
-        # df_test[cols[0], 'z_perc'] = 1
-        # df_test[cols[1], 'z_perc'] = (df_test[cols[1], 'value_currency'] - df_test[cols[0], 'value_currency'])/df_test[cols[0], 'value_currency']
-        # df_test[cols[1], 'z_perc'] = ((df_test[cols[1], 'value_currency']).astype('float64') - (df_test[cols[0], 'value_currency']).astype('float64')).divide((df_test[cols[0], 'value_currency']).astype('float64'))
-        # df_test = df_test.sort_index(axis=1)
-        # dataframe_to_excel(df_test, 'df_test')
-
         unst.columns = unst.columns.droplevel()
 
         # Группировка по нужному уровню
@@ -918,10 +887,7 @@ class GNUCashData:
             df_inf[_('Total')] = (((df[cols[i2]]).astype('float64')).divide(
                 (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
 
-        # dataframe_to_excel(df_inf, 'df_inf2', datetime_format=period)
-
         return df_inf
-
 
     def get_empty_dataframe(self, dataframe):
         """
@@ -932,41 +898,6 @@ class GNUCashData:
         df_new = pandas.DataFrame(data=None, index=dataframe.index, columns=dataframe.columns)
         df_new = df_new.dropna()
         return df_new
-
-    # @classmethod
-    # def dataframe_to_html(cls, dataframe, filename):
-    #     if not filename.endswith('.html'):
-    #         filename = os.path.join(cls.dir_excel, filename + ".html")
-    #     html = dataframe.to_html()
-    #     with open(filename, "w") as text_file:
-    #         text_file.write(html)
-
-
-        # dataframe.to_excel(filename)
-
-    # @staticmethod
-    # def _dateformat_from_period(period: str):
-    #     """
-    #     Get Excel date format from period letter (D, M, Y ...)
-    #     :param period: May be date format, e.g. dd-mm-yyyy,
-    #                     or may be period letter: D, M, Q, Y (day, month, quarter, year)
-    #                     or may be None, then dd-mm-yyyy returns
-    #     :return: datetime_format for excel
-    #     """
-    #
-    #     if period:
-    #         dateformat = period
-    #     else:
-    #         dateformat = 'dd-mm-yyyy'
-    #
-    #     if period:
-    #         if period.upper() == 'M':
-    #             dateformat = 'mmm yyyy'
-    #         if period.upper() == 'A':
-    #             dateformat = 'yyyy'
-    #         if period.upper() == 'Q':
-    #             dateformat = 'Q YY'  # ???
-    #     return dateformat
 
     def _group_prices_by_period(self, from_date, to_date, period='M', guids=None):
         """
@@ -982,18 +913,10 @@ class GNUCashData:
         :return: DataFrame with grouped prices
         """
 
-        # all_commodities_guids = set(self.df_prices['commodity_guid'].drop_duplicates().tolist())
-        # all_commodities_guids = set(self.df_prices.index.values)
         all_commodities_guids = set(self.df_prices.index.get_level_values('commodity_guid').drop_duplicates().tolist())
 
-
-        # print(all_commodities_guids)
-        # g = self.df_prices.index.values
         # Индекс по периоду
         idx = pandas.date_range(from_date, to_date, freq=period)
-
-        # Отбор строк по заданному периоду
-        # sel_df = self.df_prices[(self.df_prices['date'] <= to_date)]
 
         # Список commodities guids
         if guids is None:
@@ -1005,10 +928,6 @@ class GNUCashData:
         sel_df = pandas.DataFrame(self.df_prices,
                                   columns=['mnemonic', 'currency_guid', 'value'])
                                   # columns=['commodity_guid', 'date', 'mnemonic', 'currency_guid', 'value'])
-        # Поэтому отсекаем повторы
-        # sel_df.set_index(['commodity_guid', 'date'], inplace=True)
-        # отсечение повторов по индексу
-        # sel_df = sel_df[~sel_df.index.duplicated(keep='last')]
 
         # цикл по всем commodity_guid
         group_prices = pandas.DataFrame()
@@ -1027,9 +946,6 @@ class GNUCashData:
                 # Меняем местами индексы
                 sel_mnem = sel_mnem.swaplevel()
 
-                # if group_prices.empty:
-                #     group_prices = sel_mnem
-                # else:
                 group_prices = group_prices.append(sel_mnem)
 
         # Список guid всех нужных валют
@@ -1037,7 +953,7 @@ class GNUCashData:
             currency_guids=None
         else:
             currency_guids = set(group_prices['currency_guid'].drop_duplicates().tolist()) & all_commodities_guids
-        # print(currency_guids)
+
         if currency_guids:
             # TODO: Здесь нужен пересчет в валюту представления
             pass
@@ -1137,7 +1053,3 @@ class GNUCashData:
         self.df_prices = xls.parse('prices')
 
         xls.close()
-
-        # def get_split(self, account_name):
-        #     return self.df_splits[(self.df_splits['fullname'] == account_name)]
-        #     # return self.df_splits.loc['fullname' == account_name]
