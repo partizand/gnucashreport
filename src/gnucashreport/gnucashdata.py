@@ -1,38 +1,23 @@
 import gettext
-
 import locale
 import os
-
-import piecash
-import pandas
-import numpy
-from operator import attrgetter
-from datetime import date, datetime
-import time
-
-from decimal import Decimal
-
 from copy import copy
+from datetime import date
+from decimal import Decimal
+from operator import attrgetter
+
+import pandas
+import piecash
 
 from gnucashreport.gcxmlreader import GNUCashXMLBook
-# from gnucashreport.margins import Margins, TOTAL_NAME, MEAN_NAME, PROFIT_NAME, EQUITY_NAME
 from gnucashreport.margins import Margins
-from gnucashreport.utils import dataframe_to_excel
 
 
 class GNUCashData:
     """
-    DataFrame implementation of GnuCash database tables for build reports
+    Low level DataFrame implementation of GnuCash database tables for build reports
     Basic reports
 
-    Exaple use:
-
-    from_date = datetime.date(2016, 1, 1)
-    to_date = datetime.date(2016, 12, 31)
-    rep = repbuilder.RepBuilder()
-    rep.open_book("u:/sqllite_book/real-2017-01-26.gnucash")
-    df = rep.turnover_by_period(from_date=from_date, to_date=to_date, account_type='INCOME')
-    rep.dataframe_to_excel(df, "itog-income2")
     """
 
     # GnuCash account types
@@ -49,10 +34,6 @@ class GNUCashData:
     # GNUCash all account assets types
     ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
 
-    # Название итоговых строк
-    # TOTAL_NAME = 'Всего'
-    # MEAN_NAME = 'Среднее'
-
     # Данные для генерации тестовых данных и тестирования
     dir_pickle = 'V:/test_data'
     # dir_testdata = 'v:/test_data'
@@ -63,30 +44,7 @@ class GNUCashData:
     pickle_tr = 'transactions.pkl'
     pickle_commodities = 'commodities.pkl'
 
-    # pickle_assets = 'assets.pkl'
-    # pickle_loans = 'loans.pkl'
-    # pickle_expense = 'expense.pkl'
-    # pickle_income = 'income.pkl'
-    # pickle_profit = 'profit.pkl'
-    # pickle_equity = 'equity.pkl'
-
-    # test_glevel = 1
-
-    # test_from_date = date(2016, 1, 1)
-    # test_to_date = date(2016, 12, 31)
-    # Конец тестовых данных
-
     dir_excel = "v:/tables"
-
-    # bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
-    # bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
-
-    # bookfile_sql = "u:/sqllite_book/real-2017-01-26.gnucash"
-    # bookfile_xml = 'U:/xml_book/GnuCash-base.gnucash'
-
-    # book_name = None
-
-    # root_account_guid = None
 
     def __init__(self):
         self.df_accounts = pandas.DataFrame()
@@ -145,11 +103,8 @@ class GNUCashData:
         :param xml_file:
         :return:
         """
-        # if not xml_file:
-        #     xml_file = self.bookfile_xml
         self._read_book_xml(xml_file)
         self._after_read()
-        # print(self.df_prices)
 
     def open_book_sql(self,
                       sqlite_file=None,
@@ -165,7 +120,7 @@ class GNUCashData:
                       db_port=None,
                        **kwargs):
         """
-        Opens gnucash book from sql
+        Opens gnucash book from sql. See piecash help for sql details
         :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
         :param str uri_conn: a sqlalchemy connection string
         :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
@@ -177,8 +132,6 @@ class GNUCashData:
         :raises GnucashException: if there is a lock on the file and open_if_lock is False
         :return:
         """
-        # if not sqlite_file:
-        #     sqlite_file = self.bookfile_sql
         self._read_book_sql(sqlite_file=sqlite_file,
                                uri_conn=uri_conn,
                                readonly=readonly,
@@ -209,24 +162,12 @@ class GNUCashData:
         self._read_book_pickle(folder=folder)
         self._after_read()
 
-    def _detect_filebook_type(self, filename):
-        # Read sqllite signature
-        # Every valid SQLite database file begins with the following 16 bytes (in hex):
-        #  53 51 4c 69 74 65 20 66 6f 72 6d 61 74 20 33 00.
-        # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
-        # including the nul terminator character at the end.
-        with open(filename, "rb") as f:
-            bytes = f.read(16)
-        # sqlite_signature = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x20, 0x33, 0x00]
-        # str = bytes.decode('utf-8')
-        print(bytes)
-        if bytes == b'SQLite format 3\x00':
-            print('sql file')
-        else:
-            print('xml file')
-
-
     def _read_book_pickle(self, folder=None):
+        """
+        For testing
+        :param folder:
+        :return:
+        """
         self.df_accounts = self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
         # dataframe_to_excel(self.df_accounts, 'accounts-source')
         self.df_commodities = self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
@@ -248,7 +189,7 @@ class GNUCashData:
 
     def _dataframe_from_pickle(self, filename, folder=None):
         """
-        Читает dataframe из pickle файла
+        Get dataframe from pickle file
         :param filename: Полное или короткое имя файла
         :param folder: Каталог с файлом
         :return: DataFrame
@@ -259,15 +200,11 @@ class GNUCashData:
         df = pandas.read_pickle(fullfilename)
         return df
 
-
     def _read_book_xml(self, xml_file):
 
         # read contens of the book
         book = GNUCashXMLBook()
         book.read_from_xml(xml_file)
-
-        # print(book['prices'])
-        # return
 
         # Accounts
 
@@ -278,9 +215,6 @@ class GNUCashData:
         self.df_accounts = self._object_to_dataframe(book.accounts, fields)
         self.df_accounts.rename(columns={'actype': 'account_type'}, inplace=True)
         self.root_account_guid = book.root_account_guid
-        # self.dataframe_to_excel(self.df_accounts, 'acc-xml')
-        # print(df_accounts)
-        # return
 
         # Transactions
 
@@ -288,16 +222,12 @@ class GNUCashData:
 
         self.df_transactions = self._object_to_dataframe(book.transactions, fields)
         self.df_transactions.rename(columns={'date': 'post_date'}, inplace=True)
-        # print(self.df_transactions)
-        # return
 
         # Splits
         fields = ["guid", "transaction_guid", "account_guid",
                   "memo", "reconcile_state", "value", "quantity"]
 
         self.df_splits = self._object_to_dataframe(book.splits, fields)
-        # print(self.df_splits)
-        # return
 
         # commodity
 
@@ -305,7 +235,6 @@ class GNUCashData:
         self.df_commodities = self._object_to_dataframe(book.commodities, fields)
         self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
         self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
-        # print(self.df_commodities)
 
         # Prices
         fields = ["guid", "commodity_guid", "currency_guid",
@@ -413,9 +342,6 @@ class GNUCashData:
         :return:
         """
 
-        # Get root account guid
-        # self.df_accounts[self.df_accounts['acc']]
-
         #  Get fullname of accounts
         self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
 
@@ -428,7 +354,6 @@ class GNUCashData:
             lambda x: pandas.to_datetime(x.date()))
 
         # Merge prices with commodities
-        # self.df_prices = pandas.merge(self.df_prices, mems, left_on='commodity_guid', right_index=True)
         self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on='commodity_guid',
                                       right_index=True)
         # Convert datetme to date in prices (skip time)
@@ -460,15 +385,13 @@ class GNUCashData:
         # self.df_splits['cum_sum'] = self.df_splits.quantity.cumsum()
         self.df_splits['cum_sum'] = self.df_splits.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
         # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
-        # dataframe_to_excel(self.df_splits, 'all-splits2')
-
 
     def _add_margins(self, dataframe, margins=None):
         """
-        Добавляет итоги в DataFrame
+        Add totals into DataFrame
         :param dataframe:
-        :margins dataframe:
-        :return: DataFrame с итогами
+        :param margins:
+        :return: DataFrame with totals
         """
 
         df = dataframe.copy()
