@@ -250,7 +250,7 @@ class XLSXReport:
             if name:
                 chart_name = name
             chart_prop['name'] = chart_name
-            # chart_prop['type'] = addchart
+            chart_prop['type'] = addchart
             self._charts.append(chart_prop)
 
         self._update_cur_row(points.row_itog + 1)
@@ -278,8 +278,8 @@ class XLSXReport:
             if (not 'categories' in chart) and self.common_categories:
                 chart['categories'] = self.common_categories
 
-            # ex_chart = self._workbook.add_chart({'type': chart['type']})
-            ex_chart = self._workbook.add_chart({'type': 'column'})
+            ex_chart = self._workbook.add_chart({'type': chart['type']})
+            # ex_chart = self._workbook.add_chart({'type': 'column'})
             ex_chart.add_series(chart)
             ex_chart.set_size({'x_scale': 2, 'y_scale': 1.5})
             self._worksheet.insert_chart(row=self._cur_row, col=1, chart=ex_chart)
