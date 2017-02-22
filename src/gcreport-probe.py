@@ -6,7 +6,8 @@ import pandas
 from gnucashreport.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
 
-from gnucashreport.gnucashreport import GNUCashReport
+# from gnucashreport.gnucashreport import GNUCashReport
+import gnucashreport
 from gnucashreport.margins import Margins
 # from gnucashreport.xlsxreport import OpenpyxlReport
 from gnucashreport.utils import dataframe_to_excel
@@ -20,7 +21,7 @@ from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
 
 filename = 'v:/tables/ex-test.xlsx'
-gcrep = GNUCashReport()
+gcrep = gnucashreport.GNUCashReport()
 # gcrep._detect_filebook_type(bookfile_xml)
 # exit()
 # start_time_sql = time.time()

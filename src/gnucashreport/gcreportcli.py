@@ -1,3 +1,6 @@
+"""
+Simple cli tool for gnucashreport
+"""
 import argparse
 
 import sys

@@ -1,10 +1,8 @@
 """
-bankparser
+GnuCash reports
 
-Convert banks statements to qif format
-https://github.com/partizand/bankparser
-
-Bankparser works with Python 3
+Python library for get reports from `GnuCash <http://gnucash.org>`_ to excel.
+https://github.com/partizand/gnucashreport
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-from gnucashreport.gnucashreport import GNUCashReport
+from .gnucashreport import GNUCashReport
 
 __version__ = "0.1.0"
 __author__ = "Partizand"

@@ -49,7 +49,7 @@ setup(name='gnucashreport',
 
       entry_points={
           'console_scripts':
-              ['gcreport = src.gcreport:main'],
+              ['gcreport = gnucashreport.gcreportcli:main'],
       },
       include_package_data=True,
       zip_safe=False
