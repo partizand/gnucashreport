@@ -874,20 +874,39 @@ class GNUCashData:
 
             if not cumulative:
                 # Процент к предыдущему
-                df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).divide((df[cols[i-1]]).astype('float64'))
+                # df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).
+                # divide((df[cols[i-1]]).astype('float64'))
+                df_inf[cols[i]] = self._percent_increase(df[cols[i-1]], df[cols[i]])
             else:
                 # Процент к началу
-                df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
-                                    (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
-
+                # df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
+                #                     (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
+                df_inf[cols[i]] = self._percent_increase(df[cols[0]], df[cols[i]], i)
 
         # Average by period
         if not cumulative:
             i2 = len(cols) - 1
-            df_inf[_('Total')] = (((df[cols[i2]]).astype('float64')).divide(
-                (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
+            # df_inf[_('Total')] = (((df[cols[i2]]).astype('float64')).divide(
+            #     (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
+            df_inf[_('Total')] = self._percent_increase(df[cols[0]], df[cols[i2]], i2)
 
         return df_inf
+
+    @staticmethod
+    def _percent_increase(a_ser:pandas.Series, b_ser:pandas.Series, distance=1):
+        """
+        Return percent increase between two series
+        :param a_ser: First series
+        :param b_ser: Last series
+        :param distance: time counts between series
+        :return: series: percent increase
+        """
+        # if distance == 1:
+        #     i_ser = ((b_ser.astype('float64')) - (a_ser.astype('float64'))).divide(a_ser.astype('float64'))
+        # else:
+        i_ser = ((b_ser.astype('float64')).divide(
+            a_ser.astype('float64'))).pow(1 / distance) - 1
+        return i_ser
 
     def get_empty_dataframe(self, dataframe):
         """

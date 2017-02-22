@@ -21,6 +21,7 @@ depending on (install automatically)
 
 - pandas
 - piecash
+- xlsxwriter
 
 Examples
 --------
@@ -122,7 +123,7 @@ Now you may run tests.
 license
 -------
 
-GNU GPL 3
+`GNU GPL 3 <https://www.gnu.org/licenses/gpl.html>`_
 
 author
 ------

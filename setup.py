@@ -11,7 +11,7 @@ with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='gnucashreport',
-      version=gnucashreport.__version__, # version,
+      version=gnucashreport.__version__,
       author="Partizand",
       author_email="",
       url="https://github.com/partizand/gnucashreport",
@@ -42,7 +42,7 @@ setup(name='gnucashreport',
 
       test_suite='test',
 
-      install_requires=['setuptools', 'pandas', 'piecash'],
+      install_requires=['setuptools', 'pandas', 'piecash', 'xlsxwriter'],
       #                   'appdirs'
       #                   ],
       # namespace_packages=["bankparser"],
