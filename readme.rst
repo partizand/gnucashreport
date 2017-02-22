@@ -3,7 +3,7 @@ GnuCash reports
 
 Sorry for my English!
 
-Python library for get reports from `GnuCash <http://gnucash.org>`_ to excel.
+Python library for get reports from `GnuCash <http://gnucash.org>`_ to xlsx files.
 
 Connect directly to GnuCash book (xml or sql) and use `Pandas <http://pandas.pydata.org/>`_ for calculation reports.
 No cycles for calculation, less errors, less code.
