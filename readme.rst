@@ -8,12 +8,16 @@ Python library for get reports from `GnuCash <http://gnucash.org>`_ to excel.
 Connect directly to GnuCash book (xml or sql) and use `Pandas <http://pandas.pydata.org/>`_ for calculation reports.
 No cycles for calculation, less errors, less code.
 
+GnuCash python bindings not use, because it platform depended and unstable.
+Piecah need only for get data from sql. Not using piecash calculation and walk functions.
+All data from GnuCash loads into DataFrames as is, table to table. Then data are processed only thru pandas.
+
 Install
 -------
 
 If you not programmer and want get reports:
 
-#. Install `Python <https://www.python.org/downloads/>`_ version 3 (version 2 must work, but I don't check)
+#. Install `Python <https://www.python.org/downloads/>`_ version 3 (version 2 must worked, but I don't check)
 
 #. Install Pandas, by typing [#]_ ::
 
@@ -46,9 +50,9 @@ Examples
 >>> import gnucashreport
 >>> gcrep = gnucashreport.GNUCashReport()
 
-open sql book
+open sql or xml book
 
->>> gcrep.open_book_sql('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
+>>> gcrep.open_book_file('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
 
 save all splits to Excel (with account name, decription, currency mnemonic and other)
 
