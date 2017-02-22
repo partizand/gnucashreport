@@ -9,8 +9,8 @@ Connect directly to GnuCash book (xml or sql) and use `Pandas <http://pandas.pyd
 No cycles for calculation, less errors, less code.
 
 GnuCash python bindings not use, because it platform depended and unstable.
-Piecah need only for get data from sql. Not using piecash calculation and walk functions.
-All data from GnuCash loads into DataFrames as is, table to table. Then data are processed only thru pandas.
+Piecash need only for get data from sql. Not using piecash calculation and walk functions.
+All data from GnuCash loads into DataFrames as is, table to table. Then data are processed only thru Pandas.
 
 Install
 -------
