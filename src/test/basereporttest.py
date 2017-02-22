@@ -65,8 +65,8 @@ class BaseReportTest(BaseTest):
         filename = self._add_suffix(self.pickle_equity, self.test_level2_suffix)
         self.pickle_control(filename, df, 'Equity multiindex')
 
-    def test_inflation(self):
-        df = self.get_inflation()
+    def test_inflation_annual(self):
+        df = self.get_inflation(cumulative=False)
         self.pickle_control(self.pickle_inflation, df, 'Inflation')
 
     def test_inflation_cumulative(self):

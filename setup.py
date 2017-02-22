@@ -23,7 +23,7 @@ setup(name='gnucashreport',
       # cmdclass={'copyscript': CopyScript, 'genfiles': GenFiles},
 
       classifiers=[
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 4 - Beta',
           'Programming Language :: Python :: 3',
           'Natural Language :: Russian',
           'Topic :: Office/Business :: Financial :: Accounting',
