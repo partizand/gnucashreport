@@ -5,7 +5,7 @@ Sorry for my English!
 
 Python library for get reports from `GnuCash <http://gnucash.org>`_ to xlsx files.
 
-Connect directly to GnuCash book (xml or sql) and use `Pandas <http://pandas.pydata.org/>`_ for calculation reports.
+It connects directly to the GnuCash book (xml or sql) and `Pandas <http://pandas.pydata.org/>`_ use to building reports.
 No cycles for calculation, less errors, less code.
 
 GnuCash python bindings not use, because it platform depended and unstable.
@@ -16,9 +16,9 @@ All data from GnuCash loads into DataFrames as is, table to table. Then data are
 Install
 -------
 
-If you not programmer and want get reports:
+If you are not programmer and you want to get reports:
 
-#. Install `Python <https://www.python.org/downloads/>`_ version 3 (version 2 must worked, but I don't check)
+#. Install `Python <https://www.python.org/downloads/>`_ version 3 (version 2 should work, but I have not tested)
 
 #. Install Pandas, by typing [#]_ ::
 
