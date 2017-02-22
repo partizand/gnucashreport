@@ -11,7 +11,6 @@ import os
 import re
 
 import io
-import setuptools
 from setuptools import setup, find_packages
 
 
@@ -69,7 +68,7 @@ setup(name='gnucashreport',
 
       test_suite='test',
 
-      install_requires=['setuptools', 'numpy', 'pandas', 'piecash', 'xlsxwriter'],
+      install_requires=['numpy', 'pandas', 'piecash', 'xlsxwriter'],
       #                   'appdirs'
       #                   ],
 

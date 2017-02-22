@@ -4,40 +4,62 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2017-02-17 16:14+0300\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2017-02-22 14:58+0300\n"
+"PO-Revision-Date: 2017-02-22 15:04+0300\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+"X-Generator: Poedit 1.8.12\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language: ru\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SearchPath-0: .\n"
 
-
-#: src/gcreports\gnucashreport.py:10
-msgid "Assets"
-msgstr "Активы"
-
-#: src/gcreports\gnucashreport.py:12
-msgid "Expense"
-msgstr "Расходы"
-
-#: src/gcreports\gnucashreport.py:14
-msgid "Income"
-msgstr "Доходы"
-
-#: src/gcreports\margins.py:2
+#: src/gnucashreport\gnucashdata.py:423 src/gnucashreport\gnucashdata.py:891
+#: src/gnucashreport\margins.py:13
 msgid "Total"
 msgstr "Всего"
 
-#: src/gcreports\margins.py:3
-msgid "Average"
-msgstr "Среднее"
-
-#: src/gcreports\margins.py:4
-msgid "Profit"
-msgstr "Прибыль"
-
-#: src/gcreports\margins.py:5
+#: src/gnucashreport\gnucashdata.py:474 src/gnucashreport\margins.py:20
 msgid "Equity"
 msgstr "Капитал"
 
+#: src/gnucashreport\gnucashdata.py:653 src/gnucashreport\margins.py:19
+msgid "Profit"
+msgstr "Прибыль"
+
+#: src/gnucashreport\gnucashreport.py:106
+msgid "All"
+msgstr "Все"
+
+#: src/gnucashreport\gnucashreport.py:110
+msgid "Inflation"
+msgstr "Инфляция"
+
+#: src/gnucashreport\gnucashreport.py:294
+msgid "Inflation annual"
+msgstr "Инфляция ежегодно"
+
+#: src/gnucashreport\gnucashreport.py:301
+msgid "Inflation cumulative"
+msgstr "Инфляция нарастающая"
+
+#: src/gnucashreport\gnucashreport.py:328
+msgid "Income"
+msgstr "Доходы"
+
+#: src/gnucashreport\gnucashreport.py:335
+msgid "Expense"
+msgstr "Расходы"
+
+#: src/gnucashreport\gnucashreport.py:349
+msgid "Assets"
+msgstr "Активы"
+
+#: src/gnucashreport\margins.py:16
+msgid "Average"
+msgstr "Средне"
