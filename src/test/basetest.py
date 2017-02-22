@@ -122,9 +122,13 @@ class BaseTest(object):
         filename = cls._add_suffix(filename, cls.test_level2_suffix)
         cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
-        # Inflation
+        # Inflation annual
         filename = cls.pickle_inflation
-        df = cls.get_inflation()
+        df = cls.get_inflation(cumulative=False)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
+        # Inflation cumulative
+        df = cls.get_inflation(cumulative=True)
+        filename = cls._add_suffix(filename, cls.test_level2_suffix)
         cls._dataframe_to_pickle(df, filename=filename, folder=cls.dir_testdata)
 
         # save sql to pickle book
@@ -261,7 +265,7 @@ class BaseTest(object):
         return df
 
     @classmethod
-    def get_inflation(cls, glevel=None):
+    def get_inflation(cls, cumulative=False, glevel=None):
         """
         Get assets dataframe for testing or saving
         :return:
@@ -269,7 +273,7 @@ class BaseTest(object):
         if not glevel:
             glevel = cls.test_glevel
         df = cls.rep.inflation_by_period(from_date=cls.test_from_date_y, to_date=cls.test_to_date_y, period='A',
-                                      glevel=glevel)
+                                      glevel=glevel, cumulative=cumulative)
         return df
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):

@@ -69,3 +69,9 @@ class BaseReportTest(BaseTest):
         df = self.get_inflation()
         self.pickle_control(self.pickle_inflation, df, 'Inflation')
 
+    def test_inflation_cumulative(self):
+        # Inflation cumulative
+        df = self.get_inflation(cumulative=True)
+        filename = self._add_suffix(self.pickle_inflation, self.test_level2_suffix)
+        self.pickle_control(filename, df, 'Inflation cumulative')
+

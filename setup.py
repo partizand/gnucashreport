@@ -47,10 +47,10 @@ setup(name='gnucashreport',
       #                   ],
       # namespace_packages=["bankparser"],
 
-      # entry_points={
-      #     'console_scripts':
-      #         ['bankparser = bankparser.bankparsercli:main'],
-      # },
+      entry_points={
+          'console_scripts':
+              ['gcreport = src.gcreport:main'],
+      },
       include_package_data=True,
       zip_safe=False
       )
