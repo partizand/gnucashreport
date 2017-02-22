@@ -9,6 +9,7 @@ class GNUCashXMLBook:
     """
     Reads contents of GNUCash xml file into arrays
     """
+
     def __init__(self):
         self.commodities = []
         self.prices = []
@@ -16,10 +17,6 @@ class GNUCashXMLBook:
         self.transactions = []
         self.splits = []
         self.root_account_guid = None
-
-
-    ##################################################################
-    # XML file parsing
 
     def read_from_xml(self, filename):
         """
@@ -143,30 +140,6 @@ class GNUCashXMLBook:
                                   'transaction'):
             transaction = self._transaction_from_tree(child)
             self.transactions.append(transaction)
-            # for split in transaction.splits:
-            #     self.splits.append(split)
-
-        # ret_dict['transactions'] = transactions
-        # ret_dict['splits'] = splits
-
-        # slots = _slots_from_tree(tree.find('{http://www.gnucash.org/XML/book}slots'))
-
-        # book = Book(commodities=commodities, prices=prices, accounts=accounts, transactions=transactions, splits=splits)
-
-        # return book
-
-        # return Book(guid=guid,
-        #             transactions=transactions,
-        #             root_account=root_account,
-        #             commodities=commodities,
-        #             slots=slots)
-
-    # <gnc:commodity version="2.0.0">
-    #   <cmdty:space>Metal</cmdty:space>
-    #   <cmdty:id>VTB.AG</cmdty:id>
-    #   <cmdty:name>VTB.AG (Серебро ВТБ24)</cmdty:name>
-    #   <cmdty:fraction>1</cmdty:fraction>
-    # </gnc:commodity>
 
     # Implemented:
     # - cmdty:id
@@ -520,6 +493,7 @@ class Commodity(object):
 
     Consists of a name (or id) and a space (namespace).
     """
+
     def __init__(self, name, space=None):
         self.guid = self.get_commodity_guid(space, name)
         self.mnemonic = name
@@ -536,12 +510,14 @@ class Commodity(object):
     def __repr__(self):
         return "<Commodity {}>".format(self.guid)
 
+
 class Price(object):
     """
     A commodity is something that's stored in GNU Cash accounts.
 
     Consists of a name (or id) and a space (namespace).
     """
+
     def __init__(self, guid, commodity_guid, currency_guid, date, source, price_type, value):
         self.guid = guid
         self.commodity_guid = commodity_guid
@@ -556,6 +532,7 @@ class Price(object):
 
     def __repr__(self):
         return "<Price {}>".format(self.guid)
+
 
 class Account(object):
     """
@@ -579,6 +556,7 @@ class Account(object):
 
     def __repr__(self):
         return "<Account {}>".format(self.guid)
+
 
 class Transaction(object):
     """
@@ -605,6 +583,7 @@ class Transaction(object):
         else:
             False
 
+
 class Split(object):
     """
     A split is one entry in a transaction.
@@ -628,14 +607,12 @@ class Split(object):
     def __repr__(self):
         return "<Split {}>".format(self.guid)
 
-    # def __lt__(self, other):
-    #     # For sorted() only
-    #     if isinstance(other, Split):
-    #         return self.transaction < other.transaction
-    #     else:
-    #         False
-
-
+        # def __lt__(self, other):
+        #     # For sorted() only
+        #     if isinstance(other, Split):
+        #         return self.transaction < other.transaction
+        #     else:
+        #         False
 
 
 if __name__ == '__main__':
@@ -644,4 +621,3 @@ if __name__ == '__main__':
     book.read_from_xml(filename)
 
     print(book.prices)
-

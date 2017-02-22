@@ -25,7 +25,7 @@ If you not programmer and want get reports:
 
 Now, you may use cli tool gcreport
 
-.. [#] Pandas need install before, because numpy have `issue thru install_requires directive <https://github.com/numpy/numpy/issues/2434>`_
+.. [#] Pandas need install before, because numpy have `installation thru install_requires directive issue <https://github.com/numpy/numpy/issues/2434>`_
 
 Simple command line tool
 ------------------------
