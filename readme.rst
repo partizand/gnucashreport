@@ -13,21 +13,20 @@ Install
 
 If you not programmer and want get reports:
 
-1. Install `Python <https://www.python.org/downloads/>`_ version 3
+#. Install `Python <https://www.python.org/downloads/>`_ version 3 (version 2 must work, but I don't check)
 
-2. Install Pandas, by typing::
+#. Install Pandas, by typing [#]_ ::
 
     pip install pandas
 
-3. Install gnucashreport::
+#. Install gnucashreport::
 
     pip install gnucashreport
 
 Now, you may use cli tool gcreport
 
-Note:
-
-pandas need install before (`numpy issue <https://github.com/numpy/numpy/issues/2434>`_ install_requires)
+.. [#] Pandas need install before,because numpy have
+`issue thru install_requires directive <https://github.com/numpy/numpy/issues/2434>`_
 
 Simple command line tool
 ------------------------
