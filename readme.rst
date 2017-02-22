@@ -11,17 +11,36 @@ No cycles for calculation, less errors, less code.
 Install
 -------
 
-To install
+If you not programmer and want get reports:
 
-    python setup.py install
+1. Install `Python <https://www.python.org/downloads/>`_ version 3
 
-You may use virtualenv.
+2. Install Pandas, by typing::
 
-depending on (install automatically)
+    pip install pandas
 
-- pandas
-- piecash
-- xlsxwriter
+3. Install gnucashreport::
+
+    pip install gnucashreport
+
+Now, you may use cli tool gcreport
+
+Note:
+
+pandas need install before (`numpy issue <https://github.com/numpy/numpy/issues/2434>`_ install_requires)
+
+Simple command line tool
+------------------------
+
+Library contain the simple cli tool, usage::
+
+    gcreport gnucash_file xlsx_file [--open_if_lock]
+
+gnucash_file
+ Your gnucash database file
+
+xlsx_file
+ Path to xlsx file for saving reports
 
 Examples
 --------
@@ -96,8 +115,6 @@ Groups only 1 level, into 2 rows and 1 column:
 +----------------+
 | reserve        |
 +----------------+
-
-
 
 Testing
 -------

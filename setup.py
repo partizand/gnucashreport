@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 """Setup
-numpy and pandas need setup before (numpy issue install_requires)
-pip install pandas
+pandas need install before (numpy issue install_requires)
+
+    pip install pandas
+
 """
 import distutils.cmd
 import os
