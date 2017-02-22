@@ -7,7 +7,8 @@ from gnucashreport.xlsxreport import TablePoints
 from gnucashreport.margins import Margins
 import gnucashreport
 
-class BaseReportTest(unittest.TestCase):
+
+class TablePointsTest(unittest.TestCase):
     """
     Тестирование расчета точек excel таблицы
     """
