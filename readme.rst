@@ -82,8 +82,8 @@ Accounts structure:
 ======= =============== ========
 Assets: Current assets: Cash
 Assets: Current assets: Card
-Assets: reserve:        Deposite
-Assets: reserve:        Cash
+Assets: Reserve:        Deposite
+Assets: Reserve:        Cash
 ======= =============== ========
 
 Example 1::
@@ -111,7 +111,7 @@ Groups only 1 level, into 2 rows and 1 column:
 +================+
 | Current assets |
 +----------------+
-| reserve        |
+| Reserve        |
 +----------------+
 
 Testing
