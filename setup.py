@@ -1,17 +1,42 @@
 #!/usr/bin/python3
 """Setup
+numpy and pandas need setup before (numpy issue install_requires)
+pip install pandas
 """
 import distutils.cmd
+import os
+
+import re
+
+import io
+import setuptools
 from setuptools import setup, find_packages
 
-import gnucashreport
 
+# find version in init file
+def read(*names, **kwargs):
+    with io.open(
+        os.path.join(os.path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+version = find_version("src/gnucashreport", "__init__.py")
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='gnucashreport',
-      version=gnucashreport.__version__,
+      version=version,
       author="Partizand",
       author_email="",
       url="https://github.com/partizand/gnucashreport",
@@ -25,12 +50,12 @@ setup(name='gnucashreport',
       classifiers=[
           'Development Status :: 4 - Beta',
           'Programming Language :: Python :: 3',
-          'Natural Language :: Russian',
+          # 'Natural Language :: Russian',
           'Topic :: Office/Business :: Financial :: Accounting',
           'Topic :: Utilities',
           'Environment :: Console',
           'Operating System :: OS Independent',
-          'License :: OSI Approved :: GNU General Public License v3'],
+          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
 
       # packages=find_packages('src'),
 
@@ -42,10 +67,9 @@ setup(name='gnucashreport',
 
       test_suite='test',
 
-      install_requires=['setuptools', 'pandas', 'piecash', 'xlsxwriter'],
+      install_requires=['setuptools', 'numpy', 'pandas', 'piecash', 'xlsxwriter'],
       #                   'appdirs'
       #                   ],
-      # namespace_packages=["bankparser"],
 
       entry_points={
           'console_scripts':
