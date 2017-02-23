@@ -40,6 +40,7 @@ xlsx_file
        Path to xlsx file for saving reports
 
 --glevel glevel    Level to group accounts, may be multiple (--glevel 0 --glevel 1)
+
 --open_if_lock     Open sqlite base even if opened other user
 
 
