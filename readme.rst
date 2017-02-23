@@ -33,8 +33,12 @@ Library contain the simple cli tool, usage::
 
     gcreport gnucash_file xlsx_file [--glevel glevel] [--open_if_lock]
 
-gnucash_file       Your gnucash database file
-xlsx_file          Path to xlsx file for saving reports
+gnucash_file
+       Your gnucash database file
+
+xlsx_file
+       Path to xlsx file for saving reports
+
 --glevel glevel    Level to group accounts, may be multiple (--glevel 0 --glevel 1)
 --open_if_lock     Open sqlite base even if opened other user
 
