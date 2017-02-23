@@ -16,13 +16,7 @@ All data from GnuCash loads into DataFrames as is, table to table. Then data are
 Install
 -------
 
-If you are not programmer and you want to get reports:
-
 #. Install `Python <https://www.python.org/downloads/>`_ version 3 (version 2 should work, but I have not tested)
-
-#. Install Pandas, by typing [#]_ ::
-
-    pip install pandas
 
 #. Install gnucashreport::
 
@@ -37,7 +31,7 @@ Simple command line tool
 
 Library contain the simple cli tool, usage::
 
-    gcreport gnucash_file xlsx_file [--open_if_lock]
+    gcreport gnucash_file xlsx_file [--glevel glevel] [--open_if_lock]
 
 gnucash_file
  Your gnucash database file
@@ -45,13 +39,16 @@ gnucash_file
 xlsx_file
  Path to xlsx file for saving reports
 
+--glevel glevel    level to group accounts, may be multiple (--glevel 0 --glevel 1)
+
+
 Examples
 --------
 
 >>> import gnucashreport
 >>> gcrep = gnucashreport.GNUCashReport()
 
-open sql or xml book
+open gnucash book (sql or xml)
 
 >>> gcrep.open_book_file('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
 
