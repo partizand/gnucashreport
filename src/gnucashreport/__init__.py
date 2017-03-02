@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 from .gnucashreport import GNUCashReport
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = "Partizand"
 __license__ = "GPL3"
 

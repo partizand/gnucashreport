@@ -7,7 +7,7 @@ import sys
 
 import gnucashreport
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 def main(args=None):
@@ -28,7 +28,7 @@ def main(args=None):
     gcrep = gnucashreport.GNUCashReport()
     print('Opening file {} ...'.format(p_args.gnucash_file))
     gcrep.open_book_file(p_args.gnucash_file, open_if_lock=p_args.open_if_lock)
-    print('Buiding reports into {} ...'.format(p_args.xlsx_file))
+    print('Building reports into {} ...'.format(p_args.xlsx_file))
     gcrep.all_reports_excel(p_args.xlsx_file, glevel=p_args.glevel)
 
 
