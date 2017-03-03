@@ -481,6 +481,57 @@ class GNUCashData:
 
         return df
 
+    def _get_daterange(self):
+        """
+        Return min and max dates of splits in gnucash base
+        :return: tuple, min and max date
+        """
+        min_date = self.df_splits['post_date'].min()
+        max_date = self.df_splits['post_date'].max()
+        return min_date, max_date
+
+    def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
+        # Отбираем нужные колонки
+        sel_df = pandas.DataFrame(self.df_splits,
+                                  columns=['post_date',
+                                           'transaction_guid',
+                                           'fullname',
+                                           'commodity_guid',
+                                           'account_type',
+                                           'value', 'name', 'mnemonic'])
+
+        if accounts:
+            # Выбранные счета
+            if type(accounts) is str:
+                accounts = [accounts]
+            sel_df = sel_df[(sel_df['fullname']).isin(accounts)]
+        else:
+            # отбираем все счета с активами
+            sel_df = sel_df[(sel_df['account_type']).isin(self.ALL_ASSET_TYPES)]
+
+        # Фильтрация по времени
+        if from_date:
+            sel_df = sel_df[(sel_df['post_date'] >= from_date)]
+        if to_date:
+            sel_df = sel_df[(sel_df['post_date'] <= to_date)]
+
+        return sel_df
+
+    def _find_income_for_xirr(self, dataframe, account_type):
+        """
+        Находит все связанные проводки для dataframe, по типу счетов (INCOME или EXPENSE)
+        :param dataframe: filtered df_splits
+        :param account_type: INCOME or EXPENSE
+        :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
+        """
+        # find all income transaq for dataframe
+        df_zero = dataframe[dataframe['value'] == 0] # Возможно нужно брать все и вычитать?
+        all_tr_guids = df_zero['transaction_guid'].drop_duplicates().tolist()
+        sel_df = self.df_splits[(self.df_splits['account_type']).isin([account_type])]
+        sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
+        return sel_df
+
+
     def _balance_group_by_period(self, from_date, to_date, period, account_types, drop_null):
         """
         Группирует балансы по периоду у заданных типов счетов

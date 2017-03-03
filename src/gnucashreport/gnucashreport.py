@@ -84,8 +84,11 @@ class GNUCashReport(GNUCashData):
         :param glevel: Level account number or list for grouping. See glevel explain in readme.rst
         :return:
         """
-        min_date = self.df_splits['post_date'].min()
-        max_date = self.df_splits['post_date'].max()
+
+        min_date, max_date = self._get_daterange()
+
+        # min_date = self.df_splits['post_date'].min()
+        # max_date = self.df_splits['post_date'].max()
 
         from_date, to_date = self._complete_month(min_date, max_date)
 
