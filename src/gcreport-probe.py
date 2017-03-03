@@ -18,7 +18,15 @@ bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
 
 
 from_date = datetime.date(2016, 1, 1)
+
 to_date = datetime.date(2016, 12, 31)
+
+
+from_date = datetime.date(2016, 1, 1)
+to_date = datetime.date(2016, 1, 1)
+idx = pandas.date_range(from_date, to_date, freq='D')
+print(idx)
+exit()
 
 filename = 'v:/tables/ex-test.xlsx'
 gcrep = gnucashreport.GNUCashReport()
@@ -44,6 +52,6 @@ accounts = ['Активы:Долгосрочные активы:Ценные б�
 df = gcrep._filter_for_xirr(accounts=accounts)
 # from_date = datetime.date(2009, 1, 1)
 # to_date = datetime.date(2016, 12, 31)
-# dataframe_to_excel(df, 'aero')
+dataframe_to_excel(df, 'aero')
 df_income = gcrep._find_income_for_xirr(df, gcrep.INCOME)
 dataframe_to_excel(df_income, 'aero-income')

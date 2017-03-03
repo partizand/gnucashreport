@@ -12,6 +12,12 @@ import piecash
 from gnucashreport.gcxmlreader import GNUCashXMLBook
 from gnucashreport.margins import Margins
 
+ACCOUNT_GUID = 'account_guid'
+
+POST_DATE = 'post_date'
+
+FULLNAME = 'fullname'
+
 
 class GNUCashData:
     """
@@ -495,11 +501,14 @@ class GNUCashData:
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['post_date',
                                            'transaction_guid',
+                                           ACCOUNT_GUID,
                                            'fullname',
                                            'commodity_guid',
                                            'account_type',
-                                           'value', 'name', 'mnemonic'])
-
+                                           'value',
+                                           'cum_sum',
+                                           'name',
+                                           'mnemonic'])
         if accounts:
             # Выбранные счета
             if type(accounts) is str:
@@ -515,7 +524,36 @@ class GNUCashData:
         if to_date:
             sel_df = sel_df[(sel_df['post_date'] <= to_date)]
 
+        # TODO Нужно добавить начальный и конечный баланс (Если не задана начальная дата, то начальный баланс не нужен)
+
+        # Можно брать баланс на дату предшествующую нужной.
+        # Можно ли взять баланс сразу для всех?
+
+        # Конечный баланс это cum_sum (кол-во бумаг) на последнюю дату
+        # Его нужно пересчитать в валюту учета
+
+        # Начальный баланс это cum_sum на день раньше from_date
+        # Его нужно пересчитать в валюту учета
+        # cum_sum может отсутствовать. Если отсутсвует, то = 0, просто ничего не нужно делать
+
+        # Для пересчета в валюту учета, нужно добавить rate на начльную и конечную даты и перемножить
+        # теоретически для получения курса на дату можно вызвать функцию _group_prices_by_period
+        # с одинаковой датой начала и конца и периодом день
+
+        all_acc_guids = sel_df[ACCOUNT_GUID].drop_duplicates().tolist()
+
+        for acc_guid in all_acc_guids:
+            start_balance = self.get_balance(acc_guid, is_guid=True, on_date=from_date)
+            end_balance = self.get_balance(acc_guid, is_guid=True, on_date=to_date)
+
+
+
+
         return sel_df
+
+    # def _initaial_balance(self, dataframe, from_date=None, to_date=None):
+        # finish balance
+
 
     def _find_income_for_xirr(self, dataframe, account_type):
         """
@@ -525,8 +563,11 @@ class GNUCashData:
         :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
         """
         # find all income transaq for dataframe
-        df_zero = dataframe[dataframe['value'] == 0] # Возможно нужно брать все и вычитать?
-        all_tr_guids = df_zero['transaction_guid'].drop_duplicates().tolist()
+        if account_type == self.INCOME:
+            df = dataframe[dataframe['value'] == 0] # Возможно нужно брать все и вычитать?
+        else:
+            df = dataframe[dataframe['value'] != 0]
+        all_tr_guids = df['transaction_guid'].drop_duplicates().tolist()
         sel_df = self.df_splits[(self.df_splits['account_type']).isin([account_type])]
         sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
         return sel_df
@@ -1032,16 +1073,20 @@ class GNUCashData:
         group_prices.rename(columns={'value': 'rate'}, inplace=True)
         return group_prices
 
-    def get_balance(self, account_name, on_date=None):
+    def get_balance(self, account, is_guid=False, on_date=None):
         """
         Возвращает баланс счета на заданную дату
-        :param account_name: Полное имя счета
+        :param account: Полное имя счета или guid счета в зависимотси от is_guid
+        :param is_guid: False - account is fullname, True - account is guid
         :param on_date: Дата на которую считается баланс или None для окончательного баланса
         :return: Баланс в еденицах счета
         """
-        sel_df = self.df_splits[(self.df_splits['fullname'] == account_name)]
+        if is_guid:
+            sel_df = self.df_splits[(self.df_splits[ACCOUNT_GUID] == account)]
+        else:
+            sel_df = self.df_splits[(self.df_splits[FULLNAME] == account)]
         if not on_date is None:
-            sel_df = sel_df[sel_df['post_date'] <= on_date]
+            sel_df = sel_df[sel_df[POST_DATE] <= on_date]
         balance = sel_df['quantity'].sum()
         return balance
 
