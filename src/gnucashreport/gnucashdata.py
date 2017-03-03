@@ -543,8 +543,15 @@ class GNUCashData:
         all_acc_guids = sel_df[ACCOUNT_GUID].drop_duplicates().tolist()
 
         for acc_guid in all_acc_guids:
-            start_balance = self.get_balance(acc_guid, is_guid=True, on_date=from_date)
+            if from_date:
+                start_balance = self.get_balance(acc_guid, is_guid=True, on_date=from_date)
+                if start_balance:
+                    # Нужно добавить баланс умноженный на курс
+                    pass
             end_balance = self.get_balance(acc_guid, is_guid=True, on_date=to_date)
+            if end_balance:
+                # Нужно добавить баланс умноженный на курс
+                pass
 
 
 
