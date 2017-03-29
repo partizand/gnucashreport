@@ -22,11 +22,11 @@ from_date = datetime.date(2016, 1, 1)
 to_date = datetime.date(2016, 12, 31)
 
 
-from_date = datetime.date(2016, 1, 1)
-to_date = datetime.date(2016, 1, 1)
-idx = pandas.date_range(from_date, to_date, freq='D')
-print(idx)
-exit()
+# from_date = datetime.date(2016, 1, 1)
+# to_date = datetime.date(2016, 1, 1)
+# idx = pandas.date_range(from_date, to_date, freq='D')
+# print(idx)
+# exit()
 
 filename = 'v:/tables/ex-test.xlsx'
 gcrep = gnucashreport.GNUCashReport()
@@ -48,10 +48,23 @@ gcrep = gnucashreport.GNUCashReport()
 gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file('T:/gnucash-stock/GnuCash-base.gnucash')
 
+on_date = datetime.date(2009, 1, 1)
+dataframe_to_excel(gcrep.df_splits, 'all-splits')
+exit()
 accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
-df = gcrep._filter_for_xirr(accounts=accounts)
-# from_date = datetime.date(2009, 1, 1)
-# to_date = datetime.date(2016, 12, 31)
-dataframe_to_excel(df, 'aero')
+# to_date = datetime.date(2016, 1, 1)
+prices = gcrep.balance_to_currency(accounts=accounts)
+dataframe_to_excel(prices, 'aero-currency')
+# exit()
+
+
+# df = gcrep._filter_for_xirr(accounts=accounts)
+# dataframe_to_excel(df, 'aero')
+
+accounts = ['Активы:Текущие активы:Наличные Евро']
+prices = gcrep.balance_to_currency(accounts=accounts)
+dataframe_to_excel(prices, 'euro-currency')
+exit()
+
 df_income = gcrep._find_income_for_xirr(df, gcrep.INCOME)
 dataframe_to_excel(df_income, 'aero-income')

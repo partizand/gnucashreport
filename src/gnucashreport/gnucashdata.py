@@ -580,7 +580,7 @@ class GNUCashData:
         return sel_df
 
 
-    def _balance_group_by_period(self, from_date, to_date, period, account_types, drop_null):
+    def _balance_group_by_period(self, from_date, to_date, period, account_types=None, drop_null=False, accounts=None, is_guid=False):
         """
         Группирует балансы по периоду у заданных типов счетов
         Возвращает DataFrame со всеми счетами сгруппированными по периоду (суммирует за период)
@@ -597,10 +597,18 @@ class GNUCashData:
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
                                            'cum_sum', 'name', 'hidden', 'mnemonic'])
-        # Отбираем нужные типы счетов
-        if type(account_types) is str:
-            account_types = [account_types]
-        sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
+        # Фильтр по типам счетов
+        if account_types:
+            if type(account_types) is str:
+                account_types = [account_types]
+            sel_df = sel_df[(sel_df['account_type']).isin(account_types)]
+
+        # Фильтр по именам счетов или guid счетов
+        if accounts:
+            if is_guid:
+                sel_df = sel_df[(sel_df['account_guid']).isin(accounts)]
+            else:
+                sel_df = sel_df[(sel_df['fullname']).isin(accounts)]
 
         # Список всех account_guid
         account_guids = sel_df['account_guid'].drop_duplicates().tolist()
@@ -660,6 +668,52 @@ class GNUCashData:
         group_acc = group_acc.reset_index()
 
         return group_acc
+
+    def balance_to_currency(self, from_date=None, to_date=None, accounts=None):
+        """
+        Возвращает баланс счетов по имени или guid счета на заданную дату с пересчетом в валюту представления
+        :param on_date:
+        :param accounts:
+        :param is_guid:
+        :return: DataFrame
+        """
+
+        # Отбираем нужные колонки
+        sel_df = pandas.DataFrame(self.df_splits,
+                                  columns=['post_date',
+                                           'transaction_guid',
+                                           ACCOUNT_GUID,
+                                           'fullname',
+                                           'commodity_guid',
+                                           'account_type',
+                                           'value',
+                                           'cum_sum',
+                                           'name',
+                                           'mnemonic',
+                                           'currency_guid'])
+        if accounts:
+            # Выбранные счета
+            if type(accounts) is str:
+                accounts = [accounts]
+            sel_df = sel_df[(sel_df['fullname']).isin(accounts)]
+        else:
+            # отбираем все счета с активами
+            sel_df = sel_df[(sel_df['account_type']).isin(self.ALL_ASSET_TYPES)]
+
+        # Фильтрация по времени
+        # min_date, max_date = self._get_daterange()
+        if from_date:
+            sel_df = sel_df[(sel_df['post_date'] >= from_date)]
+
+        if to_date:
+            sel_df = sel_df[(sel_df['post_date'] <= to_date)]
+
+
+
+        # пересчет в нужную валюту
+        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period='D')
+
+        return group
 
     def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
                           margins:Margins = None, drop_null=False):
@@ -1034,7 +1088,15 @@ class GNUCashData:
         all_commodities_guids = set(self.df_prices.index.get_level_values('commodity_guid').drop_duplicates().tolist())
 
         # Индекс по периоду
-        idx = pandas.date_range(from_date, to_date, freq=period)
+        min_date, max_date = self._get_daterange()
+        from_date2 = from_date
+        to_date2 = to_date
+        if not from_date:
+            from_date2 = min_date
+        if not to_date:
+            to_date2 = max_date
+
+        idx = pandas.date_range(from_date2, to_date2, freq=period)
 
         # Список commodities guids
         if guids is None:
