@@ -48,9 +48,9 @@ gcrep = gnucashreport.GNUCashReport()
 gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file('T:/gnucash-stock/GnuCash-base.gnucash')
 
-on_date = datetime.date(2009, 1, 1)
-dataframe_to_excel(gcrep.df_splits, 'all-splits')
-exit()
+# on_date = datetime.date(2009, 1, 1)
+# dataframe_to_excel(gcrep.df_splits, 'all-splits')
+# exit()
 accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
 # to_date = datetime.date(2016, 1, 1)
 prices = gcrep.balance_to_currency(accounts=accounts)

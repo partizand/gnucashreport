@@ -711,7 +711,7 @@ class GNUCashData:
 
 
         # пересчет в нужную валюту
-        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period='D')
+        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period='D', guid_name='currency_guid')
 
         return group
 
@@ -874,7 +874,7 @@ class GNUCashData:
 
         return sel_df
 
-    def _currency_calc(self, dataframe, from_date, to_date, period):
+    def _currency_calc(self, dataframe, from_date, to_date, period, guid_name='commodity_guid'):
         """
         Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
         Исходный datafrmae должен содержать поля:
@@ -895,7 +895,7 @@ class GNUCashData:
 
         df = dataframe.copy()
         # Получаем список всех нужных mnemonic
-        commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
+        commodity_guids = df[guid_name].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
         group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
         # group_prices = group_prices.reset_index()
@@ -904,7 +904,7 @@ class GNUCashData:
         if group_prices.empty:
             df['rate'] = 1
         else:
-            df = df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+            df = df.merge(group_prices, left_on=[guid_name, 'post_date'], right_index=True,
                           how='left')
         # Заполнить пустые поля еденицей
         df['rate'] = df['rate'].fillna(Decimal(1))
@@ -1139,7 +1139,7 @@ class GNUCashData:
             pass
 
         # Теперь в колонке rate курс ценной бумаги в рублях
-        group_prices.rename(columns={'value': 'rate'}, inplace=True)
+        group_prices.rename(columns={'value': 'rate', 'currency_guid': 'price_currency_guid'}, inplace=True)
         return group_prices
 
     def get_balance(self, account, is_guid=False, on_date=None):
