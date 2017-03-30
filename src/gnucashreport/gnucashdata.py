@@ -521,6 +521,8 @@ class GNUCashData:
         df = df[~df.index.duplicated(keep='last')]
         # Теперь в cum_sum - остаток по счету на дату (если он есть)
         df['post_date'] = on_date
+        df.rename(columns={'cum_sum': 'value'}, inplace=True)
+        df = self._currency_calc(df,)
 
         return df
 
@@ -904,7 +906,7 @@ class GNUCashData:
 
         return sel_df
 
-    def _currency_calc(self, dataframe, from_date, to_date, period, guid_name='commodity_guid'):
+    def _currency_calc(self, dataframe, guid_name='commodity_guid'):
         """
         Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
         Исходный datafrmae должен содержать поля:
