@@ -587,6 +587,14 @@ class GNUCashData:
         # return df_total
 
     def _xirr_by_dataframe(self, obj, date_field='post_date', value_field='value_currency'):
+        """
+        Считает функцию xirr по значениям dataframe. obj может быть просто dataframe или массивом dataframe
+        Тогда они сложатся
+        :param obj: DataFrame or array of dataframes
+        :param date_field: Name of date column
+        :param value_field: Name of value column
+        :return: annual yield
+        """
         if isinstance(obj, pandas.DataFrame):
             df = pandas.DataFrame(obj, columns=[date_field, value_field])
         else:
