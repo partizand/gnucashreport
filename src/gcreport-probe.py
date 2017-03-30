@@ -48,25 +48,30 @@ gcrep = gnucashreport.GNUCashReport()
 gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file('T:/gnucash-stock/GnuCash-base.gnucash')
 
-# on_date = datetime.date(2009, 1, 1)
+on_date = datetime.date(2009, 1, 2)
 # dataframe_to_excel(gcrep.df_splits, 'all-splits')
 # exit()
 
-df = gcrep._splits_currency_calc()
-dataframe_to_excel(df, 'splits_cur')
-exit()
-
-accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
-# to_date = datetime.date(2016, 1, 1)
-prices = gcrep.balance_to_currency(accounts=accounts)
-dataframe_to_excel(prices, 'aero-currency')
+# df = gcrep._splits_currency_calc()
+# dataframe_to_excel(df, 'splits_cur')
 # exit()
+
+accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.', 'Активы:Текущие активы:Наличные Евро']
+df = gcrep.balance_on_date(on_date=on_date, account_names=accounts)
+dataframe_to_excel(df, 'bal_on_date')
+exit()
+# to_date = datetime.date(2016, 1, 1)
+df = gcrep._filter_for_xirr(accounts=accounts) #balance_to_currency(accounts=accounts)
+dataframe_to_excel(df, 'aero-currency')
+accounts = ['Активы:Текущие активы:Наличные Евро']
+df = gcrep._filter_for_xirr(accounts=accounts) #balance_to_currency(accounts=accounts)
+dataframe_to_excel(df, 'euro-currency')
+exit()
 
 
 # df = gcrep._filter_for_xirr(accounts=accounts)
 # dataframe_to_excel(df, 'aero')
 
-accounts = ['Активы:Текущие активы:Наличные Евро']
 prices = gcrep.balance_to_currency(accounts=accounts)
 dataframe_to_excel(prices, 'euro-currency')
 exit()

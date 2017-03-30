@@ -12,7 +12,7 @@ import piecash
 from gnucashreport.gcxmlreader import GNUCashXMLBook
 from gnucashreport.margins import Margins
 
-ACCOUNT_GUID = 'account_guid'
+#ACCOUNT_GUID = 'account_guid'
 
 POST_DATE = 'post_date'
 
@@ -500,21 +500,45 @@ class GNUCashData:
 
         return df
 
+    def balance_on_date(self, on_date, account_names=None, account_guids=None):
+        # Берем сплиты, фильтруем по дате и по счетам
+        # делаем index по account_guid, отбрасывая дубликаты и беря последнее
+        # Вуаля, готово
+        # Все не верно! Так как остаток получается на дату транзакции, а нужен текущий с изменяемой ценой
+        # Потом нужно cum_sum умножить на курс на заданную дату, тогда все будет верно
+        df = self.df_splits.copy()
+        # Сортировка по дате
+        df = df[(df['post_date'] < on_date)]
+        # Сортировка по счетам
+        if account_names:
+            df = df[(df['fullname']).isin(account_names)]
+        if account_guids:
+            df = df[(df['account_guid']).isin(account_guids)]
 
+        # Установка индекса по account_guid
+        df.set_index('account_guid', inplace=True)
+        # отсечение повторов по индексу
+        df = df[~df.index.duplicated(keep='last')]
+        # Теперь в cum_sum - остаток по счету на дату (если он есть)
+        df['post_date'] = on_date
+
+        return df
 
     def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['post_date',
                                            'transaction_guid',
-                                           ACCOUNT_GUID,
+                                           'account_guid',
                                            'fullname',
                                            'commodity_guid',
                                            'account_type',
                                            'value',
-                                           'cum_sum',
-                                           'name',
-                                           'mnemonic'])
+                                           'value_currency',
+                                           'balance_currency',
+                                           'name'
+                                           # 'mnemonic'
+                                           ])
         if accounts:
             # Выбранные счета
             if type(accounts) is str:
@@ -546,18 +570,18 @@ class GNUCashData:
         # теоретически для получения курса на дату можно вызвать функцию _group_prices_by_period
         # с одинаковой датой начала и конца и периодом день
 
-        all_acc_guids = sel_df[ACCOUNT_GUID].drop_duplicates().tolist()
-
-        for acc_guid in all_acc_guids:
-            if from_date:
-                start_balance = self.get_balance(acc_guid, is_guid=True, on_date=from_date)
-                if start_balance:
-                    # Нужно добавить баланс умноженный на курс
-                    pass
-            end_balance = self.get_balance(acc_guid, is_guid=True, on_date=to_date)
-            if end_balance:
-                # Нужно добавить баланс умноженный на курс
-                pass
+        # all_acc_guids = sel_df[ACCOUNT_GUID].drop_duplicates().tolist()
+        #
+        # for acc_guid in all_acc_guids:
+        #     if from_date:
+        #         start_balance = self.get_balance(acc_guid, is_guid=True, on_date=from_date)
+        #         if start_balance:
+        #             # Нужно добавить баланс умноженный на курс
+        #             pass
+        #     end_balance = self.get_balance(acc_guid, is_guid=True, on_date=to_date)
+        #     if end_balance:
+        #         # Нужно добавить баланс умноженный на курс
+        #         pass
 
 
 
@@ -905,9 +929,10 @@ class GNUCashData:
 
         df = dataframe.copy()
         # Получаем список всех нужных mnemonic
-        commodity_guids = df[guid_name].drop_duplicates().tolist()
+        # commodity_guids = df[guid_name].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
-        group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
+        # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
+        group_prices = self.df_prices_days
         # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
@@ -935,14 +960,12 @@ class GNUCashData:
         rate_commodity - курс валюты для остатка по счету
         :return: DataFrame с добавленными колонками
         """
-        guid1 = 'commodity_guid'
 
-        guid2 = 'currency_guid'
-        dataframe = self.df_splits
-        df = dataframe.copy()
+        # dataframe = self.df_splits
+        # df = dataframe.copy()
         # Получаем список всех нужных mnemonic
-        commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
-        currency_guids = df['currency_guid'].drop_duplicates().tolist()
+        # commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
+        # currency_guids = df['currency_guid'].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
         # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
         # group_prices = group_prices.reset_index()
@@ -950,26 +973,26 @@ class GNUCashData:
 
         # Добавление колонки курс
         if group_prices.empty:
-            df['rate_commodity'] = 1
-            df['rate_currency'] = 1
+            self.df_splits['rate_commodity'] = 1
+            self.df_splits['rate_currency'] = 1
         else:
-            df = df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+            self.df_splits = self.df_splits.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
                           how='left')
-            df.rename(columns={'rate': 'rate_commodity'}, inplace=True)
-            df = df.merge(group_prices, left_on=['currency_guid', 'post_date'], right_index=True,
+            self.df_splits.rename(columns={'rate': 'rate_commodity'}, inplace=True)
+            self.df_splits = self.df_splits.merge(group_prices, left_on=['currency_guid', 'post_date'], right_index=True,
                           how='left')
-            df.rename(columns={'rate': 'rate_currency'}, inplace=True)
+            self.df_splits.rename(columns={'rate': 'rate_currency'}, inplace=True)
         # Заполнить пустые поля еденицей
-        df['rate_currency'] = df['rate_currency'].fillna(Decimal(1))
-        df['rate_commodity'] = df['rate_commodity'].fillna(Decimal(1))
+        self.df_splits['rate_currency'] = self.df_splits['rate_currency'].fillna(Decimal(1))
+        self.df_splits['rate_commodity'] = self.df_splits['rate_commodity'].fillna(Decimal(1))
 
         # Пересчет в валюту представления
-        df['value_currency'] = (df['value'] * df['rate_currency']).apply(lambda x: round(x, 2))
-        df['balance_currency'] = (df['cum_sum'] * df['rate_commodity']).apply(lambda x: round(x, 2))
+        self.df_splits['value_currency'] = (self.df_splits['value'] * self.df_splits['rate_currency']).apply(lambda x: round(x, 2))
+        self.df_splits['balance_currency'] = (self.df_splits['cum_sum'] * self.df_splits['rate_commodity']).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
-        self.df_splits_cur = df
+        # self.df_splits_cur = df
         # Конец пересчета в нужную валюту
-        return df
+        # return df
 
     def _group_by_accounts(self, dataframe, glevel=1, drop_null=False):
         """
