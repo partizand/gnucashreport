@@ -10,6 +10,7 @@ import pandas
 import numpy
 import piecash
 
+from gnucashreport.financial import xirr, xirr_simple
 from gnucashreport.gcxmlreader import GNUCashXMLBook
 from gnucashreport.margins import Margins
 
@@ -551,7 +552,44 @@ class GNUCashData:
         df.set_index('guid', inplace=True)
         return df
 
+    def xirr_calc(self, from_date=None, to_date=None, accounts=None):
+
+        df_values = self._filter_for_xirr(from_date=from_date, to_date=to_date, accounts=accounts)
+        df_income = self._find_income_for_xirr(df_values, self.INCOME)
+        df_expense = self._find_income_for_xirr(df_values, self.EXPENSE)
+
+        # Отбор только не нулевых проводок
+        df_values = df_values[df_values['value_currency'] != 0]
+
+        df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
+        df_total.sort_values(by='post_date', inplace=True)
+
+        self._xirr_by_dataframe(df_total)
+
+        return df_total
+
+    def _xirr_by_dataframe(self, dataframe, date_field='post_date', value_field='value_currency'):
+
+        df = pandas.DataFrame(dataframe, columns=[date_field, value_field])
+        # df['date'] = df[date_field].astype('M8[ns]').astype('O')
+        # df['date'] = df[date_field].astype('O')
+        df[date_field] = df[date_field].astype(date)
+        tuples = [tuple(x) for x in df.to_records(index=False)]
+        a_yield = xirr_simple(tuples)
+        print(tuples)
+        # return a_yield
+
     def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
+        """
+        Отбирает проводки для подсчета доходности по xirr
+        Возвращает dataframe с полем post_date и value_currency
+        Итоговый dataframe может содержать нулевые проводки (для поиска доп доходов и комиссий)
+        Для поиска доп доходов и комиссий используйте _find_income_for_xirr
+        :param from_date: 
+        :param to_date: 
+        :param accounts: 
+        :return: 
+        """
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['post_date',
@@ -560,7 +598,7 @@ class GNUCashData:
                                            'fullname',
                                            'commodity_guid',
                                            'account_type',
-                                           'value',
+                                           # 'value',
                                            'value_currency',
                                            # 'balance_currency',
                                            'name'
@@ -603,12 +641,16 @@ class GNUCashData:
             start_balances = self.balance_on_date(from_date, account_guids=all_acc_guids)
             sel_df = pandas.concat([sel_df, start_balances], ignore_index=True)
 
+        # Все что участвует в транзакциях и является начальным балансом мы потратили
+        # Поэтому минусуем
+        sel_df['value_currency'] = sel_df['value_currency'] * (-1)
+
         end_date = to_date
         if not end_date:
             end_date = self.max_date
         end_balances = self.balance_on_date(end_date, account_guids=all_acc_guids)
-        # Конечные балансы нужны с минусами
-        end_balances['value_currency'] = end_balances['value_currency'] * (-1)
+        # Конечные балансы это то, что мы получим. Поэтому оставляем с плюсом
+        # end_balances['value_currency'] = end_balances['value_currency'] * (-1)
         sel_df = pandas.concat([sel_df, end_balances], ignore_index=True)
 
         #
@@ -640,13 +682,33 @@ class GNUCashData:
         :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
         """
         # find all income transaq for dataframe
+
+        # Отбираем нужные колонки
+        sel_df = pandas.DataFrame(self.df_splits,
+                                  columns=['post_date',
+                                           'transaction_guid',
+                                           'account_guid',
+                                           'fullname',
+                                           'commodity_guid',
+                                           'account_type',
+                                           # 'value',
+                                           'value_currency',
+                                           # 'balance_currency',
+                                           'name'
+                                           # 'mnemonic'
+                                           ])
+
         if account_type == self.INCOME:
             df = dataframe[dataframe['value'] == 0] # Возможно нужно брать все и вычитать?
         else:
             df = dataframe[dataframe['value'] != 0]
         all_tr_guids = df['transaction_guid'].drop_duplicates().tolist()
-        sel_df = self.df_splits[(self.df_splits['account_type']).isin([account_type])]
+        sel_df = sel_df[(self.df_splits['account_type']).isin([account_type])]
         sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
+
+        # Если не доход, то мы потратили деньги
+        if account_type != self.INCOME:
+            sel_df['value_currency'] = sel_df['value_currency'] * -1
         return sel_df
 
 

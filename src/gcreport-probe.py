@@ -3,6 +3,8 @@ import datetime
 import os
 import time
 import pandas
+from decimal import Decimal
+
 from gnucashreport.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
 
@@ -20,6 +22,7 @@ bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
 from_date = datetime.date(2016, 1, 1)
 
 to_date = datetime.date(2016, 12, 31)
+
 
 
 # from_date = datetime.date(2016, 1, 1)
@@ -62,21 +65,18 @@ accounts = ['Активы:Долгосрочные активы:Ценные б�
 # dataframe_to_excel(df, 'bal_on_date')
 # exit()
 # to_date = datetime.date(2016, 1, 1)
-df = gcrep._filter_for_xirr(accounts=accounts, to_date=on_date) #balance_to_currency(accounts=accounts)
-dataframe_to_excel(df, 'aero-currency')
-# accounts = ['Активы:Текущие активы:Наличные Евро']
-accounts = ['Активы:Текущие активы:Наличные Евро']
-df = gcrep._filter_for_xirr(accounts=accounts) #balance_to_currency(accounts=accounts)
-dataframe_to_excel(df, 'euro-currency')
-exit()
-
-
 # df = gcrep._filter_for_xirr(accounts=accounts)
-# dataframe_to_excel(df, 'aero')
-
-prices = gcrep.balance_to_currency(accounts=accounts)
-dataframe_to_excel(prices, 'euro-currency')
+df = gcrep.xirr_calc(accounts=accounts)
+# dataframe_to_excel(df, 'aero-total')
 exit()
+
+# accounts = ['Активы:Текущие активы:Наличные Евро']
+# df = gcrep._filter_for_xirr(accounts=accounts)
+# dataframe_to_excel(df, 'euro-currency')
+# exit()
 
 df_income = gcrep._find_income_for_xirr(df, gcrep.INCOME)
 dataframe_to_excel(df_income, 'aero-income')
+
+df_income = gcrep._find_income_for_xirr(df, gcrep.EXPENSE)
+dataframe_to_excel(df_income, 'aero-expense')

@@ -1,5 +1,7 @@
 from datetime import date
 #from scipy import optimize
+from decimal import Decimal
+
 
 def secant_method(tol, f, x0):
     """
@@ -111,15 +113,16 @@ def xirr_simple(transactions, guess=0.1):
     0.010061264038086382
 
     """
-    years = [(ta[0] - transactions[0][0]).days / 365.0 for ta in transactions]
+    years = [Decimal((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
     residual = 1
-    step = 0.05
+    step = Decimal(0.05)
     # guess = 0.05
-    epsilon = 0.0001
+    guess = Decimal(guess)
+    epsilon = Decimal(0.0001)
     limit = 10000
     while abs(residual) > epsilon and limit > 0:
         limit -= 1
-        residual = 0.0
+        residual = Decimal(0.0)
         for i, ta in enumerate(transactions):
             residual += ta[1] / pow(guess, years[i])
         if abs(residual) > epsilon:
@@ -127,7 +130,7 @@ def xirr_simple(transactions, guess=0.1):
                 guess += step
             else:
                 guess -= step
-                step /= 2.0
+                step /= Decimal(2.0)
     return guess-1
 
 if __name__ == "__main__":
