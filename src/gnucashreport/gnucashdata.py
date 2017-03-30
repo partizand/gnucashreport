@@ -382,6 +382,14 @@ class GNUCashData:
         # отсечение повторов по индексу
         self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
 
+        # Минимальная и максимальная даты в базе
+        self.min_date = self.df_splits['post_date'].min()
+        self.max_date = self.df_splits['post_date'].max()
+
+        # Цены за каждый день по каждому инструменту
+        self.df_prices_days = self._group_prices_by_period(self.min_date, self.max_date, 'D')
+
+
         # Сворачиваем df_splits до дней
 
         # start_time = time.time()
@@ -391,6 +399,8 @@ class GNUCashData:
         # self.df_splits['cum_sum'] = self.df_splits.quantity.cumsum()
         self.df_splits['cum_sum'] = self.df_splits.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
         # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
+
+
 
     def _add_margins(self, dataframe, margins=None):
         """
@@ -487,14 +497,7 @@ class GNUCashData:
 
         return df
 
-    def _get_daterange(self):
-        """
-        Return min and max dates of splits in gnucash base
-        :return: tuple, min and max date
-        """
-        min_date = self.df_splits['post_date'].min()
-        max_date = self.df_splits['post_date'].max()
-        return min_date, max_date
+
 
     def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
         # Отбираем нужные колонки
@@ -1088,13 +1091,13 @@ class GNUCashData:
         all_commodities_guids = set(self.df_prices.index.get_level_values('commodity_guid').drop_duplicates().tolist())
 
         # Индекс по периоду
-        min_date, max_date = self._get_daterange()
+
         from_date2 = from_date
         to_date2 = to_date
         if not from_date:
-            from_date2 = min_date
+            from_date2 = self.min_date
         if not to_date:
-            to_date2 = max_date
+            to_date2 = self.max_date
 
         idx = pandas.date_range(from_date2, to_date2, freq=period)
 
