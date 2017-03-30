@@ -895,6 +895,10 @@ class GNUCashData:
         :param period:
         :return: DataFrame с добавленными колонками
         """
+        guid1='commodity_guid'
+
+        guid2='currency_guid'
+
 
         df = dataframe.copy()
         # Получаем список всех нужных mnemonic
@@ -916,6 +920,60 @@ class GNUCashData:
         df['value_currency'] = (df['value'] * df['rate']).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
 
+        # Конец пересчета в нужную валюту
+        return df
+
+    def _splits_currency_calc(self):
+        """
+        Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
+        Исходный datafrmae должен содержать поля:
+        post_date - дата
+        value - стоимость в валюте счета или кол-во ценных бумаг
+        commodity_guid - guid счета или ценной бумаги
+        Добавятся колонки:
+        rate - курс в валюте  учета
+        value_currency - стоимость в валюте учета
+        исходный datafrmae должен быть сгруппирован по from_date, to_date, period
+        Но функция его не группирует!
+        :param dataframe:
+        :param from_date:
+        :param to_date:
+        :param period:
+        :return: DataFrame с добавленными колонками
+        """
+        guid1 = 'commodity_guid'
+
+        guid2 = 'currency_guid'
+        dataframe = self.df_splits
+        df = dataframe.copy()
+        # Получаем список всех нужных mnemonic
+        commodity_guids = df['commodity_guid'].drop_duplicates().tolist()
+        currency_guids = df['currency_guid'].drop_duplicates().tolist()
+        # Получаем их сгруппированные цены
+        # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
+        # group_prices = group_prices.reset_index()
+        group_prices = self.df_prices_days
+
+        # Добавление колонки курс
+        if group_prices.empty:
+            df['rate_commodity'] = 1
+            df['rate_currency'] = 1
+        else:
+            df = df.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+                          how='left')
+            df.rename(columns={'rate': 'rate_commodity'}, inplace=True)
+            df = df.merge(group_prices, left_on=['currency_guid', 'post_date'], right_index=True,
+                          how='left')
+            df.rename(columns={'rate': 'rate_currency'}, inplace=True)
+        # Заполнить пустые поля еденицей
+        df['rate_currency'] = df['rate_currency'].fillna(Decimal(1))
+        df['rate_commodity'] = df['rate_commodity'].fillna(Decimal(1))
+
+        # Пересчет в валюту представления
+        df['value_currency'] = (df['value'] * df['rate_currency']).apply(lambda x: round(x, 2))
+        df['balance_currency'] = (df['cum_sum'] * df['rate_commodity']).apply(lambda x: round(x, 2))
+        # Теперь в колонке value_currency реальная сумма в рублях
+        self.df_splits_cur = df
         # Конец пересчета в нужную валюту
         return df
 
