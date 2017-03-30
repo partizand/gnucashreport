@@ -51,6 +51,11 @@ gcrep._open_book_pickle(gcrep.dir_pickle)
 # on_date = datetime.date(2009, 1, 1)
 # dataframe_to_excel(gcrep.df_splits, 'all-splits')
 # exit()
+
+df = gcrep._splits_currency_calc()
+dataframe_to_excel(df, 'splits_cur')
+exit()
+
 accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
 # to_date = datetime.date(2016, 1, 1)
 prices = gcrep.balance_to_currency(accounts=accounts)

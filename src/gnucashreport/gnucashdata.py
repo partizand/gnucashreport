@@ -400,6 +400,9 @@ class GNUCashData:
         self.df_splits['cum_sum'] = self.df_splits.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
         # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
 
+        # Пересчет транзакций в валюту учета
+        self._splits_currency_calc()
+
 
 
     def _add_margins(self, dataframe, margins=None):
@@ -925,20 +928,11 @@ class GNUCashData:
 
     def _splits_currency_calc(self):
         """
-        Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
-        Исходный datafrmae должен содержать поля:
-        post_date - дата
-        value - стоимость в валюте счета или кол-во ценных бумаг
-        commodity_guid - guid счета или ценной бумаги
-        Добавятся колонки:
-        rate - курс в валюте  учета
-        value_currency - стоимость в валюте учета
-        исходный datafrmae должен быть сгруппирован по from_date, to_date, period
-        Но функция его не группирует!
-        :param dataframe:
-        :param from_date:
-        :param to_date:
-        :param period:
+        Подсчитывает сумму сплита транзакции в валюте учета.
+        Добавляется колонка value_currency - сумма сплита транзакции в валюте учета
+        balance_currency - остаток по счету после транзакции в валюте учета
+        rate_currency - курс валюты для колонки value
+        rate_commodity - курс валюты для остатка по счету
         :return: DataFrame с добавленными колонками
         """
         guid1 = 'commodity_guid'
