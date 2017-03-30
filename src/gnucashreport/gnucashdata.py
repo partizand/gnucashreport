@@ -7,6 +7,7 @@ from decimal import Decimal
 from operator import attrgetter
 
 import pandas
+import numpy
 import piecash
 
 from gnucashreport.gcxmlreader import GNUCashXMLBook
@@ -487,7 +488,7 @@ class GNUCashData:
                                                   account_types=assets_and_liability, drop_null=False)
 
         # пересчет в нужную валюту
-        group_acc = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
+        group_acc = self._currency_calc(group_acc)
 
         # Суммируем
         equity_name = _('Equity')
@@ -501,12 +502,33 @@ class GNUCashData:
         return df
 
     def balance_on_date(self, on_date, account_names=None, account_guids=None):
+        """
+        Возвращает DataFrame со строками балансов выбранных счетов на заданную дату (если баланс 0, строки не будет)
+        Баланс в кол-ве бумаг - cum_sum
+        Баланс в валюте учета - value_currency
+        :param on_date: 
+        :param account_names: 
+        :param account_guids: 
+        :return: DataFrame с балансами
+        """
         # Берем сплиты, фильтруем по дате и по счетам
         # делаем index по account_guid, отбрасывая дубликаты и беря последнее
         # Вуаля, готово
         # Все не верно! Так как остаток получается на дату транзакции, а нужен текущий с изменяемой ценой
         # Потом нужно cum_sum умножить на курс на заданную дату, тогда все будет верно
-        df = self.df_splits.copy()
+        df = pandas.DataFrame(self.df_splits,
+                                  columns=['post_date',
+                                           # 'transaction_guid',
+                                           'account_guid',
+                                           'fullname',
+                                           'commodity_guid',
+                                           'account_type',
+                                           # 'value',
+                                           'cum_sum',
+                                           'name',
+                                           # 'mnemonic'
+                                           ])
+        # df = self.df_splits.copy()
         # Сортировка по дате
         df = df[(df['post_date'] < on_date)]
         # Сортировка по счетам
@@ -516,14 +538,17 @@ class GNUCashData:
             df = df[(df['account_guid']).isin(account_guids)]
 
         # Установка индекса по account_guid
-        df.set_index('account_guid', inplace=True)
+        df['guid'] = df.index
+        df.set_index('account_guid', inplace=True, drop=False)
         # отсечение повторов по индексу
         df = df[~df.index.duplicated(keep='last')]
         # Теперь в cum_sum - остаток по счету на дату (если он есть)
-        df['post_date'] = on_date
+        df['post_date'] = numpy.datetime64(on_date)
         df.rename(columns={'cum_sum': 'value'}, inplace=True)
-        df = self._currency_calc(df,)
-
+        df = self._currency_calc(df)
+        # Теперь в value_currency - остаток в валюте учета (если он есть)
+        # df['account_guid'] = df.index
+        df.set_index('guid', inplace=True)
         return df
 
     def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
@@ -537,7 +562,7 @@ class GNUCashData:
                                            'account_type',
                                            'value',
                                            'value_currency',
-                                           'balance_currency',
+                                           # 'balance_currency',
                                            'name'
                                            # 'mnemonic'
                                            ])
@@ -572,7 +597,20 @@ class GNUCashData:
         # теоретически для получения курса на дату можно вызвать функцию _group_prices_by_period
         # с одинаковой датой начала и конца и периодом день
 
-        # all_acc_guids = sel_df[ACCOUNT_GUID].drop_duplicates().tolist()
+        all_acc_guids = sel_df['account_guid'].drop_duplicates().tolist()
+
+        if from_date:
+            start_balances = self.balance_on_date(from_date, account_guids=all_acc_guids)
+            sel_df = pandas.concat([sel_df, start_balances], ignore_index=True)
+
+        end_date = to_date
+        if not end_date:
+            end_date = self.max_date
+        end_balances = self.balance_on_date(end_date, account_guids=all_acc_guids)
+        # Конечные балансы нужны с минусами
+        end_balances['value_currency'] = end_balances['value_currency'] * (-1)
+        sel_df = pandas.concat([sel_df, end_balances], ignore_index=True)
+
         #
         # for acc_guid in all_acc_guids:
         #     if from_date:
@@ -765,7 +803,7 @@ class GNUCashData:
                                                   account_types=account_types, drop_null=drop_null)
 
         # пересчет в нужную валюту
-        group = self._currency_calc(group_acc, from_date=from_date, to_date=to_date, period=period)
+        group = self._currency_calc(group_acc)
 
         # Группировка по счетам
         group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
@@ -800,7 +838,7 @@ class GNUCashData:
             sel_df['value'] = sel_df['value'].apply(lambda x: -1 * x)
 
         # пересчет в нужную валюту
-        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+        group = self._currency_calc(sel_df)
 
         # Группировка по счетам
         group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
@@ -831,7 +869,7 @@ class GNUCashData:
                                                 account_type=income_and_expense)
 
         # пересчет в нужную валюту
-        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period=period)
+        group = self._currency_calc(sel_df)
         # Группировка по счетам
 
         # Суммируем
