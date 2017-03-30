@@ -9,6 +9,7 @@ from operator import attrgetter
 import pandas
 import numpy
 import piecash
+from gnucashreport.utils import dataframe_to_excel
 
 from gnucashreport.financial import xirr, xirr_simple
 from gnucashreport.gcxmlreader import GNUCashXMLBook
@@ -561,23 +562,43 @@ class GNUCashData:
         # Отбор только не нулевых проводок
         df_values = df_values[df_values['value_currency'] != 0]
 
-        df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
-        df_total.sort_values(by='post_date', inplace=True)
+        # df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
+        # df_total.sort_values(by='post_date', inplace=True)
 
-        self._xirr_by_dataframe(df_total)
+        # dataframe_to_excel(df_total, 'df_total')
 
-        return df_total
+        # Общая доходность
+        total_yeld = self._xirr_by_dataframe([df_values, df_income, df_expense])
+        # Доходность дивидендов
+        without_income_yeld = self._xirr_by_dataframe([df_values, df_expense])
+        without_expense_yeld = self._xirr_by_dataframe([df_values, df_income])
 
-    def _xirr_by_dataframe(self, dataframe, date_field='post_date', value_field='value_currency'):
+        expense_yeld = without_expense_yeld - total_yeld
+        if df_income.empty:
+            income_yeld = 0
+        else:
+            income_yeld = total_yeld - without_income_yeld
 
-        df = pandas.DataFrame(dataframe, columns=[date_field, value_field])
-        # df['date'] = df[date_field].astype('M8[ns]').astype('O')
+        print(total_yeld)
+        print(income_yeld)
+        print(expense_yeld)
+        print(without_expense_yeld)
+
+        # return df_total
+
+    def _xirr_by_dataframe(self, obj, date_field='post_date', value_field='value_currency'):
+        if isinstance(obj, pandas.DataFrame):
+            df = pandas.DataFrame(obj, columns=[date_field, value_field])
+        else:
+            df = pandas.concat(obj, ignore_index=True)
+            df.sort_values(by=date_field, inplace=True)
+            df = pandas.DataFrame(df, columns=[date_field, value_field])
         # df['date'] = df[date_field].astype('O')
         df[date_field] = df[date_field].astype(date)
         tuples = [tuple(x) for x in df.to_records(index=False)]
         a_yield = xirr_simple(tuples)
-        print(tuples)
-        # return a_yield
+        # print(a_yield)
+        return a_yield
 
     def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
         """
