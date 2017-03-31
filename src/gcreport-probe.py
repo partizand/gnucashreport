@@ -53,8 +53,8 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 
 
 on_date = datetime.date(2012, 9, 1)
-dataframe_to_excel(gcrep.df_splits, 'all-splits')
-exit()
+# dataframe_to_excel(gcrep.df_splits, 'all-splits')
+# exit()
 
 # df = gcrep._splits_currency_calc()
 # dataframe_to_excel(df, 'splits_cur')

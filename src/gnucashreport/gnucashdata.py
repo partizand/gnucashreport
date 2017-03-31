@@ -753,7 +753,9 @@ class GNUCashData:
         if to_date:
             sel_df = sel_df[(sel_df['post_date'] <= to_date)]
 
-        # TODO нужно удалить не нулевые строки, которым соответствует таже сумма INCOME или EXPENSE
+        # TODO нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+        sel_df = self._xirr_drop_income(sel_df)
+
 
 
 
@@ -796,6 +798,24 @@ class GNUCashData:
 
         return sel_df
 
+    def _xirr_drop_income(self, dataframe):
+        # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+        # удалить не нулевые строки у которых есть не нулевой income? Задача попроще, но правильно ли?
+        df = dataframe.copy()
+        df_income = self._find_income_for_xirr(dataframe, self.INCOME)
+        df.rename(columns={'value_currency': 'value_income'}, inplace=True)
+        df_income.set_index('transaction_guid', inplace=True, drop=False)
+        df.set_index('transaction_guid', inplace=True, drop=False)
+
+        df_join = pandas.concat([df, df_income], axis=1, join_axes=[df.index])
+
+        df_to_drop = df_join[df_join['value_currency'] + df_join['value_income'] == 0]
+
+        dataframe_to_excel(df_join, 'df_join')
+        dataframe_to_excel(df_to_drop, 'df_to_drop')
+
+        return dataframe
+
     def _find_income_for_xirr(self, dataframe, account_type):
         """
         Находит все связанные проводки для dataframe, по типу счетов (INCOME или EXPENSE)
@@ -806,6 +826,7 @@ class GNUCashData:
         # find all income transaq for dataframe
 
         # Отбираем нужные колонки
+        # TODO Очень долгая операция, нужно переместить в конец
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['post_date',
                                            'transaction_guid',
@@ -820,10 +841,11 @@ class GNUCashData:
                                            # 'mnemonic'
                                            ])
 
-        if account_type == self.INCOME:
-            df = dataframe[dataframe['value_currency'] == 0] # Возможно нужно брать все и вычитать?
-        else:
-            df = dataframe[dataframe['value_currency'] != 0]
+        df = dataframe
+        # if account_type == self.INCOME:
+        #     df = dataframe[dataframe['value_currency'] == 0] # Возможно нужно брать все и вычитать?
+        # else:
+        #     df = dataframe[dataframe['value_currency'] != 0]
         all_tr_guids = df['transaction_guid'].drop_duplicates().tolist()
         sel_df = sel_df[(self.df_splits['account_type']).isin([account_type])]
         sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
