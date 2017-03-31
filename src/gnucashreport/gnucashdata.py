@@ -553,9 +553,92 @@ class GNUCashData:
         df.set_index('guid', inplace=True)
         return df
 
-    def xirr_calc(self, from_date=None, to_date=None, accounts=None):
+    def _xirr_child_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None):
 
-        df_values = self._filter_for_xirr(from_date=from_date, to_date=to_date, accounts=accounts)
+        root_guid = account_guid
+
+        if not root_guid:
+            if account_name:
+                root_guid = self._get_account_guid(account_name)
+            elif account_types:
+                root_guid = self.root_account_guid
+
+        # Теперь в root_guid счет с которого нужно начинать
+        # Нужно посчитать его доходность и доходности его потомков
+
+        ar_xirr = []
+
+        if root_guid != self.root_account_guid:
+            xirr_root = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
+            ar_xirr.append(xirr_root)
+
+        childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types, recurse=False)
+        # if root_guid != self.root_account_guid:
+        #     childs = [root_guid] + childs
+
+        for child in childs:
+            # xirr_current = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
+            # ar_xirr.append(xirr_current)
+
+            sub_xirr = self._xirr_child_calc(account_guid=child, account_types=account_types)
+            ar_xirr.append(sub_xirr)
+
+        # df_xirr = pandas.DataFrame(ar_xirr)
+
+        return ar_xirr
+
+
+
+
+
+
+
+    def _get_child_accounts(self, account_guid, account_types=None, recurse=True):
+        """
+        Возвращает список счетов потомков
+        recurse=True - Список всех потомков
+        recurse=False - Только потомки первого уровня
+        :param account_guid: 
+        :return: 
+        """
+        df = self.df_accounts.copy()
+        # Фильтрация по типам счетов
+        if account_types:
+            df = df[(df['account_type']).isin(account_types)]
+
+        df = df[df['parent_guid'] == account_guid]
+        childs = df.index.tolist()
+
+        if recurse:
+            sub_childs = []
+            for child_account in childs:
+                sub_childs += self._get_child_accounts(child_account)
+            childs += sub_childs
+
+        return childs
+
+    def _get_account_guid(self, fullname):
+        """
+        Возвращает guid счета по полному имени или none если имя не найдено
+        :param fullname: 
+        :return: account guid
+        """
+        idx = self.df_accounts[self.df_accounts['fullname'] == fullname].index.tolist()
+        if idx:
+            return idx[0]
+        else:
+            return None
+
+    def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None):
+        """
+        Возвращает доходность итоговую по указанному счету и его потомков за заданный период
+        :param from_date: 
+        :param to_date: 
+        :param accounts: 
+        :return: 
+        """
+        account_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
+        df_values = self._filter_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
         df_income = self._find_income_for_xirr(df_values, self.INCOME)
         df_expense = self._find_income_for_xirr(df_values, self.EXPENSE)
 
@@ -568,21 +651,32 @@ class GNUCashData:
         # dataframe_to_excel(df_total, 'df_total')
 
         # Общая доходность
-        total_yeld = self._xirr_by_dataframe([df_values, df_income, df_expense])
+        yield_total = self._xirr_by_dataframe([df_values, df_income, df_expense])
         # Доходность дивидендов
         without_income_yeld = self._xirr_by_dataframe([df_values, df_expense])
-        without_expense_yeld = self._xirr_by_dataframe([df_values, df_income])
+        yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
 
-        expense_yeld = without_expense_yeld - total_yeld
+        yield_expense = yield_without_expense - yield_total
         if df_income.empty:
-            income_yeld = 0
+            yield_income = 0
         else:
-            income_yeld = total_yeld - without_income_yeld
+            yield_income = yield_total - without_income_yeld
 
-        print(total_yeld)
-        print(income_yeld)
-        print(expense_yeld)
-        print(without_expense_yeld)
+        itog = {}
+        itog['account_guid'] = account_guid
+        itog['fullname'] = self.df_accounts.loc[account_guid]['fullname']
+        itog['name'] = self.df_accounts.loc[account_guid]['name']
+        itog['yield_total'] = yield_total
+        itog['yield_income'] = yield_income
+        itog['yield_expense'] = yield_expense
+        itog['yield_without_expense'] = yield_without_expense
+        
+        # print(yield_total)
+        # print(yield_income)
+        # print(yield_expense)
+        # print(yield_without_expense)
+
+        return itog
 
         # return df_total
 
@@ -608,7 +702,7 @@ class GNUCashData:
         # print(a_yield)
         return a_yield
 
-    def _filter_for_xirr(self, from_date=None, to_date=None, accounts=None):
+    def _filter_for_xirr(self, account_guids, from_date=None, to_date=None):
         """
         Отбирает проводки для подсчета доходности по xirr
         Возвращает dataframe с полем post_date и value_currency
@@ -633,14 +727,14 @@ class GNUCashData:
                                            'name'
                                            # 'mnemonic'
                                            ])
-        if accounts:
+        # if accounts:
             # Выбранные счета
-            if type(accounts) is str:
-                accounts = [accounts]
-            sel_df = sel_df[(sel_df['fullname']).isin(accounts)]
-        else:
-            # отбираем все счета с активами
-            sel_df = sel_df[(sel_df['account_type']).isin(self.ALL_ASSET_TYPES)]
+            # if type(accounts) is str:
+            #     accounts = [accounts]
+        sel_df = sel_df[(sel_df['account_guid']).isin(account_guids)]
+        # else:
+        #     отбираем все счета с активами
+            # sel_df = sel_df[(sel_df['account_type']).isin(self.ALL_ASSET_TYPES)]
 
         # Фильтрация по времени
         if from_date:
@@ -664,10 +758,11 @@ class GNUCashData:
         # теоретически для получения курса на дату можно вызвать функцию _group_prices_by_period
         # с одинаковой датой начала и конца и периодом день
 
-        all_acc_guids = sel_df['account_guid'].drop_duplicates().tolist()
+        # Это неправильно, нужно брать все счета, а не по только те по которым были движения
+        # all_acc_guids = sel_df['account_guid'].drop_duplicates().tolist()
 
         if from_date:
-            start_balances = self.balance_on_date(from_date, account_guids=all_acc_guids)
+            start_balances = self.balance_on_date(from_date, account_guids=account_guids)
             sel_df = pandas.concat([sel_df, start_balances], ignore_index=True)
 
         # Все что участвует в транзакциях и является начальным балансом мы потратили
@@ -677,31 +772,12 @@ class GNUCashData:
         end_date = to_date
         if not end_date:
             end_date = self.max_date
-        end_balances = self.balance_on_date(end_date, account_guids=all_acc_guids)
+        end_balances = self.balance_on_date(end_date, account_guids=account_guids)
         # Конечные балансы это то, что мы получим. Поэтому оставляем с плюсом
         # end_balances['value_currency'] = end_balances['value_currency'] * (-1)
         sel_df = pandas.concat([sel_df, end_balances], ignore_index=True)
 
-        #
-        # for acc_guid in all_acc_guids:
-        #     if from_date:
-        #         start_balance = self.get_balance(acc_guid, is_guid=True, on_date=from_date)
-        #         if start_balance:
-        #             # Нужно добавить баланс умноженный на курс
-        #             pass
-        #     end_balance = self.get_balance(acc_guid, is_guid=True, on_date=to_date)
-        #     if end_balance:
-        #         # Нужно добавить баланс умноженный на курс
-        #         pass
-
-
-
-
         return sel_df
-
-    # def _initaial_balance(self, dataframe, from_date=None, to_date=None):
-        # finish balance
-
 
     def _find_income_for_xirr(self, dataframe, account_type):
         """
@@ -1085,10 +1161,11 @@ class GNUCashData:
     def _splits_currency_calc(self):
         """
         Подсчитывает сумму сплита транзакции в валюте учета.
-        Добавляется колонка value_currency - сумма сплита транзакции в валюте учета
-        balance_currency - остаток по счету после транзакции в валюте учета
+        Добавляется колонка 
+        value_currency - сумма сплита транзакции в валюте учета
+        [cancelled]balance_currency - остаток по счету после транзакции в валюте учета
         rate_currency - курс валюты для колонки value
-        rate_commodity - курс валюты для остатка по счету
+        [cancelled]rate_commodity - курс валюты для остатка по счету
         :return: DataFrame с добавленными колонками
         """
 
@@ -1104,22 +1181,22 @@ class GNUCashData:
 
         # Добавление колонки курс
         if group_prices.empty:
-            self.df_splits['rate_commodity'] = 1
+            # self.df_splits['rate_commodity'] = 1
             self.df_splits['rate_currency'] = 1
         else:
-            self.df_splits = self.df_splits.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
-                          how='left')
-            self.df_splits.rename(columns={'rate': 'rate_commodity'}, inplace=True)
+            # self.df_splits = self.df_splits.merge(group_prices, left_on=['commodity_guid', 'post_date'], right_index=True,
+            #               how='left')
+            # self.df_splits.rename(columns={'rate': 'rate_commodity'}, inplace=True)
             self.df_splits = self.df_splits.merge(group_prices, left_on=['currency_guid', 'post_date'], right_index=True,
                           how='left')
             self.df_splits.rename(columns={'rate': 'rate_currency'}, inplace=True)
         # Заполнить пустые поля еденицей
         self.df_splits['rate_currency'] = self.df_splits['rate_currency'].fillna(Decimal(1))
-        self.df_splits['rate_commodity'] = self.df_splits['rate_commodity'].fillna(Decimal(1))
+        # self.df_splits['rate_commodity'] = self.df_splits['rate_commodity'].fillna(Decimal(1))
 
         # Пересчет в валюту представления
         self.df_splits['value_currency'] = (self.df_splits['value'] * self.df_splits['rate_currency']).apply(lambda x: round(x, 2))
-        self.df_splits['balance_currency'] = (self.df_splits['cum_sum'] * self.df_splits['rate_commodity']).apply(lambda x: round(x, 2))
+        # self.df_splits['balance_currency'] = (self.df_splits['cum_sum'] * self.df_splits['rate_commodity']).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
         # self.df_splits_cur = df
         # Конец пересчета в нужную валюту

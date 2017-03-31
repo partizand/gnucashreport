@@ -51,6 +51,8 @@ gcrep = gnucashreport.GNUCashReport()
 gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file('T:/gnucash-stock/GnuCash-base.gnucash')
 
+
+
 on_date = datetime.date(2012, 9, 1)
 # dataframe_to_excel(gcrep.df_splits, 'all-splits')
 # exit()
@@ -60,13 +62,18 @@ on_date = datetime.date(2012, 9, 1)
 # exit()
 
 accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
+# accounts = ['Активы:Долгосрочные активы:Ценные бумаги']
+
+xirr = gcrep._xirr_child_calc(account_name=accounts[0])
+print(xirr)
+exit()
 
 # df = gcrep.balance_on_date(on_date=on_date, account_names=accounts)
 # dataframe_to_excel(df, 'bal_on_date')
 # exit()
 # to_date = datetime.date(2016, 1, 1)
 # df = gcrep._filter_for_xirr(accounts=accounts)
-df = gcrep.xirr_calc(accounts=accounts)
+df = gcrep._xirr_calc(account_guids=accounts)
 # dataframe_to_excel(df, 'aero-total')
 exit()
 
