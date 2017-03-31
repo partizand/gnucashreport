@@ -61,10 +61,10 @@ on_date = datetime.date(2012, 9, 1)
 # dataframe_to_excel(df, 'splits_cur')
 # exit()
 
-accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
-# accounts = ['Активы:Долгосрочные активы:Ценные бумаги']
+# accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
+accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
 
-xirr = gcrep._xirr_child_calc(account_name=accounts[0])
+xirr = gcrep.yield_calc(account_name=accounts[0])
 print(xirr)
 exit()
 

@@ -85,12 +85,12 @@ class GNUCashReport(GNUCashData):
         :return:
         """
 
-        min_date, max_date = self._get_daterange()
+        # min_date, max_date = self._get_daterange()
 
         # min_date = self.df_splits['post_date'].min()
         # max_date = self.df_splits['post_date'].max()
 
-        from_date, to_date = self._complete_month(min_date, max_date)
+        from_date, to_date = self._complete_month(self.min_date, self.max_date)
 
         years = self._split_by_years(from_date, to_date)
 

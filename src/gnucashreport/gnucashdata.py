@@ -553,7 +553,16 @@ class GNUCashData:
         df.set_index('guid', inplace=True)
         return df
 
-    def _xirr_child_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None):
+    def yield_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None):
+
+        ar_xirr = self._xirr_child_calc_array(account_guid=account_guid, account_name=account_name,
+                                              account_types=account_types, from_date=from_date, to_date=to_date)
+
+        df = pandas.DataFrame(ar_xirr)
+
+        return df
+
+    def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None):
 
         root_guid = account_guid
 
@@ -580,7 +589,7 @@ class GNUCashData:
             # xirr_current = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
             # ar_xirr.append(xirr_current)
 
-            sub_xirr = self._xirr_child_calc(account_guid=child, account_types=account_types)
+            sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types)
             ar_xirr.append(sub_xirr)
 
         # df_xirr = pandas.DataFrame(ar_xirr)
@@ -637,7 +646,8 @@ class GNUCashData:
         :param accounts: 
         :return: 
         """
-        account_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
+        child_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
+        account_guids = [account_guid] + child_guids
         df_values = self._filter_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
         df_income = self._find_income_for_xirr(df_values, self.INCOME)
         df_expense = self._find_income_for_xirr(df_values, self.EXPENSE)

@@ -110,7 +110,7 @@ def xirr_simple(transactions, guess=0.1):
         (date(2012, 1, 25), 20),\
         (date(2012, 3, 8), 10100)]
     >>> xirr_simple(tas)
-    0.010061264038086382
+    Decimal('0.010061264038085993569663582')
 
     """
     years = [Decimal((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
