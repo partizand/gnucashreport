@@ -24,7 +24,7 @@ class GNUCashReport(GNUCashData):
     >>> gcrep = GNUCashReport()
 
     open sql or xml book
-    >>> gcrep.open_book_file('v:/gnucash-base/sqlite/GnuCash-base.gnucash')
+    >>> gcrep.open_book_file('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
 
     save reports by years in xlsx file
     >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
