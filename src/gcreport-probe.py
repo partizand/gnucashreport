@@ -47,24 +47,25 @@ gcrep = gnucashreport.GNUCashReport()
 # rep.open_pickle()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
-# gcrep.open_book_sql(bookfile_sql)
-gcrep._open_book_pickle(gcrep.dir_pickle)
-# gcrep.open_book_file('T:/gnucash-stock/GnuCash-base.gnucash')
+gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
+# gcrep._open_book_pickle(gcrep.dir_pickle)
 
 
 
 on_date = datetime.date(2012, 9, 1)
-# dataframe_to_excel(gcrep.df_splits, 'all-splits')
-# exit()
+dataframe_to_excel(gcrep.df_splits, 'all-splits')
+exit()
 
 # df = gcrep._splits_currency_calc()
 # dataframe_to_excel(df, 'splits_cur')
 # exit()
 
 # accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
-accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
+# accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
+accounts = ['Активы:Долгосрочные активы:ПИФы']
 
 xirr = gcrep.yield_calc(account_name=accounts[0])
+# xirr = gcrep._xirr_child_calc_array(account_name=accounts[0])
 print(xirr)
 exit()
 

@@ -579,7 +579,7 @@ class GNUCashData:
 
         if root_guid != self.root_account_guid:
             xirr_root = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
-            ar_xirr.append(xirr_root)
+            ar_xirr += [xirr_root]
 
         childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types, recurse=False)
         # if root_guid != self.root_account_guid:
@@ -590,7 +590,7 @@ class GNUCashData:
             # ar_xirr.append(xirr_current)
 
             sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types)
-            ar_xirr.append(sub_xirr)
+            ar_xirr += sub_xirr
 
         # df_xirr = pandas.DataFrame(ar_xirr)
 
@@ -676,10 +676,11 @@ class GNUCashData:
         itog['account_guid'] = account_guid
         itog['fullname'] = self.df_accounts.loc[account_guid]['fullname']
         itog['name'] = self.df_accounts.loc[account_guid]['name']
-        itog['yield_total'] = yield_total
-        itog['yield_income'] = yield_income
-        itog['yield_expense'] = yield_expense
-        itog['yield_without_expense'] = yield_without_expense
+        itog['yield_total'] = round(yield_total, 2)
+        # itog['yield_total2'] = yield_total
+        itog['yield_income'] = round(yield_income, 2)
+        itog['yield_expense'] = round(yield_expense, 2)
+        itog['yield_without_expense'] = round(yield_without_expense, 2)
         
         # print(yield_total)
         # print(yield_income)
@@ -752,7 +753,13 @@ class GNUCashData:
         if to_date:
             sel_df = sel_df[(sel_df['post_date'] <= to_date)]
 
-        # TODO Нужно добавить начальный и конечный баланс (Если не задана начальная дата, то начальный баланс не нужен)
+        # TODO нужно удалить не нулевые строки, которым соответствует таже сумма INCOME или EXPENSE
+
+
+
+        #
+
+        # Нужно добавить начальный и конечный баланс (Если не задана начальная дата, то начальный баланс не нужен)
 
         # Можно брать баланс на дату предшествующую нужной.
         # Можно ли взять баланс сразу для всех?
@@ -814,9 +821,9 @@ class GNUCashData:
                                            ])
 
         if account_type == self.INCOME:
-            df = dataframe[dataframe['value'] == 0] # Возможно нужно брать все и вычитать?
+            df = dataframe[dataframe['value_currency'] == 0] # Возможно нужно брать все и вычитать?
         else:
-            df = dataframe[dataframe['value'] != 0]
+            df = dataframe[dataframe['value_currency'] != 0]
         all_tr_guids = df['transaction_guid'].drop_duplicates().tolist()
         sel_df = sel_df[(self.df_splits['account_type']).isin([account_type])]
         sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
