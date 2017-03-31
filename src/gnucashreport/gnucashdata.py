@@ -558,7 +558,20 @@ class GNUCashData:
         ar_xirr = self._xirr_child_calc_array(account_guid=account_guid, account_name=account_name,
                                               account_types=account_types, from_date=from_date, to_date=to_date)
 
-        df = pandas.DataFrame(ar_xirr)
+        # Колонки в нужной последовательности
+        df = pandas.DataFrame(ar_xirr, columns=['name', 'yield_total', 'yield_income', 'yield_expense', 'yield_without_expense'])
+
+
+        # Добавление MultiIndex по дате и названиям счетов
+        # s = df['fullname'].str.split(':', expand=True)
+        # cols = s.columns
+        # cols = cols.tolist()
+        # df = pandas.concat([df, s], axis=1)
+        #
+        # df.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
+        #
+        # df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
+        # df.set_index(cols, inplace=True)
 
         return df
 
@@ -673,14 +686,14 @@ class GNUCashData:
             yield_income = yield_total - without_income_yeld
 
         itog = {}
-        itog['account_guid'] = account_guid
+        # itog['account_guid'] = account_guid
         itog['fullname'] = self.df_accounts.loc[account_guid]['fullname']
         itog['name'] = self.df_accounts.loc[account_guid]['name']
-        itog['yield_total'] = round(yield_total, 2)
+        itog['yield_total'] = yield_total
         # itog['yield_total2'] = yield_total
-        itog['yield_income'] = round(yield_income, 2)
-        itog['yield_expense'] = round(yield_expense, 2)
-        itog['yield_without_expense'] = round(yield_without_expense, 2)
+        itog['yield_income'] = yield_income
+        itog['yield_expense'] = yield_expense
+        itog['yield_without_expense'] = yield_without_expense
         
         # print(yield_total)
         # print(yield_income)
@@ -710,6 +723,7 @@ class GNUCashData:
         df[date_field] = df[date_field].astype(date)
         tuples = [tuple(x) for x in df.to_records(index=False)]
         a_yield = xirr_simple(tuples)
+        a_yield = round(a_yield, 4)
         # print(a_yield)
         return a_yield
 

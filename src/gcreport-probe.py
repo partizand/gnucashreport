@@ -66,7 +66,8 @@ accounts = ['Активы:Долгосрочные активы:ПИФы']
 
 xirr = gcrep.yield_calc(account_name=accounts[0])
 # xirr = gcrep._xirr_child_calc_array(account_name=accounts[0])
-print(xirr)
+# print(xirr)
+dataframe_to_excel(xirr, 'yield')
 exit()
 
 # df = gcrep.balance_on_date(on_date=on_date, account_names=accounts)
