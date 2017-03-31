@@ -724,28 +724,12 @@ class GNUCashData:
         :param accounts: 
         :return: 
         """
-        # Отбираем нужные колонки
-        sel_df = pandas.DataFrame(self.df_splits,
-                                  columns=['post_date',
-                                           'transaction_guid',
-                                           'account_guid',
-                                           'fullname',
-                                           'commodity_guid',
-                                           'account_type',
-                                           # 'value',
-                                           'value_currency',
-                                           # 'balance_currency',
-                                           'name'
-                                           # 'mnemonic'
-                                           ])
+
         # if accounts:
             # Выбранные счета
             # if type(accounts) is str:
             #     accounts = [accounts]
-        sel_df = sel_df[(sel_df['account_guid']).isin(account_guids)]
-        # else:
-        #     отбираем все счета с активами
-            # sel_df = sel_df[(sel_df['account_type']).isin(self.ALL_ASSET_TYPES)]
+        sel_df = (self.df_splits[(self.df_splits['account_guid']).isin(account_guids)]).copy()
 
         # Фильтрация по времени
         if from_date:
@@ -753,11 +737,8 @@ class GNUCashData:
         if to_date:
             sel_df = sel_df[(sel_df['post_date'] <= to_date)]
 
-        # TODO нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+        # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
         sel_df = self._xirr_drop_income(sel_df)
-
-
-
 
         #
 
@@ -780,6 +761,7 @@ class GNUCashData:
         # Это неправильно, нужно брать все счета, а не по только те по которым были движения
         # all_acc_guids = sel_df['account_guid'].drop_duplicates().tolist()
 
+        # Добавление начального баланса
         if from_date:
             start_balances = self.balance_on_date(from_date, account_guids=account_guids)
             sel_df = pandas.concat([sel_df, start_balances], ignore_index=True)
@@ -788,6 +770,7 @@ class GNUCashData:
         # Поэтому минусуем
         sel_df['value_currency'] = sel_df['value_currency'] * (-1)
 
+        # Добавление конечного баланса
         end_date = to_date
         if not end_date:
             end_date = self.max_date
@@ -796,38 +779,8 @@ class GNUCashData:
         # end_balances['value_currency'] = end_balances['value_currency'] * (-1)
         sel_df = pandas.concat([sel_df, end_balances], ignore_index=True)
 
-        return sel_df
-
-    def _xirr_drop_income(self, dataframe):
-        # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
-        # удалить не нулевые строки у которых есть не нулевой income? Задача попроще, но правильно ли?
-        df = dataframe.copy()
-        df_income = self._find_income_for_xirr(dataframe, self.INCOME)
-        df.rename(columns={'value_currency': 'value_income'}, inplace=True)
-        df_income.set_index('transaction_guid', inplace=True, drop=False)
-        df.set_index('transaction_guid', inplace=True, drop=False)
-
-        df_join = pandas.concat([df, df_income], axis=1, join_axes=[df.index])
-
-        df_to_drop = df_join[df_join['value_currency'] + df_join['value_income'] == 0]
-
-        dataframe_to_excel(df_join, 'df_join')
-        dataframe_to_excel(df_to_drop, 'df_to_drop')
-
-        return dataframe
-
-    def _find_income_for_xirr(self, dataframe, account_type):
-        """
-        Находит все связанные проводки для dataframe, по типу счетов (INCOME или EXPENSE)
-        :param dataframe: filtered df_splits
-        :param account_type: INCOME or EXPENSE
-        :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
-        """
-        # find all income transaq for dataframe
-
         # Отбираем нужные колонки
-        # TODO Очень долгая операция, нужно переместить в конец
-        sel_df = pandas.DataFrame(self.df_splits,
+        sel_df = pandas.DataFrame(sel_df,
                                   columns=['post_date',
                                            'transaction_guid',
                                            'account_guid',
@@ -841,18 +794,72 @@ class GNUCashData:
                                            # 'mnemonic'
                                            ])
 
+        return sel_df
+
+    def _xirr_drop_income(self, dataframe):
+        """
+        Удаляет лишние записи по учету прибылей/убытков по счету
+        Логика работы:
+        Удаляются не нулевые строки у которых есть не нулевой income
+        :param dataframe: 
+        :return: dataframe с убранными лишними записями
+        """
+        # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+        # удалить не нулевые строки у которых есть не нулевой income? Задача попроще, но правильно ли?
+
+        # df = dataframe.copy()
+        df = dataframe[dataframe['value_currency'] != 0]
+
+        df_income = self._find_income_for_xirr(df, self.INCOME)
+
+        all_tr_guids = df_income['transaction_guid'].drop_duplicates().tolist()
+
+        dataframe = dataframe[~dataframe['transaction_guid'].isin(all_tr_guids)]
+
+        # dataframe_to_excel(dataframe, 'dataframe')
+
+        return dataframe
+
+    def _find_income_for_xirr(self, dataframe, account_type):
+        """
+        Находит все связанные проводки для dataframe, по типу счетов (INCOME или EXPENSE)
+        :param dataframe: filtered df_splits
+        :param account_type: INCOME or EXPENSE
+        :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
+        """
+        # find all income transaq for dataframe
+
+
+
         df = dataframe
         # if account_type == self.INCOME:
         #     df = dataframe[dataframe['value_currency'] == 0] # Возможно нужно брать все и вычитать?
         # else:
         #     df = dataframe[dataframe['value_currency'] != 0]
         all_tr_guids = df['transaction_guid'].drop_duplicates().tolist()
-        sel_df = sel_df[(self.df_splits['account_type']).isin([account_type])]
-        sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
+        sel_df = (self.df_splits[((self.df_splits['account_type']).isin([account_type])) &
+                                ((self.df_splits['transaction_guid']).isin(all_tr_guids))]).copy()
+        # sel_df = sel_df[(sel_df['transaction_guid']).isin(all_tr_guids)]
 
         # Если не доход, то мы потратили деньги
         if account_type != self.INCOME:
             sel_df['value_currency'] = sel_df['value_currency'] * -1
+
+        # Отбираем нужные колонки
+        sel_df = pandas.DataFrame(sel_df,
+                                  columns=['post_date',
+                                           'transaction_guid',
+                                           'account_guid',
+                                           'fullname',
+                                           'commodity_guid',
+                                           'account_type',
+                                           # 'value',
+                                           'value_currency',
+                                           # 'balance_currency',
+                                           'name'
+                                           # 'mnemonic'
+                                           ])
+
         return sel_df
 
 
