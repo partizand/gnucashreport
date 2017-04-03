@@ -43,6 +43,9 @@ class GNUCashData:
     # GNUCash all account assets types
     ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
 
+    # All account types for calc yield by xirr
+    ALL_XIRR_TYPES = [BANK, ASSET, STOCK, MUTUAL, LIABILITY]
+
     # Данные для генерации тестовых данных и тестирования
     dir_pickle = 'V:/test_data'
     # dir_testdata = 'v:/test_data'
@@ -609,12 +612,6 @@ class GNUCashData:
 
         return ar_xirr
 
-
-
-
-
-
-
     def _get_child_accounts(self, account_guid, account_types=None, recurse=True):
         """
         Возвращает список счетов потомков
@@ -726,6 +723,15 @@ class GNUCashData:
         a_yield = round(a_yield, 4)
         # print(a_yield)
         return a_yield
+
+    def _add_xirr_guids(self):
+        """
+        Добавляет новое поле в df_splits для подсчета xirr
+        :return: 
+        """
+        df = self.df_splits[(self.df_splits['account_type']).isin(self.ALL_XIRR_TYPES)]
+        df['xirr_guid'] = df['account_guid']
+        dataframe_to_excel(self.df_splits, 'splits_xirr')
 
     def _filter_for_xirr(self, account_guids, from_date=None, to_date=None):
         """
