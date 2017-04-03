@@ -729,9 +729,72 @@ class GNUCashData:
         Добавляет новое поле в df_splits для подсчета xirr
         :return: 
         """
-        df = self.df_splits[(self.df_splits['account_type']).isin(self.ALL_XIRR_TYPES)]
-        df['xirr_guid'] = df['account_guid']
+        self.df_splits['xirr_guid'] = self.df_splits.apply(lambda row: self._func_for_xirr(row), axis=1)
+        # df = self.df_splits[(self.df_splits['account_type']).isin(self.ALL_XIRR_TYPES)]
+        # df['xirr_guid'] = df['account_guid']
         dataframe_to_excel(self.df_splits, 'splits_xirr')
+
+    def _func_for_xirr(self, row):
+        """
+        Функция для applay для df_splits
+        Возвращает значение для нового поля xirr_guid
+        :param row: 
+        :return: xirr_guid строка
+        """
+        if row['account_type'] in self.ALL_XIRR_TYPES:
+            if row['value_currency'] == 0:
+                return None
+            else:
+                # Здесть нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+                df_r_splits = self._get_related_splits(row)
+                if len(df_r_splits) == 1:
+                    if df_r_splits.iloc[0]['account_type'] == self.INCOME:
+                        return None
+                return row['account_guid']
+        elif row['account_type'] == self.INCOME:
+            asset_row = self._get_related_asset_account(row)
+            if (asset_row['account_type'] in self.ALL_XIRR_TYPES) and (asset_row['value_currency'] == 0):
+                return asset_row['account_guid']
+            else:
+                return None
+        elif row['account_type'] == self.EXPENSE:
+            asset_row = self._get_related_asset_account(row)
+            if asset_row['account_type'] in self.ALL_XIRR_TYPES:
+                return asset_row['account_guid']
+            else:
+                return None
+
+        return None
+
+    def _get_related_asset_account(self, row):
+        """
+        Возвращает row связанного счета активов для income или expense
+        :param row: Строка из df_splits, с типом INCOME или EXPENSE
+        :return: Строка (одна) из df_splits со связанным счетом активов
+        """
+        df_r_splits = self._get_related_splits(row)
+        df_r_splits = df_r_splits[df_r_splits['account_type'].isin(self.ALL_XIRR_TYPES)]
+        if df_r_splits.empty:
+            return None
+        elif len(df_r_splits) == 1:
+            return df_r_splits.iloc[0]
+
+        # TODO возвращает первый попавшийся счет. Нужно выбирать по уровню и по типу
+        return df_r_splits.iloc[0]
+
+
+
+    def _get_related_splits(self, row):
+        """
+        Возвращает splits связанные с заданной строкой из df_splits
+        :param row: строка dataframe
+        :return: dataframe со связаными splits
+        """
+        # tr_guid = row['transaction_guid']
+        # exclude_guid = row['guid']
+        df_r_splits = self.df_splits[self.df_splits['transaction_guid'] == row['transaction_guid']]
+        df_r_splits.drop(row.index()) # TODO нужно проверить работает ли данная строка
+        return df_r_splits
 
     def _filter_for_xirr(self, account_guids, from_date=None, to_date=None):
         """

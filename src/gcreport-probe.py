@@ -62,8 +62,11 @@ on_date = datetime.date(2012, 9, 1)
 # exit()
 
 # accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
-accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
 
+gcrep._add_xirr_guids()
+exit()
+
+accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
 xirr = gcrep.yield_calc(account_name=accounts[0])
 print(xirr)
 exit()
