@@ -753,13 +753,14 @@ class GNUCashData:
                 return row['account_guid']
         elif row['account_type'] == self.INCOME:
             asset_row = self._get_related_asset_account(row)
-            if (asset_row['account_type'] in self.ALL_XIRR_TYPES) and (asset_row['value_currency'] == 0):
+            if asset_row and (asset_row['value_currency'] == 0):
                 return asset_row['account_guid']
             else:
                 return None
         elif row['account_type'] == self.EXPENSE:
+            # Так получается задвоение расходов
             asset_row = self._get_related_asset_account(row)
-            if asset_row['account_type'] in self.ALL_XIRR_TYPES:
+            if asset_row:
                 return asset_row['account_guid']
             else:
                 return None
@@ -779,10 +780,11 @@ class GNUCashData:
         elif len(df_r_splits) == 1:
             return df_r_splits.iloc[0]
 
-        # TODO возвращает первый попавшийся счет. Нужно выбирать по уровню и по типу
-        return df_r_splits.iloc[0]
-
-
+        # Приоритет счетов: stock, mutual, bank, asset
+        # Первые буквы типов счетов идут в обратном порядке приоритета.
+        # Поэтому сортируем в по типу счета и берем последнюю строку
+        df_r_splits.sort_values('account_type', inplace=True)
+        return df_r_splits.iloc[-1]
 
     def _get_related_splits(self, row):
         """
@@ -793,7 +795,8 @@ class GNUCashData:
         # tr_guid = row['transaction_guid']
         # exclude_guid = row['guid']
         df_r_splits = self.df_splits[self.df_splits['transaction_guid'] == row['transaction_guid']]
-        df_r_splits.drop(row.index()) # TODO нужно проверить работает ли данная строка
+        # df_r_splits.rename(columns={'name': 'name2'}, inplace=True)
+        df_r_splits.drop(row.name, inplace=True)
         return df_r_splits
 
     def _filter_for_xirr(self, account_guids, from_date=None, to_date=None):
