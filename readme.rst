@@ -8,6 +8,8 @@ Python library for get reports from `GnuCash <http://gnucash.org>`_ to xlsx file
 It connects directly to the GnuCash book (xml or sql) and `Pandas <http://pandas.pydata.org/>`_ use to building reports.
 No cycles for calculation, less errors, less code.
 
+The library is cross-platform, Excel is not required, you can use LibreOffice/OpenOffice
+
 GnuCash python bindings not use, because it platform depended and unstable.
 Piecash need only for get data from sql and in the future it may be replaced by bindings or sqlalchemy,
 without changing the architecture. Not using piecash calculation and walk functions.
