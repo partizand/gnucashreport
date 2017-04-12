@@ -45,6 +45,9 @@ class GNUCashData:
 
     # All account types for calc yield by xirr
     ALL_XIRR_TYPES = [BANK, ASSET, STOCK, MUTUAL, LIABILITY]
+    ASSET_XIRR_TYPES = [BANK, ASSET, LIABILITY]
+    STOCK_XIRR_TYPES = [STOCK, MUTUAL]
+    INCEXP_XIRR_TYPES = [INCOME, EXPENSE]
 
     # Данные для генерации тестовых данных и тестирования
     dir_pickle = 'V:/test_data'
@@ -723,6 +726,54 @@ class GNUCashData:
         a_yield = round(a_yield, 4)
         # print(a_yield)
         return a_yield
+
+    def _add_xirr_info(self):
+        # Добавление столбцов для xirr в df_splits
+        self.df_splits['xirr_account'] = ''
+        self.df_splits['xirr_value'] = ''
+        # Идем по транзакциям
+        tr_guids_all = self.df_splits['transaction_guid'].drop_duplicates().tolist()
+
+        for tr_guid in tr_guids_all:
+            self._add_xirr_by_transaction(tr_guid)
+
+        # df_r_splits = self.df_splits[self.df_splits['transaction_guid'] == row['transaction_guid']]
+
+    def _add_xirr_by_transaction(self, transaction_guid):
+        df_tr_splits = self.df_splits[self.df_splits['transaction_guid'] == transaction_guid]
+        # есть ли счета для xirr
+        if not self._has_transaction_for_xirr(df_tr_splits):
+            return
+        df_incexps = df_tr_splits[df_tr_splits['account_type'].isin([self.INCOME, self.EXPENSE])]
+        df_assets = df_tr_splits[df_tr_splits['account_type'].isin(self.ASSET_XIRR_TYPES)]
+        df_stocks = df_tr_splits[df_tr_splits['account_type'].isin(self.STOCK_XIRR_TYPES)]
+        # Простая 2-х проводочная транзакция
+        if len(df_tr_splits) == 2:
+
+            if (len(df_incexps) == 1) and (len(df_assets) == 1):
+                # income or expense
+                guid_asset = df_assets.iloc[0]['account_guid']
+                pass
+            elif len(df_assets) == 2:
+                pass
+            else:
+                # Неясность
+                print("Unknown transaction type for xirr. Transaction_guid={tr_guid}".format(tr_guid=transaction_guid))
+
+
+
+    def _has_transaction_for_xirr(self, df_tr_splits):
+        """
+        Проверка, есть ли в транзакции проводки, для которых необходимо считать xirr
+        true - есть
+        false - нет
+        :param df_tr_splits: 
+        :return: 
+        """
+        if df_tr_splits['account_type'].isin(self.ALL_XIRR_TYPES):
+            return True
+        else:
+            return False
 
     def _add_xirr_guids(self):
         """
