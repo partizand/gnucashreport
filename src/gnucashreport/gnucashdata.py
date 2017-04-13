@@ -588,7 +588,7 @@ class GNUCashData:
 
         return df
 
-    def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None):
+    def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
 
         root_guid = account_guid
 
@@ -603,8 +603,14 @@ class GNUCashData:
 
         ar_xirr = []
 
+        if df_all_xirr is None:
+            child_guids = self._get_child_accounts(root_guid, account_types=account_types, recurse=True)
+            account_guids = [root_guid] + child_guids
+            df_all_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+
+
         if root_guid != self.root_account_guid:
-            xirr_root = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
+            xirr_root = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date, df_all_xirr=df_all_xirr)
             ar_xirr += [xirr_root]
 
         childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types, recurse=False)
@@ -615,7 +621,7 @@ class GNUCashData:
             # xirr_current = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
             # ar_xirr.append(xirr_current)
 
-            sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types)
+            sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types, df_all_xirr=df_all_xirr)
             ar_xirr += sub_xirr
 
         # df_xirr = pandas.DataFrame(ar_xirr)
@@ -671,10 +677,11 @@ class GNUCashData:
         child_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
         account_guids = [account_guid] + child_guids
 
-        if not df_all_xirr:
+        if df_all_xirr is None:
             df_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+
         else:
-            df_xirr = (df_all_xirr[df_all_xirr['xirr_guid'] == account_guids]).copy()
+            df_xirr = (df_all_xirr[df_all_xirr['xirr_account'].isin(account_guids)]).copy()
 
 
 
