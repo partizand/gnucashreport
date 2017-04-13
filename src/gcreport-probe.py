@@ -61,9 +61,11 @@ on_date = datetime.date(2012, 9, 1)
 # dataframe_to_excel(df, 'splits_cur')
 # exit()
 
-# accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
+account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
+account_guid = gcrep._get_account_guid(account)
+xirr = gcrep._xirr_calc(account_guid)
+print(xirr)
 
-gcrep._add_xirr_info()
 exit()
 
 accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']

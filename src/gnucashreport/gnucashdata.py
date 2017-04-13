@@ -3,6 +3,9 @@ import locale
 import os
 from copy import copy
 from datetime import date
+from datetime import timedelta
+# datetime.timedelta
+# import datetime
 from decimal import Decimal
 from operator import attrgetter
 
@@ -512,7 +515,7 @@ class GNUCashData:
 
         return df
 
-    def balance_on_date(self, on_date, account_names=None, account_guids=None):
+    def balance_on_date(self, on_date, account_names=None, account_guids=None, start_balance=False):
         """
         Возвращает DataFrame со строками балансов выбранных счетов на заданную дату (если баланс 0, строки не будет)
         Баланс в кол-ве бумаг - cum_sum
@@ -537,6 +540,9 @@ class GNUCashData:
         #                                    ])
         # df = self.df_splits.copy()
         # Сортировка по дате
+        if start_balance:
+            # date_1 = datetime.datetime.strptime(start_date, "%m/%d/%y")
+            on_date = on_date + timedelta(days=-1) # TODO Проверить бы надо
         df = (self.df_splits[(self.df_splits['post_date'] < on_date)]).copy()
         # Сортировка по счетам
         if account_names:
@@ -551,10 +557,12 @@ class GNUCashData:
         df = df[~df.index.duplicated(keep='last')]
         # Теперь в cum_sum - остаток по счету на дату (если он есть)
         df['post_date'] = numpy.datetime64(on_date)
+        df.drop('value', axis=1, inplace=True)
         df.rename(columns={'cum_sum': 'value'}, inplace=True)
-        df = self._currency_calc(df)
-        # Теперь в value_currency - остаток в валюте учета (если он есть)
-        # df['account_guid'] = df.index
+        if not df.empty:
+            df = self._currency_calc(df)
+            # Теперь в value_currency - остаток в валюте учета (если он есть)
+            # df['account_guid'] = df.index
         df.set_index('guid', inplace=True)
         return df
 
@@ -650,22 +658,26 @@ class GNUCashData:
         else:
             return None
 
-    def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None):
+    def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
         """
         Возвращает доходность итоговую по указанному счету и его потомков за заданный период
         :param from_date: 
         :param to_date: 
         :param accounts: 
+        :param df_all_xirr: для ускорения рекурсии - строки с начальными и конечными балансами со всеми счетами
+                            неуказание влияет только на скорость работы
         :return: 
         """
         child_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
         account_guids = [account_guid] + child_guids
-        df_values = self._filter_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
-        df_income = self._find_income_for_xirr(df_values, self.INCOME)
-        df_expense = self._find_income_for_xirr(df_values, self.EXPENSE)
 
-        # Отбор только не нулевых проводок
-        df_values = df_values[df_values['value_currency'] != 0]
+        if not df_all_xirr:
+            df_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+        else:
+            df_xirr = (df_all_xirr[df_all_xirr['xirr_guid'] == account_guids]).copy()
+
+
+
 
         # df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
         # df_total.sort_values(by='post_date', inplace=True)
@@ -673,16 +685,31 @@ class GNUCashData:
         # dataframe_to_excel(df_total, 'df_total')
 
         # Общая доходность
-        yield_total = self._xirr_by_dataframe([df_values, df_income, df_expense])
-        # Доходность дивидендов
-        without_income_yeld = self._xirr_by_dataframe([df_values, df_expense])
-        yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
+        yield_total = self._xirr_by_dataframe(df_xirr)
 
-        yield_expense = yield_without_expense - yield_total
-        if df_income.empty:
+        # yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
+        # yield_without_expense = self._xirr_by_dataframe(df_without_expense)
+
+        # yield_expense = yield_without_expense - yield_total
+
+        # Доходность денежного потока
+        if not any(df_xirr['account_type'].isin([self.INCOME])):
             yield_income = 0
         else:
+            # Доходность без денежного потока
+            df_without_income = df_xirr[df_xirr['account_type'] != self.INCOME]
+            without_income_yeld = self._xirr_by_dataframe(df_without_income)
             yield_income = yield_total - without_income_yeld
+
+        # Стоимость расходов
+        if not any(df_xirr['account_type'].isin([self.EXPENSE])):
+            yield_expense = 0
+            yield_without_expense = yield_total
+        else:
+            # Доходность без расходов
+            df_without_expense = df_xirr[df_xirr['account_type'] != self.EXPENSE]
+            yield_without_expense = self._xirr_by_dataframe(df_without_expense)
+            yield_expense = yield_without_expense - yield_total
 
         itog = {}
         # itog['account_guid'] = account_guid
@@ -693,7 +720,7 @@ class GNUCashData:
         itog['yield_income'] = yield_income
         itog['yield_expense'] = yield_expense
         itog['yield_without_expense'] = yield_without_expense
-        
+
         # print(yield_total)
         # print(yield_income)
         # print(yield_expense)
@@ -701,9 +728,60 @@ class GNUCashData:
 
         return itog
 
-        # return df_total
+    # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None):
+    #     """
+    #     Возвращает доходность итоговую по указанному счету и его потомков за заданный период
+    #     :param from_date:
+    #     :param to_date:
+    #     :param accounts:
+    #     :return:
+    #     """
+    #     child_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
+    #     account_guids = [account_guid] + child_guids
+    #     df_values = self._filter_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+    #     df_income = self._find_income_for_xirr(df_values, self.INCOME)
+    #     df_expense = self._find_income_for_xirr(df_values, self.EXPENSE)
+    #
+    #     # Отбор только не нулевых проводок
+    #     df_values = df_values[df_values['value_currency'] != 0]
+    #
+    #     # df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
+    #     # df_total.sort_values(by='post_date', inplace=True)
+    #
+    #     # dataframe_to_excel(df_total, 'df_total')
+    #
+    #     # Общая доходность
+    #     yield_total = self._xirr_by_dataframe([df_values, df_income, df_expense])
+    #     # Доходность дивидендов
+    #     without_income_yeld = self._xirr_by_dataframe([df_values, df_expense])
+    #     yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
+    #
+    #     yield_expense = yield_without_expense - yield_total
+    #     if df_income.empty:
+    #         yield_income = 0
+    #     else:
+    #         yield_income = yield_total - without_income_yeld
+    #
+    #     itog = {}
+    #     # itog['account_guid'] = account_guid
+    #     itog['fullname'] = self.df_accounts.loc[account_guid]['fullname']
+    #     itog['name'] = self.df_accounts.loc[account_guid]['name']
+    #     itog['yield_total'] = yield_total
+    #     # itog['yield_total2'] = yield_total
+    #     itog['yield_income'] = yield_income
+    #     itog['yield_expense'] = yield_expense
+    #     itog['yield_without_expense'] = yield_without_expense
+    #
+    #     # print(yield_total)
+    #     # print(yield_income)
+    #     # print(yield_expense)
+    #     # print(yield_without_expense)
+    #
+    #     return itog
+    #
+    #     # return df_total
 
-    def _xirr_by_dataframe(self, obj, date_field='post_date', value_field='value_currency'):
+    def _xirr_by_dataframe(self, obj, date_field='post_date', value_field='xirr_value'):
         """
         Считает функцию xirr по значениям dataframe. obj может быть просто dataframe или массивом dataframe
         Тогда они сложатся
@@ -943,7 +1021,27 @@ class GNUCashData:
     #     df_r_splits.drop(row.name, inplace=True)
     #     return df_r_splits
 
+    def _get_all_for_xirr(self, account_guids, from_date=None, to_date=None):
+        """
+        Возвращает все данные для подсчета xirr
+        :param account_guids: 
+        :param from_date: 
+        :param to_date: 
+        :return: 
+        """
+        df_splits = self._get_splits_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+        df_balances = self._get_balances_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+        df_all = pandas.concat([df_splits, df_balances], ignore_index=True)
+        return df_all
+
     def _get_balances_for_xirr(self, account_guids, from_date=None, to_date=None):
+        """
+        Возвращает начальный и конечный баланс для подсчета xirr
+        :param account_guids: 
+        :param from_date: 
+        :param to_date: 
+        :return: 
+        """
 
         # Конечный баланс
         end_date = to_date
@@ -953,11 +1051,11 @@ class GNUCashData:
 
         # Добавление начального баланса
         if from_date:
-            start_balances = self.balance_on_date(from_date, account_guids=account_guids)
+            start_balances = self.balance_on_date(from_date, account_guids=account_guids, start_balance=True)
             # Начальный баланс - это потрачено
             start_balances['value_currency'] = start_balances['value_currency'] * (-1)
 
-            df_itog_balances = pandas.concat([start_balances, df_itog_balances]) # TODO Эту строку нужно проверить
+            df_itog_balances = pandas.concat([start_balances, df_itog_balances], ignore_index=True) # TODO Эту строку нужно проверить
 
         # Задать xirr_value и xirr_account
         df_itog_balances['xirr_value'] = df_itog_balances['value_currency']
@@ -965,8 +1063,25 @@ class GNUCashData:
 
         return df_itog_balances
 
+    def _get_splits_for_xirr(self, account_guids, from_date=None, to_date=None):
+        """
+        Возвращает строки из df_splits, для подсчета xirr
+        :param account_guids: 
+        :param from_date: 
+        :param to_date: 
+        :return: dataframe
+        """
+        sel_df = (self.df_splits[(self.df_splits['xirr_account']).isin(account_guids)]).copy()
 
-    def _filter_for_xirr(self, account_guids, from_date=None, to_date=None):
+        # Фильтрация по времени
+        if from_date:
+            sel_df = sel_df[(sel_df['post_date'] >= from_date)]
+        if to_date:
+            sel_df = sel_df[(sel_df['post_date'] <= to_date)]
+
+        return sel_df
+
+    def _filter_for_xirr_old(self, account_guids, from_date=None, to_date=None):
         """
         Отбирает проводки для подсчета доходности по xirr
         Возвращает dataframe с полем post_date и value_currency
@@ -1451,6 +1566,7 @@ class GNUCashData:
         df['rate'] = df['rate'].fillna(Decimal(1))
 
         # Пересчет в валюту представления
+        # dataframe_to_excel(df, 'df_error')
         df['value_currency'] = (df['value'] * df['rate']).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
 
