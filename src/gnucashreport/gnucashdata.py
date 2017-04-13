@@ -412,6 +412,9 @@ class GNUCashData:
         # Пересчет транзакций в валюту учета
         self._splits_currency_calc()
 
+        # Подсчет значений для xirr
+        self._add_xirr_info()
+
 
 
     def _add_margins(self, dataframe, margins=None):
@@ -519,26 +522,22 @@ class GNUCashData:
         :param account_guids: 
         :return: DataFrame с балансами
         """
-        # Берем сплиты, фильтруем по дате и по счетам
-        # делаем index по account_guid, отбрасывая дубликаты и беря последнее
-        # Вуаля, готово
-        # Все не верно! Так как остаток получается на дату транзакции, а нужен текущий с изменяемой ценой
-        # Потом нужно cum_sum умножить на курс на заданную дату, тогда все будет верно
-        df = pandas.DataFrame(self.df_splits,
-                                  columns=['post_date',
-                                           # 'transaction_guid',
-                                           'account_guid',
-                                           'fullname',
-                                           'commodity_guid',
-                                           'account_type',
-                                           # 'value',
-                                           'cum_sum',
-                                           'name',
-                                           # 'mnemonic'
-                                           ])
+
+        # df = pandas.DataFrame(self.df_splits,
+        #                           columns=['post_date',
+        #                                    # 'transaction_guid',
+        #                                    'account_guid',
+        #                                    'fullname',
+        #                                    'commodity_guid',
+        #                                    'account_type',
+        #                                    # 'value',
+        #                                    'cum_sum',
+        #                                    'name',
+        #                                    # 'mnemonic'
+        #                                    ])
         # df = self.df_splits.copy()
         # Сортировка по дате
-        df = df[(df['post_date'] < on_date)]
+        df = (self.df_splits[(self.df_splits['post_date'] < on_date)]).copy()
         # Сортировка по счетам
         if account_names:
             df = df[(df['fullname']).isin(account_names)]
@@ -738,9 +737,16 @@ class GNUCashData:
         for tr_guid in tr_guids_all:
             self._add_xirr_by_transaction(tr_guid)
 
-        dataframe_to_excel(self.df_splits, 'test-split')
+        # dataframe_to_excel(self.df_splits, 'test-split')
 
     def _add_xirr_by_transaction(self, transaction_guid):
+        """
+        Добавляет значения в поля xirr_account и xirr_value в df_splits
+        Согласно правил, описанных в excel нике
+        Возможно можно оптимизировать быстродействие
+        :param transaction_guid: 
+        :return: 
+        """
         df_tr_splits = self.df_splits[self.df_splits['transaction_guid'] == transaction_guid]
         # для тестовыых целей. Выборочная проверка верна. Пока отключаю
         # self._add_tr_acc_names(df_tr_splits)
@@ -862,80 +868,103 @@ class GNUCashData:
         else:
             return False
 
-    def _add_xirr_guids(self):
-        """
-        Добавляет новое поле в df_splits для подсчета xirr
-        :return: 
-        """
-        self.df_splits['xirr_guid'] = self.df_splits.apply(lambda row: self._func_for_xirr(row), axis=1)
-        # df = self.df_splits[(self.df_splits['account_type']).isin(self.ALL_XIRR_TYPES)]
-        # df['xirr_guid'] = df['account_guid']
-        dataframe_to_excel(self.df_splits, 'splits_xirr')
+    # def _add_xirr_guids(self):
+    #     """
+    #     Добавляет новое поле в df_splits для подсчета xirr
+    #     :return:
+    #     """
+    #     self.df_splits['xirr_guid'] = self.df_splits.apply(lambda row: self._func_for_xirr(row), axis=1)
+    #     # df = self.df_splits[(self.df_splits['account_type']).isin(self.ALL_XIRR_TYPES)]
+    #     # df['xirr_guid'] = df['account_guid']
+    #     dataframe_to_excel(self.df_splits, 'splits_xirr')
 
-    def _func_for_xirr(self, row):
-        """
-        Функция для applay для df_splits
-        Возвращает значение для нового поля xirr_guid
-        :param row: 
-        :return: xirr_guid строка
-        """
-        if row['account_type'] in self.ALL_XIRR_TYPES:
-            if row['value_currency'] == 0:
-                return None
-            else:
-                # Здесть нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
-                df_r_splits = self._get_related_splits(row)
-                if len(df_r_splits) == 1:
-                    if df_r_splits.iloc[0]['account_type'] == self.INCOME:
-                        return None
-                return row['account_guid']
-        elif row['account_type'] == self.INCOME:
-            asset_row = self._get_related_asset_account(row)
-            if asset_row and (asset_row['value_currency'] == 0):
-                return asset_row['account_guid']
-            else:
-                return None
-        elif row['account_type'] == self.EXPENSE:
-            # Так получается задвоение расходов
-            asset_row = self._get_related_asset_account(row)
-            if asset_row:
-                return asset_row['account_guid']
-            else:
-                return None
+    # def _func_for_xirr(self, row):
+    #     """
+    #     Функция для applay для df_splits
+    #     Возвращает значение для нового поля xirr_guid
+    #     :param row:
+    #     :return: xirr_guid строка
+    #     """
+    #     if row['account_type'] in self.ALL_XIRR_TYPES:
+    #         if row['value_currency'] == 0:
+    #             return None
+    #         else:
+    #             # Здесть нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+    #             df_r_splits = self._get_related_splits(row)
+    #             if len(df_r_splits) == 1:
+    #                 if df_r_splits.iloc[0]['account_type'] == self.INCOME:
+    #                     return None
+    #             return row['account_guid']
+    #     elif row['account_type'] == self.INCOME:
+    #         asset_row = self._get_related_asset_account(row)
+    #         if asset_row and (asset_row['value_currency'] == 0):
+    #             return asset_row['account_guid']
+    #         else:
+    #             return None
+    #     elif row['account_type'] == self.EXPENSE:
+    #         # Так получается задвоение расходов
+    #         asset_row = self._get_related_asset_account(row)
+    #         if asset_row:
+    #             return asset_row['account_guid']
+    #         else:
+    #             return None
+    #
+    #     return None
 
-        return None
+    # def _get_related_asset_account(self, row):
+    #     """
+    #     Возвращает row связанного счета активов для income или expense
+    #     :param row: Строка из df_splits, с типом INCOME или EXPENSE
+    #     :return: Строка (одна) из df_splits со связанным счетом активов
+    #     """
+    #     df_r_splits = self._get_related_splits(row)
+    #     df_r_splits = df_r_splits[df_r_splits['account_type'].isin(self.ALL_XIRR_TYPES)]
+    #     if df_r_splits.empty:
+    #         return None
+    #     elif len(df_r_splits) == 1:
+    #         return df_r_splits.iloc[0]
+    #
+    #     # Приоритет счетов: stock, mutual, bank, asset
+    #     # Первые буквы типов счетов идут в обратном порядке приоритета.
+    #     # Поэтому сортируем в по типу счета и берем последнюю строку
+    #     df_r_splits.sort_values('account_type', inplace=True)
+    #     return df_r_splits.iloc[-1]
 
-    def _get_related_asset_account(self, row):
-        """
-        Возвращает row связанного счета активов для income или expense
-        :param row: Строка из df_splits, с типом INCOME или EXPENSE
-        :return: Строка (одна) из df_splits со связанным счетом активов
-        """
-        df_r_splits = self._get_related_splits(row)
-        df_r_splits = df_r_splits[df_r_splits['account_type'].isin(self.ALL_XIRR_TYPES)]
-        if df_r_splits.empty:
-            return None
-        elif len(df_r_splits) == 1:
-            return df_r_splits.iloc[0]
+    # def _get_related_splits(self, row):
+    #     """
+    #     Возвращает splits связанные с заданной строкой из df_splits
+    #     :param row: строка dataframe
+    #     :return: dataframe со связаными splits
+    #     """
+    #     # tr_guid = row['transaction_guid']
+    #     # exclude_guid = row['guid']
+    #     df_r_splits = self.df_splits[self.df_splits['transaction_guid'] == row['transaction_guid']]
+    #     # df_r_splits.rename(columns={'name': 'name2'}, inplace=True)
+    #     df_r_splits.drop(row.name, inplace=True)
+    #     return df_r_splits
 
-        # Приоритет счетов: stock, mutual, bank, asset
-        # Первые буквы типов счетов идут в обратном порядке приоритета.
-        # Поэтому сортируем в по типу счета и берем последнюю строку
-        df_r_splits.sort_values('account_type', inplace=True)
-        return df_r_splits.iloc[-1]
+    def _get_balances_for_xirr(self, account_guids, from_date=None, to_date=None):
 
-    def _get_related_splits(self, row):
-        """
-        Возвращает splits связанные с заданной строкой из df_splits
-        :param row: строка dataframe
-        :return: dataframe со связаными splits
-        """
-        # tr_guid = row['transaction_guid']
-        # exclude_guid = row['guid']
-        df_r_splits = self.df_splits[self.df_splits['transaction_guid'] == row['transaction_guid']]
-        # df_r_splits.rename(columns={'name': 'name2'}, inplace=True)
-        df_r_splits.drop(row.name, inplace=True)
-        return df_r_splits
+        # Конечный баланс
+        end_date = to_date
+        if not end_date:
+            end_date = self.max_date
+        df_itog_balances = self.balance_on_date(end_date, account_guids=account_guids)
+
+        # Добавление начального баланса
+        if from_date:
+            start_balances = self.balance_on_date(from_date, account_guids=account_guids)
+            # Начальный баланс - это потрачено
+            start_balances['value_currency'] = start_balances['value_currency'] * (-1)
+
+            df_itog_balances = pandas.concat([start_balances, df_itog_balances]) # TODO Эту строку нужно проверить
+
+        # Задать xirr_value и xirr_account
+        df_itog_balances['xirr_value'] = df_itog_balances['value_currency']
+        df_itog_balances['xirr_account'] = df_itog_balances['account_guid']
+
+        return df_itog_balances
+
 
     def _filter_for_xirr(self, account_guids, from_date=None, to_date=None):
         """
