@@ -63,7 +63,7 @@ on_date = datetime.date(2012, 9, 1)
 
 # accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.']
 
-gcrep._add_xirr_guids()
+gcrep._add_xirr_info()
 exit()
 
 accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
@@ -76,8 +76,9 @@ exit()
 # exit()
 # to_date = datetime.date(2016, 1, 1)
 # df = gcrep._filter_for_xirr(accounts=accounts)
+df = gcrep._add_xirr_info()
 df = gcrep._xirr_calc(account_guids=accounts)
-# dataframe_to_excel(df, 'aero-total')
+dataframe_to_excel(df, 'aero-total')
 exit()
 
 # accounts = ['Активы:Текущие активы:Наличные Евро']

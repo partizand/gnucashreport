@@ -731,36 +731,118 @@ class GNUCashData:
         # Добавление столбцов для xirr в df_splits
         self.df_splits['xirr_account'] = ''
         self.df_splits['xirr_value'] = ''
+        # self.df_splits['tr_acc_names'] = ''
         # Идем по транзакциям
         tr_guids_all = self.df_splits['transaction_guid'].drop_duplicates().tolist()
 
         for tr_guid in tr_guids_all:
             self._add_xirr_by_transaction(tr_guid)
 
-        # df_r_splits = self.df_splits[self.df_splits['transaction_guid'] == row['transaction_guid']]
+        dataframe_to_excel(self.df_splits, 'test-split')
 
     def _add_xirr_by_transaction(self, transaction_guid):
         df_tr_splits = self.df_splits[self.df_splits['transaction_guid'] == transaction_guid]
+        # для тестовыых целей. Выборочная проверка верна. Пока отключаю
+        # self._add_tr_acc_names(df_tr_splits)
+
         # есть ли счета для xirr
         if not self._has_transaction_for_xirr(df_tr_splits):
             return
         df_incexps = df_tr_splits[df_tr_splits['account_type'].isin([self.INCOME, self.EXPENSE])]
         df_assets = df_tr_splits[df_tr_splits['account_type'].isin(self.ASSET_XIRR_TYPES)]
+        df_all_xirr_types = df_tr_splits[df_tr_splits['account_type'].isin(self.ALL_XIRR_TYPES)]
         df_stocks = df_tr_splits[df_tr_splits['account_type'].isin(self.STOCK_XIRR_TYPES)]
+        # df_equity = df_tr_splits[df_tr_splits['account_type'] == self.EQUITY]
+
+
         # Простая 2-х проводочная транзакция
         if len(df_tr_splits) == 2:
 
             if (len(df_incexps) == 1) and (len(df_assets) == 1):
-                # income or expense
+                # income or expense to asset
                 guid_asset = df_assets.iloc[0]['account_guid']
-                pass
-            elif len(df_assets) == 2:
-                pass
+                self._add_xirr_value(df_incexps, xirr_account=guid_asset)
+                return
+            elif (len(df_stocks) == 1) and (len(df_incexps) == 1):
+                # ignore, gain income, капитальные прибыли или убытки,
+                return
+            elif (any(df_tr_splits['account_type'].isin([self.EQUITY, self.CASH]))) and (len(df_all_xirr_types) == 1):
+                # Остатки
+                self._add_xirr_value(df_all_xirr_types)
+
+            elif len(df_all_xirr_types) == 2:
+                # asset to asset
+                self._add_xirr_value(df_all_xirr_types)
+                return
             else:
                 # Неясность
-                print("Unknown transaction type for xirr. Transaction_guid={tr_guid}".format(tr_guid=transaction_guid))
+                print("Unknown transaction type for xirr. Transaction_guid {tr_guid}".format(tr_guid=transaction_guid))
+                return
+
+        # Multi transaction
+        if len(df_all_xirr_types) > 0: # Это условие всегда верно
+            self._add_xirr_value(df_all_xirr_types)
+            # Тут нужно определить счет на который пойдут прибыли или убытки
+            asset_guid = self._get_master_asset_guid(df_all_xirr_types)
+            self._add_xirr_value(df_incexps, xirr_account=asset_guid)
+        else:
+            # Неясность
+            print("Unknown multi transaction type for xirr. Transaction_guid {tr_guid}".format(tr_guid=transaction_guid))
+            return
 
 
+    def _add_tr_acc_names(self, dataframe):
+        """
+        Для тестовых целей, пишет в поле tr_acc_names все имена счетов участвующие в транзакции через запятую
+        Для поиска всех связанных со счетом split в excel
+        :param dataframe: 
+        :return: 
+        """
+        tr_acc_names = dataframe['name'].drop_duplicates().tolist()
+        tr_acc_names = ','.join(tr_acc_names)
+        self.df_splits.loc[dataframe.index.values, 'tr_acc_names'] = tr_acc_names
+
+
+
+    def _get_master_asset_guid(self, dataframe):
+        """
+        dataframe - отобранные проводки из df_splits
+        Находит из них ту, на которую писать доход/убыток
+        Возвращает account_guid для отобранного счета
+        :param dataframe: 
+        :return: account_guid
+        """
+        if len(dataframe) == 1:
+            return dataframe.iloc[0]['account_guid']
+        # если есть тип stock, то он главный
+        if any(dataframe['account_type'].isin(self.STOCK_XIRR_TYPES)):
+            df = dataframe[dataframe['account_type'].isin(self.STOCK_XIRR_TYPES)]
+            return df.iloc[0]['account_guid']
+        # Главный счет у которого value меньше по модулю
+        df = dataframe.copy()
+        df['value_sort'] = df['value_currency'].map(lambda x: abs(x))
+        df.sort_values('value_sort')
+        return df.iloc[0]['account_guid']
+
+    def _add_xirr_value(self, dataframe, xirr_account=None):
+        """
+        Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
+        dataframe - Это отобранные строки из df_splits
+        Если xirr_account = None, то записывается account_guid строки, иначе переданный guid
+        xirr_value = value_currency * -1
+        :param dataframe: 
+        :param xirr_account: 
+        :return: 
+        """
+
+        for index in dataframe.index.values:
+            value_currency = self.df_splits.loc[index, 'value_currency']
+            if value_currency != 0:
+                self.df_splits.loc[index, 'xirr_value'] = value_currency * -1
+                if xirr_account:
+                    self.df_splits.loc[index, 'xirr_account'] = xirr_account
+                else:
+                    self.df_splits.loc[index, 'xirr_account'] = self.df_splits.loc[index, 'account_guid']
 
     def _has_transaction_for_xirr(self, df_tr_splits):
         """
@@ -770,7 +852,12 @@ class GNUCashData:
         :param df_tr_splits: 
         :return: 
         """
-        if df_tr_splits['account_type'].isin(self.ALL_XIRR_TYPES):
+        # return True
+        # all_types = df_tr_splits['account_type'].drop_duplicates().tolist()
+        # for cur_type in all_types:
+        #     if cur_type in self.ALL_XIRR_TYPES:
+        #         return True
+        if any(df_tr_splits['account_type'].isin(self.ALL_XIRR_TYPES)):
             return True
         else:
             return False
