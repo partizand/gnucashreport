@@ -228,7 +228,7 @@ class GNUCashData:
 
         fields = ["guid", "name", "actype",
                   "commodity_guid", "commodity_scu",
-                  "parent_guid", "description", "hidden"]
+                  "parent_guid", "description", "hidden", "notes"]
 
         self.df_accounts = self._object_to_dataframe(book.accounts, fields)
         self.df_accounts.rename(columns={'actype': 'account_type'}, inplace=True)
@@ -319,7 +319,7 @@ class GNUCashData:
             fields = ["guid", "name", "type", "placeholder",
                       "commodity_guid", "commodity_scu",
                       "parent_guid", "description", "hidden"]
-            self.df_accounts = self._object_to_dataframe(t_accounts, fields)
+            self.df_accounts = self._object_to_dataframe(t_accounts, fields, slot_names=['notes'])
             # rename to real base name of field from piecash name
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
             # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
