@@ -572,7 +572,7 @@ class GNUCashData:
                                               account_types=account_types, from_date=from_date, to_date=to_date)
 
         # Колонки в нужной последовательности
-        df = pandas.DataFrame(ar_xirr, columns=['name', 'yield_total', 'yield_income', 'yield_expense', 'yield_without_expense'])
+        df = pandas.DataFrame(ar_xirr, columns=['name', 'yield_total', 'yield_income', 'yield_expense'])
 
 
         # Добавление MultiIndex по дате и названиям счетов
