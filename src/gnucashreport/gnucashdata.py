@@ -324,6 +324,13 @@ class GNUCashData:
             self.df_accounts.rename(columns={'type': 'account_type'}, inplace=True)
             # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
 
+            # slots
+            # t_slots = gnucash_book.session.query(piecash.).all()
+            # fields = ["guid", "name", "type", "placeholder",
+            #           "commodity_guid", "commodity_scu",
+            #           "parent_guid", "description", "hidden"]
+            # self.df_accounts = self._object_to_dataframe(t_accounts, fields)
+
             # Transactions
 
             t_transactions = gnucash_book.session.query(piecash.Transaction).all()
@@ -1900,7 +1907,7 @@ class GNUCashData:
             return 'error'
 
     @staticmethod
-    def _object_to_dataframe(pieobject, fields):
+    def _object_to_dataframe(pieobject, fields, slot_names=None):
         """
         Преобразовывае объект piecash в DataFrame с заданными полями
         :param pieobject:
@@ -1908,8 +1915,42 @@ class GNUCashData:
         :return:
         """
         # build dataframe
-        fields_getter = [attrgetter(fld) for fld in fields]
-        df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
+        # fields_getter = [attrgetter(fld) for fld in fields]
+        fields_getter = [(fld, attrgetter(fld)) for fld in fields]
+
+        # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
+
+        # у строки есть массив slots
+        # в поле name = notes
+        # в поле value = значение
+
+
+        # Разложение цикла
+        array = []
+        for sp in pieobject:
+            line = {}
+            for field in fields:
+                line[field] = getattr(sp, field, None)
+            # for fld, fg in fields_getter:
+            #     line[fld] = fg(sp)
+            if slot_names:
+                for slot_name in slot_names:
+                    line[slot_name] = None
+                for slot in sp.slots:
+                    if slot.name in slot_names:
+                        line[slot.name] = slot.value
+
+
+            array.append(line)
+
+        # if slot_names:
+        #     all_fields = fields + slots
+        # else:
+        #     all_fields = fields
+
+        # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
+        # df_obj = pandas.DataFrame(array, columns=all_fields)
+        df_obj = pandas.DataFrame(array)
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
