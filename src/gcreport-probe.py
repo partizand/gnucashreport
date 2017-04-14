@@ -63,21 +63,22 @@ on_date = datetime.date(2012, 9, 1)
 
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
-account = 'Активы:Долгосрочные активы:Депозиты'
+
 # account = 'Активы:Долгосрочные активы:ПИФы:ТД Илья Муромец'
 # account = 'Активы:Долгосрочные активы:ПИФы'
 # account_guid = gcrep._get_account_guid(account)
 # xirr = gcrep._xirr_calc(account_guid)
 # print(xirr)
+account = 'Активы:Долгосрочные активы:Депозиты'
 df_return = gcrep.yield_calc(account_name=account)
-# print(df_return)
 dataframe_to_excel(df_return, 'df_return_depo')
+
+account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
+df_return = gcrep.yield_calc(account_name=account)
+dataframe_to_excel(df_return, 'df_return_alfa')
 exit()
 
-accounts = ['Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ']
-xirr = gcrep.yield_calc(account_name=accounts[0])
-print(xirr)
-exit()
+
 
 # df = gcrep.balance_on_date(on_date=on_date, account_names=accounts)
 # dataframe_to_excel(df, 'bal_on_date')

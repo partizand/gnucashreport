@@ -711,7 +711,7 @@ class GNUCashData:
         # Стоимость расходов
         if not any(df_xirr['account_type'].isin([self.EXPENSE])):
             yield_expense = 0
-            yield_without_expense = yield_total
+            # yield_without_expense = yield_total
         else:
             # Доходность без расходов
             df_without_expense = df_xirr[df_xirr['account_type'] != self.EXPENSE]
@@ -726,7 +726,7 @@ class GNUCashData:
         # itog['yield_total2'] = yield_total
         itog['yield_income'] = yield_income
         itog['yield_expense'] = yield_expense
-        itog['yield_without_expense'] = yield_without_expense
+        # itog['yield_without_expense'] = yield_without_expense
 
         # print(yield_total)
         # print(yield_income)
@@ -851,15 +851,16 @@ class GNUCashData:
 
             if (len(df_incexps) == 1) and (len(df_assets) == 1):
                 # income or expense to asset
-                guid_asset = df_assets.iloc[0]['account_guid']
-                self._add_xirr_value(df_incexps, xirr_account=guid_asset)
+                # guid_asset = df_assets.iloc[0]['account_guid']
+                # self._add_xirr_value(df_incexps, xirr_account=guid_asset)
                 return
             elif (len(df_stocks) == 1) and (len(df_incexps) == 1):
-                # ignore, gain income, капитальные прибыли или убытки,
+                # ignore, capital gain, капитальные прибыли или убытки,
                 return
             elif (any(df_tr_splits['account_type'].isin([self.EQUITY, self.CASH]))) and (len(df_all_xirr_types) == 1):
                 # Остатки
                 self._add_xirr_value(df_all_xirr_types)
+                return
 
             elif len(df_all_xirr_types) == 2:
                 # asset to asset
@@ -871,11 +872,24 @@ class GNUCashData:
                 return
 
         # Multi transaction
-        if len(df_all_xirr_types) > 0: # Это условие всегда верно
+        # has one stock
+        if len(df_stocks) == 1:
             self._add_xirr_value(df_all_xirr_types)
             # Тут нужно определить счет на который пойдут прибыли или убытки
             asset_guid = self._get_master_asset_guid(df_all_xirr_types)
             self._add_xirr_value(df_incexps, xirr_account=asset_guid)
+            return
+        elif (len(df_assets) == 2) and (len(df_incexps) == 1):
+            self._add_xirr_value(df_assets)
+            return
+        elif (len(df_assets) == 1) and (len(df_incexps) == 1) and (any(df_tr_splits['account_type'].isin([self.EQUITY, self.CASH]))):
+            self._add_xirr_value(df_assets)
+            # Тут нужно определить счет на который пойдут прибыли или убытки
+            asset_guid = self._get_master_asset_guid(df_assets)
+            self._add_xirr_value(df_incexps, xirr_account=asset_guid)
+            return
+        elif (len(df_assets) == 1) and (len(df_incexps) == 2):
+            return
         else:
             # Неясность
             print("Unknown multi transaction type for xirr. Transaction_guid {tr_guid}".format(tr_guid=transaction_guid))
