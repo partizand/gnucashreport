@@ -295,6 +295,12 @@ class GNUCashXMLBook:
                 hidden = False
         else:
             hidden = False
+
+        if 'notes' in slots.keys():
+            notes = slots['notes']
+        else:
+            notes = None
+
         # hidden = slots['hidden']
         # {'reconcile-info': {'include-children': 0, 'last-date': 1324151999, 'last-interval': {'days': 7, 'months': 0}},
         #  'color': 'Not Set', 'hidden': 'true', 'placeholder': 'true'}
@@ -322,7 +328,8 @@ class GNUCashXMLBook:
                           hidden=hidden,
                           commodity_guid=commodity_guid,
                           commodity_scu=commodity_scu,
-                          parent_guid=parent_guid)
+                          parent_guid=parent_guid,
+                          notes=notes)
 
         return account
 
@@ -541,7 +548,7 @@ class Account(object):
 
     def __init__(self, name, guid, actype, hidden, parent_guid=None,
                  commodity_guid=None, commodity_scu=None,
-                 description=None):
+                 description=None, notes=None):
         self.name = name
         self.guid = guid
         self.actype = actype
@@ -551,6 +558,7 @@ class Account(object):
         self.commodity_guid = commodity_guid
         self.commodity_scu = commodity_scu
         self.hidden = hidden
+        self.notes = notes
         # self.splits = []
         # self.slots = slots or {}
 

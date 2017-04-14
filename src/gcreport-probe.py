@@ -58,8 +58,8 @@ on_date = datetime.date(2012, 9, 1)
 # exit()
 
 # df = gcrep._splits_currency_calc()
-# dataframe_to_excel(df, 'splits_cur')
-# exit()
+dataframe_to_excel(gcrep.df_accounts, 'accounts')
+exit()
 
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
