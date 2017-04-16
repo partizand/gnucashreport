@@ -18,11 +18,12 @@ from gnucashreport.financial import xirr, xirr_simple
 from gnucashreport.gcxmlreader import GNUCashXMLBook
 from gnucashreport.margins import Margins
 
+import gnucashreport.cols as cols
+
 #ACCOUNT_GUID = 'account_guid'
-
-POST_DATE = 'post_date'
-
-FULLNAME = 'fullname'
+#ACCOUNT_TYPE = 'account_type'
+# POST_DATE = 'post_date'
+# FULLNAME = 'fullname'
 
 
 class GNUCashData:
@@ -368,7 +369,7 @@ class GNUCashData:
         """
 
         #  Get fullname of accounts
-        self.df_accounts['fullname'] = self.df_accounts.index.map(self._get_fullname_account)
+        self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
 
         # Add commodity mnemonic to accounts
         mems = self.df_commodities['mnemonic'].to_frame()
@@ -416,7 +417,7 @@ class GNUCashData:
         # print('Start calculating cum sum')
         self.df_splits.sort_values(by='post_date', inplace=True)
         # self.df_splits['cum_sum'] = self.df_splits.quantity.cumsum()
-        self.df_splits['cum_sum'] = self.df_splits.groupby('fullname')['quantity'].transform(pandas.Series.cumsum)
+        self.df_splits['cum_sum'] = self.df_splits.groupby(cols.FULLNAME)['quantity'].transform(pandas.Series.cumsum)
         # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
 
         # Пересчет транзакций в валюту учета
@@ -626,7 +627,7 @@ class GNUCashData:
         df = (self.df_splits[(self.df_splits['post_date'] < on_date)]).copy()
         # Сортировка по счетам
         if account_names:
-            df = df[(df['fullname']).isin(account_names)]
+            df = df[(df[cols.FULLNAME]).isin(account_names)]
         if account_guids:
             df = df[(df['account_guid']).isin(account_guids)]
 
@@ -719,7 +720,7 @@ class GNUCashData:
         df = self.df_accounts.copy()
         # Фильтрация по типам счетов
         if account_types:
-            df = df[(df['account_type']).isin(account_types)]
+            df = df[(df[cols.ACCOUNT_TYPE]).isin(account_types)]
 
         df = df[df['parent_guid'] == account_guid]
         childs = df.index.tolist()
@@ -738,7 +739,7 @@ class GNUCashData:
         :param fullname: 
         :return: account guid
         """
-        idx = self.df_accounts[self.df_accounts['fullname'] == fullname].index.tolist()
+        idx = self.df_accounts[self.df_accounts[cols.FULLNAME] == fullname].index.tolist()
         if idx:
             return idx[0]
         else:
@@ -800,7 +801,7 @@ class GNUCashData:
 
         itog = {}
         # itog['account_guid'] = account_guid
-        itog['fullname'] = self.df_accounts.loc[account_guid]['fullname']
+        itog[cols.FULLNAME] = self.df_accounts.loc[account_guid][cols.FULLNAME]
         itog['name'] = self.df_accounts.loc[account_guid]['name']
         itog['yield_total'] = yield_total
         # itog['yield_total2'] = yield_total
@@ -1212,7 +1213,7 @@ class GNUCashData:
                                   columns=['post_date',
                                            'transaction_guid',
                                            'account_guid',
-                                           'fullname',
+                                           cols.FULLNAME,
                                            'commodity_guid',
                                            'account_type',
                                            # 'value',
@@ -1278,7 +1279,7 @@ class GNUCashData:
                                   columns=['post_date',
                                            'transaction_guid',
                                            'account_guid',
-                                           'fullname',
+                                           cols.FULLNAME,
                                            'commodity_guid',
                                            'account_type',
                                            # 'value',
@@ -1306,7 +1307,7 @@ class GNUCashData:
 
         # Отбираем нужные колонки (почти все и нужны)
         sel_df = pandas.DataFrame(self.df_splits,
-                                  columns=['account_guid', 'post_date', 'fullname', 'commodity_guid', 'account_type',
+                                  columns=['account_guid', 'post_date', cols.FULLNAME, 'commodity_guid', 'account_type',
                                            'cum_sum', 'name', 'hidden', 'mnemonic'])
         # Фильтр по типам счетов
         if account_types:
@@ -1319,7 +1320,7 @@ class GNUCashData:
             if is_guid:
                 sel_df = sel_df[(sel_df['account_guid']).isin(accounts)]
             else:
-                sel_df = sel_df[(sel_df['fullname']).isin(accounts)]
+                sel_df = sel_df[(sel_df[cols.FULLNAME]).isin(accounts)]
 
         # Список всех account_guid
         account_guids = sel_df['account_guid'].drop_duplicates().tolist()
@@ -1362,7 +1363,7 @@ class GNUCashData:
                     acc_info = self.df_accounts.loc[account_guid]
                     df_acc.index.name = 'post_date'
                     df_acc['account_guid'] = account_guid
-                    df_acc['fullname'] = acc_info['fullname']
+                    df_acc[cols.FULLNAME] = acc_info[cols.FULLNAME]
                     df_acc['commodity_guid'] = acc_info['commodity_guid']
                     df_acc['account_type'] = acc_info['account_type']
                     df_acc['name'] = acc_info['name']
@@ -1393,8 +1394,8 @@ class GNUCashData:
         sel_df = pandas.DataFrame(self.df_splits,
                                   columns=['post_date',
                                            'transaction_guid',
-                                           ACCOUNT_GUID,
-                                           'fullname',
+                                           cols.ACCOUNT_GUID,
+                                           cols.FULLNAME,
                                            'commodity_guid',
                                            'account_type',
                                            'value',
@@ -1406,7 +1407,7 @@ class GNUCashData:
             # Выбранные счета
             if type(accounts) is str:
                 accounts = [accounts]
-            sel_df = sel_df[(sel_df['fullname']).isin(accounts)]
+            sel_df = sel_df[(sel_df[cols.FULLNAME]).isin(accounts)]
         else:
             # отбираем все счета с активами
             sel_df = sel_df[(sel_df['account_type']).isin(self.ALL_ASSET_TYPES)]
@@ -1536,7 +1537,8 @@ class GNUCashData:
         """
 
         # Суммируем
-        group = dataframe.groupby('post_date').value_currency.sum() #.map(lambda x: x * -1)
+        # group = dataframe.groupby('post_date').value_currency.sum()
+        group = dataframe.groupby(cols.POST_DATE).value_currency.sum()
 
         if inverse:
             group = group.map(lambda x: x * -1)
@@ -1581,7 +1583,7 @@ class GNUCashData:
 
         # Группировка по месяцу
         sel_df.set_index('post_date', inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), 'fullname', 'commodity_guid']).value.sum().reset_index()
+        sel_df = sel_df.groupby([pandas.TimeGrouper(period), cols.FULLNAME, 'commodity_guid']).value.sum().reset_index()
 
         return sel_df
 
@@ -1727,10 +1729,10 @@ class GNUCashData:
 
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(dataframe,
-                                  columns=['post_date', 'fullname', 'value_currency']).copy()
+                                  columns=['post_date', cols.FULLNAME, 'value_currency']).copy()
 
         # Добавление MultiIndex по дате и названиям счетов
-        s = sel_df['fullname'].str.split(':', expand=True)
+        s = sel_df[cols.FULLNAME].str.split(':', expand=True)
         cols = s.columns
         cols = cols.tolist()
         cols = ['post_date'] + cols
@@ -1742,7 +1744,7 @@ class GNUCashData:
             sel_df.dropna(subset=['value_currency'], inplace=True)  # Удаление пустых значений
             # sel_df = sel_df[sel_df['value'] != 0]  # Удаление нулевых значений
 
-        sel_df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
+        sel_df.drop(cols.FULLNAME, axis=1, inplace=True)  # Удаление колонки fullname
         # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
         # for col in cols[1:]:
         #     sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
