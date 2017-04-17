@@ -875,8 +875,8 @@ class GNUCashData:
         self.df_splits[cols.XIRR_VALUE] = ''
         # Установить индекс по tr_guid
         self.df_splits.set_index(cols.TRANSACTION_GUID, inplace=True, append=True, drop=False)
-        self.df_splits.index.swaplevel()
-        dataframe_to_excel(self.df_splits, 'splits-after-index')
+        self.df_splits = self.df_splits.swaplevel()
+        # dataframe_to_excel(self.df_splits, 'splits-after-index')
 
         # Перебираем все транзакции
         for tr_guid in self.df_splits.index.get_level_values(0):
@@ -905,8 +905,29 @@ class GNUCashData:
         # Вернуть индекс на место
         self.df_splits.reset_index(level=1, drop=False, inplace=True)
 
+    def _get_master_asset_guid(self, dataframe: pandas.DataFrame):
+        """
+        dataframe - отобранные проводки из df_splits
+        Находит из них ту, на которую писать доход/убыток
+        Возвращает account_guid для отобранного счета
+        :param dataframe: 
+        :return: account_guid
+        """
+        df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
+        if len(df_asset) == 1:
+            return df_asset.iloc[0][cols.ACCOUNT_GUID]
+        # если есть тип stock, то он главный
+        if any(df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)):
+            df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)]
+            return df.iloc[0][cols.ACCOUNT_GUID]
+        # Главный счет у которого value меньше по модулю
+        df = df_asset.copy()
+        df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x: abs(x))
+        df.sort_values('value_sort')
+        return df.iloc[0][cols.ACCOUNT_GUID]
 
-    def _add_xirr_value(self, dataframe: pandas.DataFrame, on_types=ALL_XIRR_TYPES, on_xirr_enable=True, xirr_account=None):
+
+    def _add_xirr_value(self, df: pandas.DataFrame, on_types=ALL_XIRR_TYPES, on_xirr_enable=True, xirr_account=None):
         """
         Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
         dataframe - Это отобранные строки из df_splits
@@ -917,23 +938,25 @@ class GNUCashData:
         :return: 
         """
 
-        for index in dataframe.index.values:
+        for index, row in df.iterrows():
+        # for index in dataframe.index.values:
             # if xirr_account:  # Значит Income or Expense
-            split = dataframe.loc[index]
+            # split = dataframe.loc[index]
 
-            account_type = split[cols.ACCOUNT_TYPE]
+            account_type = row[cols.ACCOUNT_TYPE]
             if account_type in on_types:
-                xirr_enable = split[cols.XIRR_ENABLE]
+                xirr_enable = row[cols.XIRR_ENABLE]
                 if xirr_enable == on_xirr_enable:
-                    value_currency = split[cols.VALUE_CURRENCY]
+                    value_currency = row[cols.VALUE_CURRENCY]
                     if value_currency != 0:
 
                         # split[cols.XIRR_VALUE] = value_currency * -1
-                        dataframe.loc[index, cols.XIRR_VALUE] = value_currency * -1
+                        df.loc[index, cols.XIRR_VALUE] = value_currency * -1
                         if xirr_account: # Значит Income or Expense
-                            dataframe.loc[index, cols.XIRR_ACCOUNT] = xirr_account
+                            df.loc[index, cols.XIRR_ACCOUNT] = xirr_account
                         else: # Значит asset
-                            dataframe.loc[index, cols.XIRR_ACCOUNT] = split[cols.ACCOUNT_GUID]
+                            account_guid = row[cols.ACCOUNT_GUID]
+                            df.loc[index, cols.XIRR_ACCOUNT] = account_guid
 
 
     def _add_xirr_info(self):
@@ -1034,25 +1057,6 @@ class GNUCashData:
 
 
 
-    def _get_master_asset_guid(self, dataframe:pandas.DataFrame):
-        """
-        dataframe - отобранные проводки из df_splits
-        Находит из них ту, на которую писать доход/убыток
-        Возвращает account_guid для отобранного счета
-        :param dataframe: 
-        :return: account_guid
-        """
-        if len(dataframe) == 1:
-            return dataframe.iloc[0][cols.ACCOUNT_GUID]
-        # если есть тип stock, то он главный
-        if any(dataframe[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)):
-            df = dataframe[dataframe[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)]
-            return df.iloc[0][cols.ACCOUNT_GUID]
-        # Главный счет у которого value меньше по модулю
-        df = dataframe.copy()
-        df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x: abs(x))
-        df.sort_values('value_sort')
-        return df.iloc[0][cols.ACCOUNT_GUID]
 
 
 
