@@ -448,7 +448,7 @@ class GNUCashData:
         inheritance = default
         if default is None: # Установка текущего значения если default не установлен
             # Если тип CASH или EQUITY, то False, иначе True
-            account_type = self.df_accounts.loc[account_guid, 'account_type']
+            account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
             if (account_type == self.CASH) or (account_type == self.EQUITY):
                 current = False
             else:
@@ -456,7 +456,7 @@ class GNUCashData:
         else:
             current = default
         # Перекрытие значениями из Notes если они есть
-        notes = self.df_accounts.loc[account_guid, 'notes']
+        notes = self.df_accounts.loc[account_guid, cols.NOTES]
         if notes:
             if '%no_xirr' in notes:
                 current = False
@@ -467,7 +467,7 @@ class GNUCashData:
 
         # Установка значения для текущего счета
         # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
-        self.df_accounts.loc[account_guid, 'xirr_enable'] = current
+        self.df_accounts.loc[account_guid, cols.XIRR_ENABLE] = current
         # Установка значения для дочерних счетов
         child_accounts = self._get_child_accounts(account_guid, recurse=False)
         for child_account in child_accounts:
@@ -863,6 +863,27 @@ class GNUCashData:
         a_yield = round(a_yield, 4)
         # print(a_yield)
         return a_yield
+
+
+    def _add_xirr_info2(self):
+
+        # Добавление столбцов для xirr в df_splits
+        self.df_splits[cols.XIRR_ACCOUNT] = ''
+        self.df_splits[cols.XIRR_VALUE] = ''
+        # Установить индекс по tr_guid
+        self.df_splits.set_index(cols.TRANSACTION_GUID, inplace=True, append=True)
+        self.df_splits.index.swap()
+
+        # Перебираем все транзакции
+        for tr_guid in self.df_splits.index.get_level_values(0):
+            df_tr_splits = self.df_splits.loc[tr_guid]
+            if any(df_tr_splits[cols.XIRR_ENABLE]): # В этой транзакции есть проводки для подсчета xirr
+                # Делим на 3 типа:
+                # Пробуем просто:
+                # если счет asset - то пишем в него если включен
+                # если счет income или expense - пишем если включен
+
+
 
     def _add_xirr_info(self):
         # Добавление столбцов для xirr в df_splits
