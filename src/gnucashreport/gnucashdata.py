@@ -371,6 +371,9 @@ class GNUCashData:
         #  Get fullname of accounts
         self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
 
+        self.df_accounts[cols.XIRR_ENABLE] = None
+        self._fill_xirr_enable()
+
         # Add commodity mnemonic to accounts
         mems = self.df_commodities[cols.MNEMONIC].to_frame()
 
@@ -428,9 +431,9 @@ class GNUCashData:
         self._splits_currency_calc()
 
         # Подсчет значений для xirr
-        self._add_xirr_info()
+        self._add_xirr_info2()
 
-        self._fill_xirr_enable()
+
 
     def _fill_xirr_enable(self, account_guid=None, default=None):
         """
@@ -871,19 +874,66 @@ class GNUCashData:
         self.df_splits[cols.XIRR_ACCOUNT] = ''
         self.df_splits[cols.XIRR_VALUE] = ''
         # Установить индекс по tr_guid
-        self.df_splits.set_index(cols.TRANSACTION_GUID, inplace=True, append=True)
-        self.df_splits.index.swap()
+        self.df_splits.set_index(cols.TRANSACTION_GUID, inplace=True, append=True, drop=False)
+        self.df_splits.index.swaplevel()
+        dataframe_to_excel(self.df_splits, 'splits-after-index')
 
         # Перебираем все транзакции
         for tr_guid in self.df_splits.index.get_level_values(0):
             df_tr_splits = self.df_splits.loc[tr_guid]
-            if any(df_tr_splits[cols.XIRR_ENABLE]): # В этой транзакции есть проводки для подсчета xirr
+            # if any(df_tr_splits[cols.XIRR_ENABLE]): # В этой транзакции есть проводки для подсчета xirr
                 # Делим на 3 типа:
                 # Пробуем просто:
                 # если счет asset - то пишем в него если включен
                 # если счет income или expense - пишем если включен
+                # Простая 2-х проводочная транзакция
+            # df_all_assets = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(self.ALL_XIRR_TYPES)]
+            # тут нужно добавить всем df_all_assets xirr_value, если у них включено xirr_enable
+            self._add_xirr_value(df_tr_splits, on_types=self.ALL_XIRR_TYPES, on_xirr_enable=True)
+            master_guid = self._get_master_asset_guid(df_tr_splits)
+            if any(df_tr_splits[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)):
+                # Проводка со stock
+                # Здесь нужно всем incexp добавить xirr_Value на stock, если у них xirr_enable = True
+                self._add_xirr_value(df_tr_splits, on_types=self.INCEXP_XIRR_TYPES, on_xirr_enable=True, xirr_account=master_guid)
                 pass
+            else:
+                # Проводка без stock
+                # Здесь нужно всем incexp добавить xirr_Value на master account, если у них xirr_enable = False
+                self._add_xirr_value(df_tr_splits, on_types=self.INCEXP_XIRR_TYPES, on_xirr_enable=False,
+                                     xirr_account=master_guid)
 
+        # Вернуть индекс на место
+        self.df_splits.reset_index(level=1, drop=False, inplace=True)
+
+
+    def _add_xirr_value(self, dataframe: pandas.DataFrame, on_types=ALL_XIRR_TYPES, on_xirr_enable=True, xirr_account=None):
+        """
+        Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
+        dataframe - Это отобранные строки из df_splits
+        Если xirr_account = None, то записывается account_guid строки, иначе переданный guid
+        xirr_value = value_currency * -1
+        :param dataframe: 
+        :param xirr_account: 
+        :return: 
+        """
+
+        for index in dataframe.index.values:
+            # if xirr_account:  # Значит Income or Expense
+            split = dataframe.loc[index]
+
+            account_type = split[cols.ACCOUNT_TYPE]
+            if account_type in on_types:
+                xirr_enable = split[cols.XIRR_ENABLE]
+                if xirr_enable == on_xirr_enable:
+                    value_currency = split[cols.VALUE_CURRENCY]
+                    if value_currency != 0:
+
+                        # split[cols.XIRR_VALUE] = value_currency * -1
+                        dataframe.loc[index, cols.XIRR_VALUE] = value_currency * -1
+                        if xirr_account: # Значит Income or Expense
+                            dataframe.loc[index, cols.XIRR_ACCOUNT] = xirr_account
+                        else: # Значит asset
+                            dataframe.loc[index, cols.XIRR_ACCOUNT] = split[cols.ACCOUNT_GUID]
 
 
     def _add_xirr_info(self):
@@ -912,7 +962,7 @@ class GNUCashData:
         # self._add_tr_acc_names(df_tr_splits)
 
         # есть ли счета для xirr
-        if not self._has_transaction_for_xirr(df_tr_splits):
+        if not self._has_splits_for_xirr(df_tr_splits):
             return
         df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin([self.INCOME, self.EXPENSE])]
         df_assets = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(self.ASSET_XIRR_TYPES)]
@@ -984,7 +1034,7 @@ class GNUCashData:
 
 
 
-    def _get_master_asset_guid(self, dataframe):
+    def _get_master_asset_guid(self, dataframe:pandas.DataFrame):
         """
         dataframe - отобранные проводки из df_splits
         Находит из них ту, на которую писать доход/убыток
@@ -1004,7 +1054,9 @@ class GNUCashData:
         df.sort_values('value_sort')
         return df.iloc[0][cols.ACCOUNT_GUID]
 
-    def _add_xirr_value(self, dataframe, xirr_account=None):
+
+
+    def _add_xirr_value_old(self, dataframe, xirr_account=None):
         """
         Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
         dataframe - Это отобранные строки из df_splits
@@ -1024,7 +1076,7 @@ class GNUCashData:
                 else:
                     self.df_splits.loc[index, cols.XIRR_ACCOUNT] = self.df_splits.loc[index, cols.ACCOUNT_GUID]
 
-    def _has_transaction_for_xirr(self, df_tr_splits):
+    def _has_splits_for_xirr(self, df_tr_splits):
         """
         Проверка, есть ли в транзакции проводки, для которых необходимо считать xirr
         true - есть
