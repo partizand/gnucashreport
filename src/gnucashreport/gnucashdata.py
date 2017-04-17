@@ -373,7 +373,11 @@ class GNUCashData:
 
         # Add commodity mnemonic to accounts
         mems = self.df_commodities['mnemonic'].to_frame()
-        self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
+
+        # После этой строчки пропадает root account
+        # self.df_accounts = pandas.merge(self.df_accounts, mems, left_on='commodity_guid', right_index=True)
+        # А после этой не пропадает
+        self.df_accounts = self.df_accounts.merge(mems, how='left', left_on='commodity_guid', right_index=True)
 
         # Convert datetme to date in transactions (skip time)
         self.df_transactions['post_date'] = self.df_transactions['post_date'].apply(
@@ -428,8 +432,7 @@ class GNUCashData:
 
         self._fill_xirr_enable()
 
-
-    def _fill_xirr_enable(self):
+    def _fill_xirr_enable(self, account_guid=None, default=None):
         """
         Заполнение колонки xirr_enable в df_accounts
         :return: 
@@ -437,69 +440,38 @@ class GNUCashData:
         # %no_xirr% - False
         # Нет или %enable_xirr% - True
         # Cash и Equity - false
-        self.df_accounts['xirr_enable'] = self.df_accounts.apply(lambda row: self._func_for_fill_xirr_enable(row), axis=1)
-        # Алгоритм
-
-        # Потом все потомки от указанных наследуют значения
-
-        # def _add_xirr_guids(self):
-        #     """
-        #     Добавляет новое поле в df_splits для подсчета xirr
-        #     :return:
-        #     """
-        #     self.df_splits['xirr_guid'] = self.df_splits.apply(lambda row: self._func_for_xirr(row), axis=1)
-        #     # df = self.df_splits[(self.df_splits['account_type']).isin(self.ALL_XIRR_TYPES)]
-        #     # df['xirr_guid'] = df['account_guid']
-        #     dataframe_to_excel(self.df_splits, 'splits_xirr')
-
-    def _func_for_fill_xirr_enable(self, row):
-
-        if (row['account_type'] == self.CASH) or (row['account_type'] == self.EQUITY):
-            return False
-        if row['notes']:
-            if '%no_xirr' in row['notes']:
-                return False
-            if '%enable_xirr' in row['notes']:
-                return True
-        # TODO Один ли корень у книги? Можно ли ему добавить Notes?
-        if row.name == self.root_account_guid:
-            return True
-        return None
-
-        # def _func_for_xirr(self, row):
-        #     """
-        #     Функция для applay для df_splits
-        #     Возвращает значение для нового поля xirr_guid
-        #     :param row:
-        #     :return: xirr_guid строка
-        #     """
-        #     if row['account_type'] in self.ALL_XIRR_TYPES:
-        #         if row['value_currency'] == 0:
-        #             return None
-        #         else:
-        #             # Здесть нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
-        #             df_r_splits = self._get_related_splits(row)
-        #             if len(df_r_splits) == 1:
-        #                 if df_r_splits.iloc[0]['account_type'] == self.INCOME:
-        #                     return None
-        #             return row['account_guid']
-        #     elif row['account_type'] == self.INCOME:
-        #         asset_row = self._get_related_asset_account(row)
-        #         if asset_row and (asset_row['value_currency'] == 0):
-        #             return asset_row['account_guid']
-        #         else:
-        #             return None
-        #     elif row['account_type'] == self.EXPENSE:
-        #         # Так получается задвоение расходов
-        #         asset_row = self._get_related_asset_account(row)
-        #         if asset_row:
-        #             return asset_row['account_guid']
-        #         else:
-        #             return None
-        #
-        #     return None
 
 
+        if not account_guid:
+            account_guid = self.root_account_guid
+        # acc_name = self.df_accounts.loc[account_guid, 'name']  # For test
+        inheritance = default
+        if default is None: # Установка текущего значения если default не установлен
+            # Если тип CASH или EQUITY, то False, иначе True
+            account_type = self.df_accounts.loc[account_guid, 'account_type']
+            if (account_type == self.CASH) or (account_type == self.EQUITY):
+                current = False
+            else:
+                current = True
+        else:
+            current = default
+        # Перекрытие значениями из Notes если они есть
+        notes = self.df_accounts.loc[account_guid, 'notes']
+        if notes:
+            if '%no_xirr' in notes:
+                current = False
+                inheritance = current
+            if '%enable_xirr' in notes:
+                current = True
+                inheritance = current
+
+        # Установка значения для текущего счета
+        # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
+        self.df_accounts.loc[account_guid, 'xirr_enable'] = current
+        # Установка значения для дочерних счетов
+        child_accounts = self._get_child_accounts(account_guid, recurse=False)
+        for child_account in child_accounts:
+            self._fill_xirr_enable(child_account, default=inheritance)
 
     def _add_margins(self, dataframe, margins=None):
         """
