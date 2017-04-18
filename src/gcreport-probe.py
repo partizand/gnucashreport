@@ -54,12 +54,12 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 
 
 on_date = datetime.date(2012, 9, 1)
-# dataframe_to_excel(gcrep.df_splits, 'all-splits')
-# exit()
+dataframe_to_excel(gcrep.df_splits, 'all-splits')
+exit()
 
 # df = gcrep._splits_currency_calc()
-dataframe_to_excel(gcrep.df_splits, 'splits')
-exit()
+# dataframe_to_excel(gcrep.df_splits, 'splits')
+# exit()
 
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
@@ -71,11 +71,11 @@ exit()
 # print(xirr)
 account = 'Активы:Долгосрочные активы:Депозиты'
 df_return = gcrep.yield_calc(account_name=account)
-dataframe_to_excel(df_return, 'df_return_depo')
+dataframe_to_excel(df_return, 'df_return_depo2')
 
 account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 df_return = gcrep.yield_calc(account_name=account)
-dataframe_to_excel(df_return, 'df_return_alfa')
+dataframe_to_excel(df_return, 'df_return_alfa2')
 exit()
 
 
