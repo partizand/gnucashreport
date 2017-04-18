@@ -51,10 +51,13 @@ gcrep = gnucashreport.GNUCashReport()
 # gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file(bookfile_xml)
 gcrep.open_book_file('c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash')
+on_date = datetime.date(2016, 12, 31)
+df = gcrep.balance_on_date(on_date=on_date)
+dataframe_to_excel(df, 'balance')
 exit()
 
 
-on_date = datetime.date(2012, 9, 1)
+
 # dataframe_to_excel(gcrep.df_splits, 'all-splits')
 # exit()
 
