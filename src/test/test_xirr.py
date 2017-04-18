@@ -6,6 +6,7 @@ from decimal import Decimal
 
 import gnucashreport.gnucashdata
 import gnucashreport.cols as cols
+from gnucashreport.utils import dataframe_to_excel
 
 from test.baseopentest import BaseOpenTest
 
@@ -44,6 +45,8 @@ class SQLOpenTest(unittest.TestCase):
         for test_data in self.test_datas:
             account_guid = test_data[cols.ACCOUNT_GUID]
             etalon_yield = test_data['yield_etalon']
+            # df_test = self.gcrep.yield_calc(account_guid=account_guid)
+            # dataframe_to_excel(self.gcrep.df_splits, 'splits_test')
             xirr_yield = self.gcrep._xirr_calc(account_guid=account_guid)
             checking_yield = xirr_yield['yield_total']
 
