@@ -47,10 +47,11 @@ gcrep = gnucashreport.GNUCashReport()
 # rep.open_pickle()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
-gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
+# gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file(bookfile_xml)
-
+gcrep.open_book_file('c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash')
+exit()
 
 
 on_date = datetime.date(2012, 9, 1)

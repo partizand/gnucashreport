@@ -2089,14 +2089,18 @@ class GNUCashData:
 
             array.append(line)
 
-        # if slot_names:
-        #     all_fields = fields + slots
-        # else:
-        #     all_fields = fields
+
 
         # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
         # df_obj = pandas.DataFrame(array, columns=all_fields)
-        df_obj = pandas.DataFrame(array)
+        if array:
+            df_obj = pandas.DataFrame(array)
+        else:
+            if slot_names:
+                all_fields = fields + slot_names
+            else:
+                all_fields = fields
+            df_obj = pandas.DataFrame(columns=all_fields)
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
