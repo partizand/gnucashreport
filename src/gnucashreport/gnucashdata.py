@@ -575,12 +575,15 @@ class GNUCashData:
 
     def balance_on_date(self, on_date, account_names=None, account_guids=None, start_balance=False):
         """
-        Возвращает DataFrame со строками балансов выбранных счетов на заданную дату (если баланс 0, строки не будет)
+        Возвращает DataFrame со строками балансов выбранных счетов на конец дня заданной даты
+        Если задано start_balance=True - будет значение на начало дня заданной даты
+         (если баланс 0, строки не будет)
         Баланс в кол-ве бумаг - cum_sum
         Баланс в валюте учета - value_currency
         :param on_date: 
         :param account_names: 
         :param account_guids: 
+        :param start_balance: False - баланс на конец дня, True - баланс на начало дня
         :return: DataFrame с балансами
         """
 
@@ -601,7 +604,7 @@ class GNUCashData:
         if start_balance:
             # date_1 = datetime.datetime.strptime(start_date, "%m/%d/%y")
             on_date = on_date + timedelta(days=-1) # TODO Проверить бы надо
-        df = (self.df_splits[(self.df_splits[cols.POST_DATE] < on_date)]).copy()
+        df = (self.df_splits[(self.df_splits[cols.POST_DATE] <= on_date)]).copy()
         # Сортировка по счетам
         if account_names:
             df = df[(df[cols.FULLNAME]).isin(account_names)]
