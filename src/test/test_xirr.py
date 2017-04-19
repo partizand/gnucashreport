@@ -20,10 +20,10 @@ class XIRRTest(unittest.TestCase):
     
     Доходность проверяется за весь период существования счета
     
-    Для тестирования, создайте базу GnuCash с именем xirr-test.gnucash в подкаталоге data этого файла
+    Для тестирования, создайте базу GnuCash (xml или sqlite) с именем xirr-test.gnucash в подкаталоге data этого файла
     Создайте проводки
     Для тестируемых счетов, задайте их эталонные доходности в описании счета
-    Если счет тестировать не нужно, описание счета не заполняйте!
+    Если счет тестировать не нужно, описание счета не заполняйте, или добавьте skip в описание
     Доходность в описании можно задать либо просто итоговую, числом доходоности
     Например 0,1 - доходность 10% годовых, остальные доходности = 0, capital_gain = 0,1
     Или задавайте доходности парами тип_доходности1=значение1 тип_доходности2=значение2
@@ -50,15 +50,16 @@ class XIRRTest(unittest.TestCase):
 
         df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
         for index, row in df_test.iterrows():
-            entries = parse_string_to_dict(row[cols.DESCRIPTION], parse_to_decimal=True)
-            if not entries:
-                # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
-                entries[cols.YIELD_TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
-                # entries[cols.YIELD_CAPITAL] = entries[cols.YIELD_TOTAL]
-            # test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
-            test_data = {cols.ACCOUNT_GUID: index, cols.SHORTNAME: row[cols.SHORTNAME]}
-            test_data.update(entries)
-            cls.test_datas.append(test_data)
+            if 'skip' not in row[cols.DESCRIPTION]:
+                entries = parse_string_to_dict(row[cols.DESCRIPTION], parse_to_decimal=True)
+                if not entries:
+                    # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
+                    entries[cols.YIELD_TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
+                    # entries[cols.YIELD_CAPITAL] = entries[cols.YIELD_TOTAL]
+                # test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
+                test_data = {cols.ACCOUNT_GUID: index, cols.SHORTNAME: row[cols.SHORTNAME]}
+                test_data.update(entries)
+                cls.test_datas.append(test_data)
 
 
     def test_accounts(self):
@@ -79,7 +80,7 @@ class XIRRTest(unittest.TestCase):
                               'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_TOTAL))
             self.assertEquals(etalon_yield_income, checking_yield_income,
-                             'testing {gain} in account {shortname}'.
+                              'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_INCOME))
             self.assertEquals(etalon_yield_expense, checking_yield_expense,
                               'testing {gain} in account {shortname}'.

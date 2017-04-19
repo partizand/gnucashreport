@@ -80,10 +80,17 @@ def xirr(cashflows, guess=0.1):
         (date(2012, 3, 8), 10100)]
     >>> xirr(tas)
     0.0100612651650822
+    
+    # >>> tas = [ (date(2016, 1, 1), -10000),\
+    #     (date(2016, 1, 1), 10000),\
+    #     (date(2016, 12, 31), -11000),\
+    #     (date(2016, 12, 31), 11000)]
+    # >>> xirr(tas)
+    # 0
 
     """
     
-    return secant_method(0.0001,lambda r: xnpv(r,cashflows),guess)
+    return secant_method(0.0001, lambda r: xnpv(r, cashflows), guess)
     #return optimize.newton(lambda r: xnpv(r,cashflows),guess)
 
     # version from http://stackoverflow.com/questions/8919718/financial-python-library-that-has-xirr-and-xnpv-function
@@ -111,6 +118,13 @@ def xirr_simple(transactions, guess=0.1):
         (date(2012, 3, 8), 10100)]
     >>> xirr_simple(tas)
     Decimal('0.010061264038085993569663582')
+    
+    # >>> tas = [ (date(2016, 1, 1), -10000),\
+    #     (date(2016, 1, 1), 10000),\
+    #     (date(2016, 12, 31), -11000),\
+    #     (date(2016, 12, 31), 11000)]
+    # >>> xirr_simple(tas)
+    # Decimal('0')
 
     """
     years = [Decimal((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
@@ -132,6 +146,50 @@ def xirr_simple(transactions, guess=0.1):
                 guess -= step
                 step /= Decimal(2.0)
     return guess-1
+
+
+
+def xirr_float(transactions):
+    """
+    
+    # >>> tas = [ (date(2010, 12, 29), -10000),\
+    #     (date(2012, 1, 25), 20),\
+    #     (date(2012, 3, 8), 10100)]
+    # >>> xirr_float(tas)
+    # 0.010061264038086382
+    
+    >>> tas = [ (date(2016, 1, 1), -10000),\
+        (date(2016, 1, 1), 10000),\
+        (date(2016, 12, 31), -11000),\
+        (date(2016, 12, 31), 11000)]
+    >>> xirr_float(tas)
+    0
+
+    
+    :param transactions: 
+    :return: 
+    """
+
+
+    years = [(ta[0] - transactions[0][0]).days / 365.0 for ta in transactions]
+    residual = 1
+    step = 0.005
+    guess = 0.0001
+    epsilon = 0.000001
+    limit = 100000
+    while abs(residual) > epsilon and limit > 0:
+        limit -= 1
+        residual = 0.0
+        for i, ta in enumerate(transactions):
+            residual += ta[1] / pow(guess, years[i])
+        if abs(residual) > epsilon:
+            if residual > 0:
+                guess += step
+            else:
+                guess -= step
+                # step /= 2.0
+    return guess-1
+
 
 if __name__ == "__main__":
     # Example
