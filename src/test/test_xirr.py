@@ -54,7 +54,7 @@ class XIRRTest(unittest.TestCase):
             if not entries:
                 # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
                 entries[cols.YIELD_TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
-                entries[cols.YIELD_CAPITAL] = entries[cols.YIELD_TOTAL]
+                # entries[cols.YIELD_CAPITAL] = entries[cols.YIELD_TOTAL]
             # test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
             test_data = {cols.ACCOUNT_GUID: index, cols.SHORTNAME: row[cols.SHORTNAME]}
             test_data.update(entries)
@@ -67,7 +67,7 @@ class XIRRTest(unittest.TestCase):
             etalon_yield_total = test_data.get(cols.YIELD_TOTAL, Decimal(0))
             etalon_yield_income = test_data.get(cols.YIELD_INCOME, Decimal(0))
             etalon_yield_expense = test_data.get(cols.YIELD_EXPENSE, Decimal(0))
-            etalon_yield_capital = test_data.get(cols.YIELD_CAPITAL, Decimal(0))
+            etalon_yield_capital = test_data.get(cols.YIELD_CAPITAL, etalon_yield_total-etalon_yield_income)
 
             xirr_yield = self.gcrep._xirr_calc(account_guid=account_guid)
             checking_yield_total = xirr_yield[cols.YIELD_TOTAL]
