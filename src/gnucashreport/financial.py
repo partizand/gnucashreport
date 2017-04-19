@@ -191,6 +191,56 @@ def xirr_float(transactions):
     return guess-1
 
 
+# Ruby XIRR
+#https://puneinvestor.wordpress.com/2013/10/01/calculate-xirr-in-ruby-bisection-method/
+
+# def xirr(cashflow, dates)
+#
+    # if cashflow.length != dates.length
+    #
+        # abort(“length(cashflow) not equal to length(dates)”)
+    #
+    # else
+    #
+        # nil
+    #
+    # end
+    #
+    # data = cashflow.zip(dates)
+    #
+    # # Bisection method finding the rate to zero nfv
+    #
+    # left = -0.99/365
+    # right = 9.99/365
+    # epsilon = 1e-8
+    # while ((right-left).abs > 2*epsilon) do
+    #
+        # midpoint = (right+left)/2
+        #
+        # if (nfv(data, left) * nfv(data, midpoint) > 0)
+        #
+            # left = midpoint
+        #
+        # else
+        #
+            # right = midpoint
+        #
+        # end
+    #
+    # end
+    #
+    # # Irr for daily cashflow (not in percentage format)
+    # irr = (right+left) / 2
+    # # Irr for daily cashflow multiplied by 365 to get yearly return
+    # irr = irr * 365
+    # # Annualized yield (return) reflecting compounding effect of daily returns
+    # irr = (1 + irr / 365) ** 365 – 1
+    #
+    # return irr
+
+# end Ruby XIRR
+
+
 if __name__ == "__main__":
     # Example
     tas = [ (date(2010, 12, 29), -10000),
