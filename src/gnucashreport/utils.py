@@ -1,6 +1,7 @@
 import os
 
 import pandas
+import re
 
 DIR_EXCEL = "v:/tables"
 
@@ -68,3 +69,34 @@ def dateformat_from_period(period: str):
         if period.upper() == 'Q':
             dateformat = 'Q YY'  # ???
     return dateformat
+
+
+def parse_string_to_dict(string: str):
+    """
+    Получает из строки вида 'CS ID=123 HD=CT NE=HI THERE' 
+    значения словаря
+    Возвращает словарь
+    >>> x = 'CS ID=123 HD=CT NE="HI THERE"'
+    >>> entries = parse_string_to_dict(x)
+    >>> entries['ID']
+    '123'
+    >>> entries['NE']
+    'HI THERE'
+    >>> x = '0.1'
+    >>> entries = parse_string_to_dict(x)
+    >>> entries
+    {}
+    
+    :param string: 
+    :return: dictionary
+    """
+
+    # Без кавычек:
+    # x = '''CS ID=123 HD=CT NE="HI THERE"'''
+    # >> > re.findall("""\w+="[^"]*"|\w+='[^']*'|\w+=\w+|\w+""", x)
+    # ['CS', 'ID=123', 'HD=CT', 'NE="HI THERE"']
+
+    array_strings = list(map(''.join, re.findall("""(\w+=)"([^"]*)"|(\w+=)'([^']*)'|(\w+=\w+)""", string)))
+    dict1 = dict(map(lambda x1: x1.split('='), array_strings))
+
+    return dict1

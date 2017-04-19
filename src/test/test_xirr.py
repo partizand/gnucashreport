@@ -4,9 +4,12 @@ import os
 
 from decimal import Decimal
 
+
+
 import gnucashreport.gnucashdata
 import gnucashreport.cols as cols
 from gnucashreport.utils import dataframe_to_excel
+from gnucashreport.utils import parse_string_to_dict
 
 from test.baseopentest import BaseOpenTest
 
@@ -36,8 +39,13 @@ class SQLOpenTest(unittest.TestCase):
 
         df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
         for index, row in df_test.iterrows():
-            yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
-            test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
+            entries = parse_string_to_dict(row[cols.DESCRIPTION])
+            if entries:
+                # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
+                entries['total_gain'] = row[cols.DESCRIPTION]
+            # test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
+            test_data = {cols.ACCOUNT_GUID: index}
+            test_data.update(entries)
             cls.test_datas.append(test_data)
 
 
@@ -51,6 +59,8 @@ class SQLOpenTest(unittest.TestCase):
             checking_yield = xirr_yield['yield_total']
 
             self.assertEquals(etalon_yield, checking_yield)
+
+
 
 
 

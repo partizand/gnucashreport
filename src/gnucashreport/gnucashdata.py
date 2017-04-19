@@ -633,7 +633,12 @@ class GNUCashData:
                                               account_types=account_types, from_date=from_date, to_date=to_date)
 
         # Колонки в нужной последовательности
-        df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME, 'yield_total', 'yield_income', 'yield_expense'])
+        df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME,
+                                                cols.YIELD_TOTAL,
+                                                cols.YIELD_INCOME,
+                                                cols.YIELD_GAIN,
+                                                cols.YIELD_EXPENSE])
+
 
 
         # Добавление MultiIndex по дате и названиям счетов
@@ -702,7 +707,7 @@ class GNUCashData:
         if account_types:
             df = df[(df[cols.ACCOUNT_TYPE]).isin(account_types)]
 
-        df = df[df['parent_guid'] == account_guid]
+        df = df[df[cols.PARENT_GUID] == account_guid]
         childs = df.index.tolist()
 
         if recurse:
@@ -763,11 +768,13 @@ class GNUCashData:
         # Доходность денежного потока
         if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.INCOME])):
             yield_income = 0
+            yield_gain = yield_total
         else:
             # Доходность без денежного потока
             df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.INCOME]
             without_income_yeld = self._xirr_by_dataframe(df_without_income)
             yield_income = yield_total - without_income_yeld
+            yield_gain = yield_total - yield_income
 
         # Стоимость расходов
         if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.EXPENSE])):
@@ -783,10 +790,11 @@ class GNUCashData:
         # itog[cols.ACCOUNT_GUID] = account_guid
         itog[cols.FULLNAME] = self.df_accounts.loc[account_guid][cols.FULLNAME]
         itog[cols.SHORTNAME] = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-        itog['yield_total'] = yield_total
+        itog[cols.YIELD_TOTAL] = yield_total
         # itog['yield_total2'] = yield_total
-        itog['yield_income'] = yield_income
-        itog['yield_expense'] = yield_expense
+        itog[cols.YIELD_INCOME] = yield_income
+        itog[cols.YIELD_EXPENSE] = yield_expense
+        itog[cols.YIELD_GAIN] = yield_gain
         # itog['yield_without_expense'] = yield_without_expense
 
         # print(yield_total)
