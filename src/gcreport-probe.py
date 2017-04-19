@@ -22,7 +22,7 @@ from gnucashreport.xlsxreport import XLSXReport
 # regex test
 my_str = u'ucourt métrage pour kino session volume 18\nThème: O sombres héros\nContraintes: sous titrés\nAuthor: nicoalabdou\nTags: wakatanka productions court métrage kino session humour cantat bertrand noir désir sombres héros mer medine marie trintignant femme droit des femmes nicoalabdou pute soumise\nPosted: 06 June 2009\nRating: 1.3\nVotes: 3'
 my_str = 'CS \nID=123\nHD: CT\nNE: HI THERE'
-x = 'CS ID=123 HD=CT NE="HI THERE"'
+x = 'CS ID=12.3 HD=CT NE="HI THERE"'
 my_tags = ['\S+'] # gets all tags
 # my_tags = ['Tags','Author','Posted'] # selected tags
 regex = re.compile(r'''
@@ -50,17 +50,17 @@ other = list(map(''.join, re.findall("""(\w+=)"([^"]*)"|(\w+=)'([^']*)'|(\w+=\w+
 # other = re.findall("""(\w+=)"([^"]*)"|(\w+=)'([^']*)'|(\w+=\w+)""", x)
 # dict1 = {map(lambda x1: dict(x1.split('=')), other)}
 dict1 = dict(map(lambda x1: x1.split('='), other))
-print(dict1)
-print(dict1['ID'])
-exit()
+# print(dict1)
+# print(dict1['ID'])
+# exit()
 
 textin ="LexicalReordering0= -1.88359 0 -1.6864 -2.34184 -3.29584 0 Distortion0= -4 LM0= -85.3898 WordPenalty0= -13 PhrasePenalty0= 11 TranslationModel0= -6.79761 -3.06898 -8.90342 -4.35544"
 pat = re.compile(r'''([^\s=]+)=\s*((?:[^\s=]+(?:\s|$))*)''')
 c = pat.findall(x)
-# print(c)
+print(c)
 entries = dict((k, v) for k, v in c)
-# print(entries)
-# print(entries['ID'])
+print(entries)
+print(entries['ID'])
 exit()
 
 # a = regex.sub('',my_str) # return my_str without matching key-vaue lines

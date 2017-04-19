@@ -636,7 +636,7 @@ class GNUCashData:
         df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME,
                                                 cols.YIELD_TOTAL,
                                                 cols.YIELD_INCOME,
-                                                cols.YIELD_GAIN,
+                                                cols.YIELD_CAPITAL,
                                                 cols.YIELD_EXPENSE])
 
 
@@ -794,7 +794,7 @@ class GNUCashData:
         # itog['yield_total2'] = yield_total
         itog[cols.YIELD_INCOME] = yield_income
         itog[cols.YIELD_EXPENSE] = yield_expense
-        itog[cols.YIELD_GAIN] = yield_gain
+        itog[cols.YIELD_CAPITAL] = yield_gain
         # itog['yield_without_expense'] = yield_without_expense
 
         # print(yield_total)

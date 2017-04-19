@@ -3,6 +3,8 @@ import os
 import pandas
 import re
 
+from decimal import Decimal
+
 DIR_EXCEL = "v:/tables"
 
 
@@ -71,21 +73,24 @@ def dateformat_from_period(period: str):
     return dateformat
 
 
-def parse_string_to_dict(string: str):
+def parse_string_to_dict(string: str, parse_to_decimal=False):
     """
     Получает из строки вида 'CS ID=123 HD=CT NE=HI THERE' 
     значения словаря
     Возвращает словарь
-    >>> x = 'CS ID=123 HD=CT NE="HI THERE"'
-    >>> entries = parse_string_to_dict(x)
+    >>> entries = parse_string_to_dict('CS ID=123 HD=CT NE=HI THERE')
     >>> entries['ID']
     '123'
     >>> entries['NE']
     'HI THERE'
-    >>> x = '0.1'
-    >>> entries = parse_string_to_dict(x)
-    >>> entries
+    >>> parse_string_to_dict('0.1')
     {}
+    >>> entries = parse_string_to_dict('ID=12.3')
+    >>> entries['ID']
+    '12.3'
+    >>> entries = parse_string_to_dict('ID=12.3', parse_to_decimal=True)
+    >>> entries['ID']
+    Decimal('12.3')
     
     :param string: 
     :return: dictionary
@@ -96,7 +101,35 @@ def parse_string_to_dict(string: str):
     # >> > re.findall("""\w+="[^"]*"|\w+='[^']*'|\w+=\w+|\w+""", x)
     # ['CS', 'ID=123', 'HD=CT', 'NE="HI THERE"']
 
-    array_strings = list(map(''.join, re.findall("""(\w+=)"([^"]*)"|(\w+=)'([^']*)'|(\w+=\w+)""", string)))
-    dict1 = dict(map(lambda x1: x1.split('='), array_strings))
+    # array_strings = list(map(''.join, re.findall("""(\w+=)"([^"]*)"|(\w+=)'([^']*)'|(\w+=\w+)""", string)))
+    # dict1 = dict(map(lambda x1: (x1.split('=')[0], decimal_from_string(x1.split('=')[1]) if parse_to_decimal else x1.split('=')[1]), array_strings))
+    # if parse_to_decimal:
+    #     pass
 
-    return dict1
+    pat = re.compile(r'''([^\s=]+)=\s*((?:[^\s=]+(?:\s|$))*)''')
+    c = pat.findall(string)
+    if parse_to_decimal:
+        entries = dict((k, decimal_from_string(v.strip())) for k, v in c)
+    else:
+        entries = dict((k, v.strip()) for k, v in c)
+    # print(entries)
+    # print(entries['ID'])
+
+    return entries
+
+
+def decimal_from_string(str_decimal:str):
+    """
+    Parse string to decimal
+    
+    >>> decimal_from_string('0.1')
+    Decimal('0.1')
+    
+    >>> decimal_from_string('0,1')
+    Decimal('0.1')
+    
+    :param str_decimal: 
+    :return: 
+    """
+    dec = Decimal(str_decimal.replace(',', '.'))
+    return dec

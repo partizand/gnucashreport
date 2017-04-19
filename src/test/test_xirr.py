@@ -8,13 +8,13 @@ from decimal import Decimal
 
 import gnucashreport.gnucashdata
 import gnucashreport.cols as cols
-from gnucashreport.utils import dataframe_to_excel
-from gnucashreport.utils import parse_string_to_dict
+# from gnucashreport.utils import dataframe_to_excel
+from gnucashreport.utils import *
 
 from test.baseopentest import BaseOpenTest
 
 
-class SQLOpenTest(unittest.TestCase):
+class XIRRTest(unittest.TestCase):
     """
     Тестирование правильности расчета доходности
     """
@@ -39,12 +39,13 @@ class SQLOpenTest(unittest.TestCase):
 
         df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
         for index, row in df_test.iterrows():
-            entries = parse_string_to_dict(row[cols.DESCRIPTION])
-            if entries:
+            entries = parse_string_to_dict(row[cols.DESCRIPTION], parse_to_decimal=True)
+            if not entries:
                 # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
-                entries['total_gain'] = row[cols.DESCRIPTION]
+                entries[cols.YIELD_TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
+                entries[cols.YIELD_CAPITAL] = entries[cols.YIELD_TOTAL]
             # test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
-            test_data = {cols.ACCOUNT_GUID: index}
+            test_data = {cols.ACCOUNT_GUID: index, cols.SHORTNAME: row[cols.SHORTNAME]}
             test_data.update(entries)
             cls.test_datas.append(test_data)
 
@@ -52,16 +53,29 @@ class SQLOpenTest(unittest.TestCase):
     def test_accounts(self):
         for test_data in self.test_datas:
             account_guid = test_data[cols.ACCOUNT_GUID]
-            etalon_yield = test_data['yield_etalon']
-            # df_test = self.gcrep.yield_calc(account_guid=account_guid)
-            # dataframe_to_excel(self.gcrep.df_splits, 'splits_test')
+            etalon_yield_total = test_data.get(cols.YIELD_TOTAL, Decimal(0))
+            etalon_yield_income = test_data.get(cols.YIELD_INCOME, Decimal(0))
+            etalon_yield_expense = test_data.get(cols.YIELD_EXPENSE, Decimal(0))
+            etalon_yield_capital = test_data.get(cols.YIELD_CAPITAL, Decimal(0))
+
             xirr_yield = self.gcrep._xirr_calc(account_guid=account_guid)
-            checking_yield = xirr_yield['yield_total']
+            checking_yield_total = xirr_yield[cols.YIELD_TOTAL]
+            checking_yield_income = xirr_yield[cols.YIELD_INCOME]
+            checking_yield_expense = xirr_yield[cols.YIELD_EXPENSE]
+            checking_yield_capital = xirr_yield[cols.YIELD_CAPITAL]
 
-            self.assertEquals(etalon_yield, checking_yield)
-
-
-
+            self.assertEquals(etalon_yield_total, checking_yield_total,
+                              'testing {gain} in account {shortname}'.
+                              format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_TOTAL))
+            self.assertEquals(etalon_yield_income, checking_yield_income,
+                             'testing {gain} in account {shortname}'.
+                              format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_INCOME))
+            self.assertEquals(etalon_yield_expense, checking_yield_expense,
+                              'testing {gain} in account {shortname}'.
+                              format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_EXPENSE))
+            self.assertEquals(etalon_yield_capital, checking_yield_capital,
+                              'testing {gain} in account {shortname}'.
+                              format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_CAPITAL))
 
 
 if __name__ == '__main__':
