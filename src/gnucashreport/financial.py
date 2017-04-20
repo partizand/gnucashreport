@@ -131,7 +131,7 @@ def xnpv(rate, cashflows):
 
 
 
-def xirr(cashflows, guess=0.000001, for_decimal=True):
+def xirr(cashflows, guess=0.00001, for_decimal=True):
     """
     Rigth!
     Calculate the Internal Rate of Return of a series of cashflows at irregular intervals.
@@ -160,7 +160,7 @@ def xirr(cashflows, guess=0.000001, for_decimal=True):
     >>> tas_10 = [(date(2016, 1, 1), -10000),\
            (date(2016, 12, 31), 11000)]
     >>> xirr(tas_10)
-    0.1
+    Decimal('0.1000')
     
     >>> tas = [ (date(2016, 1, 1), -10000),\
         (date(2016, 1, 1), 10000),\
@@ -168,6 +168,14 @@ def xirr(cashflows, guess=0.000001, for_decimal=True):
         (date(2016, 12, 31), 11000)]
     >>> xirr(tas)
     0
+    
+    >>> tas_6161 = [ (date(2016, 1, 1), -9900),\
+        (date(2016, 1, 1), -100),\
+        (date(2016, 6, 1), 500),\
+        (date(2016, 12, 1), 15000),\
+        (date(2016, 12, 1), -100)]
+    >>> xirr(tas_6161)
+    Decimal('0.6161')
 
     """
     
@@ -185,9 +193,9 @@ def xirr(cashflows, guess=0.000001, for_decimal=True):
         # decimal to float
         chron_order = list((date, float(value)) for date, value in chron_order )
     res = newton(lambda r: xnpv(r, chron_order), guess)
-    res = round(res, 4)
+    # res = round(res, 4)
     if for_decimal:
-        return Decimal(res)
+        return round(Decimal(res), 4)
     else:
         return res
 
