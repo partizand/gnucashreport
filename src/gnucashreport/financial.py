@@ -122,14 +122,16 @@ def xnpv(rate, cashflows):
 
     """
 
-    chron_order = sorted(cashflows, key = lambda x: x[0])
+    # chron_order = sorted(cashflows, key = lambda x: x[0])
+    # optimization !?
+    chron_order = cashflows
     t0 = chron_order[0][0] #t0 is the date of the first cash flow
 
-    return sum([cf/(1+rate)**((t-t0).days/365.0) for (t,cf) in chron_order])
+    return sum([cf/(1+rate)**((t-t0).days/365.0) for (t, cf) in chron_order])
 
 
 
-def xirr(cashflows, guess=0.00001):
+def xirr(cashflows, guess=0.00001, for_decimal=True):
     """
     Rigth!
     Calculate the Internal Rate of Return of a series of cashflows at irregular intervals.
@@ -176,10 +178,18 @@ def xirr(cashflows, guess=0.00001):
     s = sum([pair[1] for pair in cashflows])
     if s == 0:
         return 0
-
-    res = newton(lambda r: xnpv(r, cashflows), guess)
-
-    return round(res, 4)
+    # guess = Decimal(guess)
+    # sort
+    chron_order = sorted(cashflows, key=lambda x: x[0])
+    if for_decimal:
+        # decimal to float
+        chron_order = list((date, float(value)) for date, value in chron_order )
+    res = newton(lambda r: xnpv(r, chron_order), guess)
+    res = round(res, 4)
+    if for_decimal:
+        return Decimal(res)
+    else:
+        return res
 
 
     # version from http://stackoverflow.com/questions/8919718/financial-python-library-that-has-xirr-and-xnpv-function
