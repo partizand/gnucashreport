@@ -10,7 +10,7 @@ from decimal import Decimal
 # Newton-Raphson method
 # From scipy. Use only secant method. Cuted function to secant method
 # def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50, fprime2=None):
-def newton(func, x0, args=(), tol=1.48e-8, maxiter=50):
+def newton(func, x0, args=(), tol=1.48e-8, maxiter=1000):
     """
     Find a zero using the Newton-Raphson or secant method.
 
@@ -131,7 +131,7 @@ def xnpv(rate, cashflows):
 
 
 
-def xirr(cashflows, guess=0.00001, for_decimal=True):
+def xirr(cashflows, guess=0.000001, for_decimal=True):
     """
     Rigth!
     Calculate the Internal Rate of Return of a series of cashflows at irregular intervals.
