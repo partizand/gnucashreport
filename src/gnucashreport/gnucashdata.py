@@ -764,13 +764,13 @@ class GNUCashData:
         # Доходность денежного потока
         if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.INCOME])):
             yield_income = 0
-            yield_gain = yield_total
+            # yield_gain = yield_total
         else:
             # Доходность без денежного потока
             df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.INCOME]
             without_income_yeld = self._xirr_by_dataframe(df_without_income)
             yield_income = yield_total - without_income_yeld
-            yield_gain = yield_total - yield_income
+            # yield_gain = yield_total - yield_income
 
         # Стоимость расходов
         if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.EXPENSE])):
@@ -791,7 +791,8 @@ class GNUCashData:
         # itog['yield_total2'] = yield_total
         itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
         itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
-        itog[cols.YIELD_CAPITAL] = round(yield_gain, round_prec)
+        # itog[cols.YIELD_CAPITAL] = round(yield_gain, round_prec)
+        itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
         # itog['yield_without_expense'] = yield_without_expense
 
         # print(yield_total)
