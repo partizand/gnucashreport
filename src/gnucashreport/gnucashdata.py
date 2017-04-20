@@ -877,7 +877,7 @@ class GNUCashData:
         # df['date'] = df[date_field].astype('O')
         df[date_field] = df[date_field].astype(date)
         tuples = [tuple(x) for x in df.to_records(index=False)]
-        a_yield = xirr_simple(tuples)
+        a_yield = xirr(tuples)
         a_yield = round(a_yield, 4)
         # print(a_yield)
         return a_yield

@@ -239,47 +239,6 @@ def xirr_simple(transactions, guess=0.00001):
 
 
 
-def xirr_float(transactions):
-    """
-    
-    # >>> tas = [ (date(2010, 12, 29), -10000),\
-    #     (date(2012, 1, 25), 20),\
-    #     (date(2012, 3, 8), 10100)]
-    # >>> xirr_float(tas)
-    # 0.010061264038086382
-    
-    # >>> tas = [ (date(2016, 1, 1), -10000),\
-    #     (date(2016, 1, 1), 10000),\
-    #     (date(2016, 12, 31), -11000),\
-    #     (date(2016, 12, 31), 11000)]
-    # >>> xirr_float(tas)
-    # 0
-
-    
-    :param transactions: 
-    :return: 
-    """
-
-
-    years = [(ta[0] - transactions[0][0]).days / 365.0 for ta in transactions]
-    residual = 1
-    step = 0.005
-    guess = 0.0001
-    epsilon = 0.000001
-    limit = 100000
-    while abs(residual) > epsilon and limit > 0:
-        limit -= 1
-        residual = 0.0
-        for i, ta in enumerate(transactions):
-            residual += ta[1] / pow(guess, years[i])
-        if abs(residual) > epsilon:
-            if residual > 0:
-                guess += step
-            else:
-                guess -= step
-                # step /= 2.0
-    return guess-1
-
 
 def secant_method(tol, f, x0):
     """
@@ -309,45 +268,41 @@ def secant_method(tol, f, x0):
         x0, x1 = x1, x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
     return x1
 
-def xirr_ruby(cashflow):
-    # Wrong!!!
-
-
-    # data = cashflow.zip(dates)
-
-    # Bisection method finding the rate to zero nfv
-
-    left = -0.99/365
-    right = 9.99/365
-    epsilon = 1e-8
-    while math.fabs(right-left) > 2 * epsilon:
-
-        midpoint = (right+left)/2
-
-        # if xnpv(left, cashflow) * xnpv(midpoint, cashflow) > 0:
-        if xnpv(left, cashflow) * xnpv(right, cashflow) > 0:
-
-            left = midpoint
-
-        else:
-
-            right = midpoint
-
-
-
-
-
-    # Irr for daily cashflow (not in percentage format)
-    irr = (right+left) / 2
-    # Irr for daily cashflow multiplied by 365 to get yearly return
-    irr = irr * 365
-    # Annualized yield (return) reflecting compounding effect of daily returns
-
-    # irr = (1 + irr / 365) ^ 365 – 1
-    # irr = (1 + irr / 365) ^ 365 – 1
-    irr = math.pow(1 + irr / 365, 365) - 1
-
-    return irr
+# def xirr_ruby(cashflow):
+#     # Wrong!!!
+#
+#
+#     # Bisection method finding the rate to zero nfv
+#
+#     left = -0.99/365
+#     right = 9.99/365
+#     epsilon = 1e-8
+#     while math.fabs(right-left) > 2 * epsilon:
+#
+#         midpoint = (right+left)/2
+#
+#         # if xnpv(left, cashflow) * xnpv(midpoint, cashflow) > 0:
+#         if xnpv(left, cashflow) * xnpv(right, cashflow) > 0:
+#
+#             left = midpoint
+#
+#         else:
+#
+#             right = midpoint
+#
+#
+#
+#
+#
+#     # Irr for daily cashflow (not in percentage format)
+#     irr = (right+left) / 2
+#     # Irr for daily cashflow multiplied by 365 to get yearly return
+#     irr = irr * 365
+#     # Annualized yield (return) reflecting compounding effect of daily returns
+#
+#     irr = math.pow(1 + irr / 365, 365) - 1
+#
+#     return irr
 
 
 # Ruby XIRR
