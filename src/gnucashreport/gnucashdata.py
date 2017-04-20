@@ -749,13 +749,7 @@ class GNUCashData:
         else:
             df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
 
-
-
-
-        # df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
-        # df_total.sort_values(by=cols.POST_DATE, inplace=True)
-
-        # dataframe_to_excel(df_total, 'df_total')
+        # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         yield_total = self._xirr_by_dataframe(df_xirr)
@@ -789,14 +783,15 @@ class GNUCashData:
             yield_expense = yield_without_expense - yield_total
 
         itog = {}
+        round_prec = 4
         # itog[cols.ACCOUNT_GUID] = account_guid
         itog[cols.FULLNAME] = self.df_accounts.loc[account_guid][cols.FULLNAME]
         itog[cols.SHORTNAME] = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-        itog[cols.YIELD_TOTAL] = yield_total
+        itog[cols.YIELD_TOTAL] = round(yield_total, round_prec)
         # itog['yield_total2'] = yield_total
-        itog[cols.YIELD_INCOME] = yield_income
-        itog[cols.YIELD_EXPENSE] = yield_expense
-        itog[cols.YIELD_CAPITAL] = yield_gain
+        itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
+        itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
+        itog[cols.YIELD_CAPITAL] = round(yield_gain, round_prec)
         # itog['yield_without_expense'] = yield_without_expense
 
         # print(yield_total)
@@ -878,7 +873,7 @@ class GNUCashData:
         df[date_field] = df[date_field].astype(date)
         tuples = [tuple(x) for x in df.to_records(index=False)]
         a_yield = xirr(tuples)
-        a_yield = round(a_yield, 4)
+        # a_yield = round(a_yield, 4)
         # print(a_yield)
         return a_yield
 

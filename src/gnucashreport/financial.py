@@ -4,7 +4,7 @@ import warnings
 import math
 
 # from gnucashreport.scipy import newton
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 
 # Newton-Raphson method
@@ -195,8 +195,14 @@ def xirr(cashflows, guess=0.00001, for_decimal=True):
     res = newton(lambda r: xnpv(r, chron_order), guess)
     # res = round(res, 4)
     if for_decimal:
-        return round(Decimal(res), 4)
+        return Decimal(res)
+        # res = Decimal(res)
+        # output = Decimal(res.quantize(Decimal('.0000'), rounding=ROUND_HALF_UP))
+        # output = res.quantize(Decimal('.00000'), rounding=ROUND_HALF_UP)
+        # return output
+        # return round(Decimal(res), 5)
     else:
+        # return round(res, 4)
         return res
 
 

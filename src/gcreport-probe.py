@@ -27,7 +27,17 @@ from_date = datetime.date(2016, 1, 1)
 
 to_date = datetime.date(2016, 12, 31)
 
+# round test
 
+# I have value 0.07196
+# it must be 0.0720
+
+in_val = Decimal('0.07196')
+out_val = round(in_val, 4)
+print(out_val)
+exit()
+
+# end round test
 
 # from_date = datetime.date(2016, 1, 1)
 # to_date = datetime.date(2016, 1, 1)
