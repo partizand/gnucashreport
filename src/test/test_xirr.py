@@ -54,6 +54,7 @@ class XIRRTest(unittest.TestCase):
         :return: 
         """
 
+        only_test = None
         df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
         for index, row in df_test.iterrows():
             if 'skip' not in row[cols.DESCRIPTION]:
@@ -66,6 +67,11 @@ class XIRRTest(unittest.TestCase):
                 test_data = {cols.ACCOUNT_GUID: index, cols.SHORTNAME: row[cols.SHORTNAME]}
                 test_data.update(entries)
                 cls.test_datas.append(test_data)
+                if 'only' in row[cols.DESCRIPTION]:
+                    only_test = test_data
+
+        if only_test:
+            cls.test_datas = [only_test]
 
 
     def test_accounts(self):
