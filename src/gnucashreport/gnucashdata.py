@@ -9,6 +9,7 @@ from datetime import timedelta
 from decimal import Decimal
 from operator import attrgetter
 
+import math
 import pandas
 import numpy
 import piecash
@@ -964,18 +965,28 @@ class GNUCashData:
         :param dataframe: 
         :return: account_guid
         """
+        # Если счет один, то он и главный
         df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
+        # Нет счетов вообще
+        if df_asset.empty:
+            return None
+        # Если счет один, то он и главный
         if len(df_asset) == 1:
             return df_asset.iloc[0][cols.ACCOUNT_GUID]
         # если есть тип stock, то он главный
         if any(df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)):
             df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)]
             return df.iloc[0][cols.ACCOUNT_GUID]
-        # Главный счет у которого value меньше по модулю
+        # Если есть счет с 0, то главный он
+        df_zero = df_asset[df_asset[cols.VALUE_CURRENCY] == 0]
+        if len(df_zero) > 0:
+            return df_zero.iloc[0][cols.ACCOUNT_GUID]
+
+        # Главный счет у которого value больше по модулю
         df = df_asset.copy()
-        df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x: abs(x))
+        df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x:  math.fabs(x))
         df.sort_values('value_sort')
-        return df.iloc[0][cols.ACCOUNT_GUID]
+        return df.iloc[-1][cols.ACCOUNT_GUID]
 
 
     def _add_xirr_value(self, df: pandas.DataFrame, on_types=ALL_XIRR_TYPES, on_xirr_enable=True, xirr_account=None):
@@ -1098,9 +1109,10 @@ class GNUCashData:
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # Здесь пока неясно, что добавлять по incexp
-            ie_xirr_enable = df_incexps.iloc[0][cols.XIRR_ENABLE]
-            if not ie_xirr_enable:
-                self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
+            # ie_xirr_enable = df_incexps.iloc[0][cols.XIRR_ENABLE]
+            # if not ie_xirr_enable:
+            master_guid = self._get_master_asset_guid(df_assets)
+            self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             # self._add_xirr_value(df_assets)
             return
         # elif (len(df_assets) == 1) and (len(df_incexps) == 1) and (any(df_tr_splits[cols.ACCOUNT_TYPE].isin([self.EQUITY, self.CASH]))):
