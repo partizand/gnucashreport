@@ -13,6 +13,12 @@ from gnucashreport.utils import *
 
 from test.baseopentest import BaseOpenTest
 
+TOTAL = 'total'
+INCOME = 'income'
+EXPENSE = 'expense'
+CAPITAL = 'capital'
+
+GNUCASH_TESTBASE = 'data/xirr-test.gnucash'
 
 class XIRRTest(unittest.TestCase):
     """
@@ -27,7 +33,7 @@ class XIRRTest(unittest.TestCase):
     Доходность в описании можно задать либо просто итоговую, числом доходоности
     Например 0,1 - доходность 10% годовых, остальные доходности = 0, capital_gain = 0,1
     Или задавайте доходности парами тип_доходности1=значение1 тип_доходности2=значение2
-    Тип доходности можно посмотреть в файле cols.py 
+    Тип доходности можно посмотреть константах сверху этого файла 
     """
 
     gcrep = gnucashreport.gnucashdata.GNUCashData()
@@ -37,7 +43,7 @@ class XIRRTest(unittest.TestCase):
     def setUpClass(cls):
 
         base_path = os.path.dirname(os.path.realpath(__file__))
-        base_path = os.path.join(base_path, 'data', 'xirr-test.gnucash')
+        base_path = os.path.join(base_path, GNUCASH_TESTBASE)
         cls.gcrep.open_book_file(base_path, open_if_lock=True)
         cls.get_testaccounts()
 
@@ -54,7 +60,7 @@ class XIRRTest(unittest.TestCase):
                 entries = parse_string_to_dict(row[cols.DESCRIPTION], parse_to_decimal=True)
                 if not entries:
                     # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
-                    entries[cols.YIELD_TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
+                    entries[TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
                     # entries[cols.YIELD_CAPITAL] = entries[cols.YIELD_TOTAL]
                 # test_data = {cols.ACCOUNT_GUID: index, 'yield_etalon': yield_etalon}
                 test_data = {cols.ACCOUNT_GUID: index, cols.SHORTNAME: row[cols.SHORTNAME]}
@@ -65,10 +71,10 @@ class XIRRTest(unittest.TestCase):
     def test_accounts(self):
         for test_data in self.test_datas:
             account_guid = test_data[cols.ACCOUNT_GUID]
-            etalon_yield_total = test_data.get(cols.YIELD_TOTAL, Decimal(0))
-            etalon_yield_income = test_data.get(cols.YIELD_INCOME, Decimal(0))
-            etalon_yield_expense = test_data.get(cols.YIELD_EXPENSE, Decimal(0))
-            etalon_yield_capital = test_data.get(cols.YIELD_CAPITAL, etalon_yield_total-etalon_yield_income)
+            etalon_yield_total = test_data.get(TOTAL, Decimal(0))
+            etalon_yield_income = test_data.get(INCOME, Decimal(0))
+            etalon_yield_expense = test_data.get(EXPENSE, Decimal(0))
+            etalon_yield_capital = test_data.get(CAPITAL, etalon_yield_total-etalon_yield_income)
 
             xirr_yield = self.gcrep._xirr_calc(account_guid=account_guid)
             checking_yield_total = xirr_yield[cols.YIELD_TOTAL]
