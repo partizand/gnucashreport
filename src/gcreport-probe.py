@@ -36,7 +36,7 @@ to_date = datetime.date(2016, 12, 31)
 # exit()
 
 filename = 'v:/tables/ex-test.xlsx'
-gcrep = gnucashreport.GNUCashReport()
+gcrep = gnucashreport.GNUCashRep()
 # start_time_sql = time.time()
 # rep.open_book_xml()
 # rep.save_pickle()

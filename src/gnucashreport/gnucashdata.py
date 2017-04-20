@@ -760,6 +760,8 @@ class GNUCashData:
         # Общая доходность
         yield_total = self._xirr_by_dataframe(df_xirr)
 
+
+
         # yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
         # yield_without_expense = self._xirr_by_dataframe(df_without_expense)
 

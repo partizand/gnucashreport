@@ -14,14 +14,14 @@ COLOR_YELLOW = '#FFFF00'
 COLOR_ORANGE_LIGHT = '#FDE9D9'
 
 
-class GNUCashReport(GNUCashData):
+class GNUCashRep(GNUCashData):
     """
     High level reports from GnuCash to Excel
 
     Example
 
     >>> import gnucashreport
-    >>> gcrep = GNUCashReport()
+    >>> gcrep = GNUCashRep()
 
     open sql or xml book
     >>> gcrep.open_book_file('v:/gnucash-base/sqlite/GnuCash-base.gnucash', open_if_lock=True)
@@ -32,7 +32,7 @@ class GNUCashReport(GNUCashData):
     """
 
     def __init__(self):
-        super(GNUCashReport, self).__init__()
+        super(GNUCashRep, self).__init__()
 
     def cashflow_report_html(self, from_date, to_date, period='M', glevel=[0, 1]):
         """
@@ -120,7 +120,7 @@ class GNUCashReport(GNUCashData):
         """
         Splits two dates interval on array of intervals by years
 
-        >>> GNUCashReport._split_by_years(date(2014,1,2), date(2017, 1, 20))
+        >>> GNUCashRep._split_by_years(date(2014,1,2), date(2017, 1, 20))
         [[datetime.date(2014, 2, 1), datetime.date(2014, 12, 31)],\
  [datetime.date(2015, 1, 1), datetime.date(2015, 12, 31)],\
  [datetime.date(2016, 1, 1), datetime.date(2016, 12, 31)]]
@@ -130,7 +130,7 @@ class GNUCashReport(GNUCashData):
         :return: Array of tuples date
         """
         dates = []
-        from_date, to_date = GNUCashReport._complete_month(from_date, to_date)
+        from_date, to_date = GNUCashRep._complete_month(from_date, to_date)
         cur_year = from_date.year
         not_end_cycle = True
         while not_end_cycle:
@@ -153,9 +153,9 @@ class GNUCashReport(GNUCashData):
     def _complete_years(from_date: date, to_date: date):
         """
         Return tuple of first and last year from interval, which are full ended
-        >>> GNUCashReport._complete_years(date(2016,1,2), date(2016,12,30))
+        >>> GNUCashRep._complete_years(date(2016,1,2), date(2016,12,30))
 
-        >>> GNUCashReport._complete_years(date(2008,12,31), date(2017, 2, 15))
+        >>> GNUCashRep._complete_years(date(2008,12,31), date(2017, 2, 15))
         (2009, 2016)
 
         :param from_date:
@@ -187,11 +187,11 @@ class GNUCashReport(GNUCashData):
         Return tuple of two dates, wich contain full months.
         Cut interval to start and end full months
 
-        >>> GNUCashReport._complete_month(date(2016,1,2), date(2016,12,30))
+        >>> GNUCashRep._complete_month(date(2016,1,2), date(2016,12,30))
         (datetime.date(2016, 2, 1), datetime.date(2016, 11, 30))
-        >>> GNUCashReport._complete_month(date(2008,12,31), date(2017, 2, 15))
+        >>> GNUCashRep._complete_month(date(2008,12,31), date(2017, 2, 15))
         (datetime.date(2009, 1, 1), datetime.date(2017, 1, 31))
-        >>> GNUCashReport._complete_month(date(2008,12,31), date(2017, 1, 15))
+        >>> GNUCashRep._complete_month(date(2008,12,31), date(2017, 1, 15))
         (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
 
         :param from_date:
@@ -202,14 +202,14 @@ class GNUCashReport(GNUCashData):
         new_from_date = from_date
         first_day = from_date.day
         if first_day != 1:
-            new_from_date = GNUCashReport._add_months(from_date, 1)
+            new_from_date = GNUCashRep._add_months(from_date, 1)
             new_from_date = new_from_date.replace(day=1)
 
         # Вторая дата выравниваем на месяц
         new_to_date = to_date
         _, days_in_month = calendar.monthrange(to_date.year, to_date.month)
         if to_date.day != days_in_month:
-            new_to_date = GNUCashReport._add_months(to_date, -1)
+            new_to_date = GNUCashRep._add_months(to_date, -1)
             _, new_days_in_month = calendar.monthrange(new_to_date.year, new_to_date.month)
             new_to_date = new_to_date.replace(day=new_days_in_month)
 
@@ -220,15 +220,15 @@ class GNUCashReport(GNUCashData):
         """
         Add months to date
 
-        >>> GNUCashReport._add_months(date(2016,1,2), 1)
+        >>> GNUCashRep._add_months(date(2016,1,2), 1)
         datetime.date(2016, 2, 2)
-        >>> GNUCashReport._add_months(date(2016,12,31), 1)
+        >>> GNUCashRep._add_months(date(2016,12,31), 1)
         datetime.date(2017, 1, 31)
-        >>> GNUCashReport._add_months(date(2017,2,28), 1)
+        >>> GNUCashRep._add_months(date(2017,2,28), 1)
         datetime.date(2017, 3, 28)
-        >>> GNUCashReport._add_months(date(2017,2,28), -1)
+        >>> GNUCashRep._add_months(date(2017,2,28), -1)
         datetime.date(2017, 1, 28)
-        >>> GNUCashReport._add_months(date(2017,1,1), -1)
+        >>> GNUCashRep._add_months(date(2017,1,1), -1)
         datetime.date(2016, 12, 1)
 
         :param months:

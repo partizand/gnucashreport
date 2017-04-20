@@ -38,7 +38,7 @@ class TablePointsTest(unittest.TestCase):
     def test_header_allmargins(self):
         # create simple dataframe 8 rows , 4 cols
         df = pandas.DataFrame(numpy.random.randn(4, 7), index=[0, 1, 2, 3])
-        gnucashreport.GNUCashReport.set_locale()
+        gnucashreport.GNUCashRep.set_locale()
         margins = Margins()
         margins.empty_col = True
         margins.total_col = True
@@ -57,7 +57,7 @@ class TablePointsTest(unittest.TestCase):
     def test_header_somemargins(self):
         # create simple dataframe 8 rows , 4 cols
         df = pandas.DataFrame(numpy.random.randn(4, 6), index=[0, 1, 2, 3])
-        gnucashreport.GNUCashReport.set_locale()
+        gnucashreport.GNUCashRep.set_locale()
         margins = Margins()
         # margins.empty_col = True
         margins.total_col = True
