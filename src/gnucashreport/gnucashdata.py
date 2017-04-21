@@ -746,7 +746,7 @@ class GNUCashData:
         # else:
         df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
 
-        # dataframe_to_excel(df_xirr, 'df_xirr')
+        dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         yield_total = self._xirr_by_dataframe(df_xirr)
@@ -1052,8 +1052,8 @@ class GNUCashData:
         # Главный счет у которого value больше по модулю
         df = df_asset.copy()
         df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x:  math.fabs(x))
-        df.sort_values('value_sort')
-        return df.iloc[0][cols.ACCOUNT_GUID]
+        df.sort_values('value_sort', inplace=True)
+        return df.iloc[-1][cols.ACCOUNT_GUID]
 
     def _add_tr_acc_names(self, dataframe):
         """
