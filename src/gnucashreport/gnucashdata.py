@@ -944,17 +944,13 @@ class GNUCashData:
         # if not self._has_splits_for_xirr(df_tr_splits):
         #     return
 
-
-        df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)]
-        df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)]
+        incexp_types = [self.INCOME, self.EXPENSE]
+        df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
+        df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
+        # df_assets = df_assets[df_assets[cols.XIRR_ENABLE]]
         # есть ли счета для xirr
         if not any(df_assets[cols.XIRR_ENABLE]):
             return
-
-        # df_all_xirr_types = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(self.ALL_XIRR_TYPES)]
-
-        # df_equity = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE] == self.EQUITY]
-
 
         # Простая 2-х проводочная транзакция
         if len(df_tr_splits) == 2:
@@ -1002,43 +998,11 @@ class GNUCashData:
             # И добавить все расходы/доходы у которых xirr_enable=true
             master_guid = self._get_master_asset_guid(df_assets)
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
-            # Здесь пока неясно, что добавлять по incexp
-            # print('Multitransaction 1-asset 2-incexp. Xirr rule not set. Transaction_guid {tr_guid}'.format(tr_guid=tr_guid))
             return
         else:
             # Неясность
             print("Unknown multi transaction type for xirr. Transaction_guid {tr_guid}".format(tr_guid=tr_guid))
             return
-
-
-    # def _add_xirr_by_transaction_wrong(self, df_tr_splits:pandas.DataFrame, tr_guid:str):
-    #     """
-    #     Логика подсчета xirr по транзакции. Обновляет df_splits для переданной транзакции
-    #     :param df_tr_splits: Сплиты транзакции
-    #     :param tr_guid: guid transaction
-    #     :return:
-    #     """
-    #
-    #     has_stock = any(df_tr_splits[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES))
-    #     master_guid = self._get_master_asset_guid(df_tr_splits)
-    #
-    #     for index, row in df_tr_splits.iterrows():
-    #
-    #
-    #         xirr_enable = row[cols.XIRR_ENABLE]
-    #
-    #         account_type = row[cols.ACCOUNT_TYPE]
-    #         # ASSET
-    #         if account_type in self.ALL_XIRR_TYPES:
-    #             if xirr_enable:
-    #                 self._set_xirr_to_split(tr_guid=tr_guid, index=index, row=row)
-    #         # Income or Expense
-    #         elif account_type in self.INCEXP_XIRR_TYPES:
-    #             if has_stock:
-    #                 if xirr_enable:
-    #                     self._set_xirr_to_split(tr_guid=tr_guid, index=index, row=row, xirr_account=master_guid)
-    #             elif not xirr_enable:
-    #                 self._set_xirr_to_split(tr_guid=tr_guid, index=index, row=row, xirr_account=master_guid)
 
     def _set_xirr_to_splits(self, tr_guid: str, df: pandas.DataFrame, xirr_account: str=None):
         """
@@ -1061,13 +1025,13 @@ class GNUCashData:
 
     def _get_master_asset_guid(self, dataframe: pandas.DataFrame):
         """
-        dataframe - отобранные проводки из df_splits
+        dataframe - отобранные проводки из df_splits с типом asset
         Находит из них ту, на которую писать доход/убыток
         Возвращает account_guid для отобранного счета
         :param dataframe: 
         :return: account_guid
         """
-        # Если счет один, то он и главный
+
         # df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
         df_asset = dataframe[dataframe[cols.XIRR_ENABLE]] # Долго
         # Нет счетов вообще
