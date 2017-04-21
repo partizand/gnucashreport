@@ -25,7 +25,7 @@ def main(args=None):
 
     p_args = parser.parse_args(args)
 
-    gcrep = gnucashreport.GNUCashRep()
+    gcrep = gnucashreport.GCReport()
     print('Opening file {} ...'.format(p_args.gnucash_file))
     gcrep.open_book_file(p_args.gnucash_file, open_if_lock=p_args.open_if_lock)
     print('Building reports into {} ...'.format(p_args.xlsx_file))

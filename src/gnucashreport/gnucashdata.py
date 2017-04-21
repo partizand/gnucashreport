@@ -1561,18 +1561,20 @@ class GNUCashData:
         :return:
         """
 
+        # import gnucashreport.cols as cols
+
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(dataframe,
                                   columns=[cols.POST_DATE, cols.FULLNAME, cols.VALUE_CURRENCY]).copy()
 
         # Добавление MultiIndex по дате и названиям счетов
         s = sel_df[cols.FULLNAME].str.split(':', expand=True)
-        cols = s.columns
-        cols = cols.tolist()
-        cols = [cols.POST_DATE] + cols
+        columns = s.columns
+        columns = columns.tolist()
+        columns = [cols.POST_DATE] + columns
         sel_df = pandas.concat([sel_df, s], axis=1)
 
-        sel_df.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
+        sel_df.sort_values(by=columns, inplace=True)  # Сортировка по дате и счетам
 
         if drop_null:
             sel_df.dropna(subset=[cols.VALUE_CURRENCY], inplace=True)  # Удаление пустых значений
@@ -1583,7 +1585,7 @@ class GNUCashData:
         # for col in cols[1:]:
         #     sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
 
-        sel_df.set_index(cols, inplace=True)
+        sel_df.set_index(columns, inplace=True)
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
@@ -1618,27 +1620,27 @@ class GNUCashData:
         # Empty Dataframe with same columns and index
         df_inf = pandas.DataFrame(index=df.index, columns=df.columns[1:])
 
-        cols = df.columns
+        columns = df.columns
 
-        for i in range(1, len(cols)):
+        for i in range(1, len(columns)):
 
             if not cumulative:
                 # Процент к предыдущему
                 # df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).
                 # divide((df[cols[i-1]]).astype('float64'))
-                df_inf[cols[i]] = self._percent_increase(df[cols[i-1]], df[cols[i]])
+                df_inf[columns[i]] = self._percent_increase(df[columns[i-1]], df[columns[i]])
             else:
                 # Процент к началу
                 # df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
                 #                     (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
-                df_inf[cols[i]] = self._percent_increase(df[cols[0]], df[cols[i]], i)
+                df_inf[columns[i]] = self._percent_increase(df[columns[0]], df[columns[i]], i)
 
         # Average by period
         if not cumulative:
-            i2 = len(cols) - 1
+            i2 = len(columns) - 1
             # df_inf[_('Total')] = (((df[cols[i2]]).astype('float64')).divide(
             #     (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
-            df_inf[_('Total')] = self._percent_increase(df[cols[0]], df[cols[i2]], i2)
+            df_inf[_('Total')] = self._percent_increase(df[columns[0]], df[columns[i2]], i2)
 
         return df_inf
 

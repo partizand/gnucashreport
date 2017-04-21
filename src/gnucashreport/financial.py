@@ -159,7 +159,7 @@ def xirr(cashflows, guess=0.00001, for_decimal=True):
     
     >>> tas_10 = [(date(2016, 1, 1), -10000),\
            (date(2016, 12, 31), 11000)]
-    >>> xirr(tas_10)
+    >>> round(xirr(tas_10), 4)
     Decimal('0.1000')
     
     >>> tas = [ (date(2016, 1, 1), -10000),\
@@ -174,7 +174,7 @@ def xirr(cashflows, guess=0.00001, for_decimal=True):
         (date(2016, 6, 1), 500),\
         (date(2016, 12, 1), 15000),\
         (date(2016, 12, 1), -100)]
-    >>> xirr(tas_6161)
+    >>> round(xirr(tas_6161), 4)
     Decimal('0.6161')
 
     """
