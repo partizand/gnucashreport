@@ -92,6 +92,8 @@ def parse_string_to_dict(string: str, parse_to_decimal=False):
     >>> entries['ID']
     Decimal('12.3')
     
+    todate=01-01-2017 total=-0.0242 expense=0.0242
+    
     :param string: 
     :return: dictionary
     """

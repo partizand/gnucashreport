@@ -4,7 +4,7 @@ import os
 
 from decimal import Decimal
 
-
+import datetime
 
 import gnucashreport.gnucashdata
 import gnucashreport.cols as cols
@@ -17,6 +17,8 @@ TOTAL = 'total'
 INCOME = 'income'
 EXPENSE = 'expense'
 CAPITAL = 'capital'
+TO_DATE = 'todate'
+FROM_DATE = 'fromdate'
 
 GNUCASH_TESTBASE = 'data/xirr-test.gnucash'
 
@@ -58,7 +60,7 @@ class XIRRTest(unittest.TestCase):
         df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
         for index, row in df_test.iterrows():
             if 'skip' not in row[cols.DESCRIPTION]:
-                entries = parse_string_to_dict(row[cols.DESCRIPTION], parse_to_decimal=True)
+                entries = parse_string_to_dict(row[cols.DESCRIPTION])
                 if not entries:
                     # yield_etalon = Decimal((row[cols.DESCRIPTION]).replace(',','.'))
                     entries[TOTAL] = decimal_from_string(row[cols.DESCRIPTION])
@@ -77,12 +79,20 @@ class XIRRTest(unittest.TestCase):
     def test_accounts(self):
         for test_data in self.test_datas:
             account_guid = test_data[cols.ACCOUNT_GUID]
-            etalon_yield_total = test_data.get(TOTAL, Decimal(0))
-            etalon_yield_income = test_data.get(INCOME, Decimal(0))
-            etalon_yield_expense = test_data.get(EXPENSE, Decimal(0))
-            etalon_yield_capital = test_data.get(CAPITAL, etalon_yield_total-etalon_yield_income)
+            etalon_yield_total = Decimal(test_data.get(TOTAL, Decimal(0)))
+            etalon_yield_income = Decimal(test_data.get(INCOME, Decimal(0)))
+            etalon_yield_expense = Decimal(test_data.get(EXPENSE, Decimal(0)))
+            etalon_yield_capital = Decimal(test_data.get(CAPITAL, etalon_yield_total-etalon_yield_income))
 
-            xirr_yield = self.gcrep.yield_calc(account_guid=account_guid, recurse=False)
+            # str_from_date = test_data.get(FROM_DATE, None)
+            # str_to_date = test_data.get(TO_DATE, None)
+
+            from_date = self._date_from_str(test_data.get(FROM_DATE, None))
+            to_date = self._date_from_str(test_data.get(TO_DATE, None))
+
+            xirr_yield = self.gcrep.yield_calc(account_guid=account_guid,
+                                               from_date=from_date, to_date=to_date,
+                                               recurse=False)
             # if xirr_yield.empty
             checking_yield_total = xirr_yield.iloc[0][cols.YIELD_TOTAL]
             checking_yield_income = xirr_yield.iloc[0][cols.YIELD_INCOME]
@@ -102,6 +112,12 @@ class XIRRTest(unittest.TestCase):
                               'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_CAPITAL))
 
+    def _date_from_str(self, str_date):
+        if str_date:
+            a_date = datetime.datetime.strptime(str_date, '%d-%m-%y').date()
+            return a_date
+        else:
+            return None
 
 if __name__ == '__main__':
     unittest.main()
