@@ -431,10 +431,18 @@ class GNUCashData:
         # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
 
         # Пересчет транзакций в валюту учета
-        self._splits_currency_calc()
+        # self._splits_currency_calc()
+        self.df_splits = self._currency_calc(self.df_splits,
+        # self._currency_calc(self.df_splits,
+                                             col_currency_guid=cols.CURRENCY_GUID,
+                                             col_rate=cols.RATE_CURRENCY
+                                             )
+        # self._currency_calc(self.df_splits, col_rate=cols.RATE_CURRENCY, inplace=True)
 
         # Подсчет значений для xirr
         self._add_xirr_info()
+
+        # dataframe_to_excel(self.df_splits, 'splits-2')
 
 
 
@@ -574,7 +582,8 @@ class GNUCashData:
 
         return df
 
-    def balance_on_date(self, on_date, account_names=None, account_guids=None, start_balance=False):
+    def balance_on_date(self, on_date, col_value_currency=cols.VALUE_CURRENCY,
+                        account_names=None, account_guids=None, start_balance=False):
         """
         Возвращает DataFrame со строками балансов выбранных счетов на конец дня заданной даты
         Если задано start_balance=True - будет значение на начало дня заданной даты
@@ -588,19 +597,6 @@ class GNUCashData:
         :return: DataFrame с балансами
         """
 
-        # df = pandas.DataFrame(self.df_splits,
-        #                           columns=[cols.POST_DATE,
-        #                                    # cols.TRANSACTION_GUID,
-        #                                    cols.ACCOUNT_GUID,
-        #                                    'fullname',
-        #                                    cols.COMMODITY_GUID,
-        #                                    cols.ACCOUNT_TYPE,
-        #                                    # cols.VALUE,
-        #                                    cols.CUM_SUM,
-        #                                    cols.SHORTNAME,
-        #                                    # cols.MNEMONIC
-        #                                    ])
-        # df = self.df_splits.copy()
         # Сортировка по дате
         if start_balance:
             # date_1 = datetime.datetime.strptime(start_date, "%m/%d/%y")
@@ -619,10 +615,11 @@ class GNUCashData:
         df = df[~df.index.duplicated(keep='last')]
         # Теперь в cum_sum - остаток по счету на дату (если он есть)
         df[cols.POST_DATE] = numpy.datetime64(on_date)
-        df.drop(cols.VALUE, axis=1, inplace=True)
-        df.rename(columns={cols.CUM_SUM: cols.VALUE}, inplace=True)
+        # df.drop(cols.VALUE, axis=1, inplace=True)
+        # df.rename(columns={cols.CUM_SUM: cols.VALUE}, inplace=True)
         if not df.empty:
-            df = self._currency_calc(df)
+            df = self._currency_calc(df, col_value=cols.CUM_SUM,
+                                     col_value_currency=col_value_currency)
             # Теперь в value_currency - остаток в валюте учета (если он есть)
             # df[cols.ACCOUNT_GUID] = df.index
         df.set_index('guid', inplace=True)
@@ -746,7 +743,7 @@ class GNUCashData:
         # else:
         df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
 
-        dataframe_to_excel(df_xirr, 'df_xirr')
+        # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         yield_total = self._xirr_by_dataframe(df_xirr)
@@ -1093,6 +1090,7 @@ class GNUCashData:
         if not end_date:
             end_date = self.max_date
         df_itog_balances = self.balance_on_date(end_date, account_guids=account_guids)
+        # dataframe_to_excel(df_itog_balances, 'end_balance')
 
         # Добавление начального баланса
         if from_date:
@@ -1100,7 +1098,7 @@ class GNUCashData:
             # Начальный баланс - это потрачено
             start_balances[cols.VALUE_CURRENCY] = start_balances[cols.VALUE_CURRENCY] * (-1)
 
-            df_itog_balances = pandas.concat([start_balances, df_itog_balances], ignore_index=True) # TODO Эту строку нужно проверить
+            df_itog_balances = pandas.concat([start_balances, df_itog_balances], ignore_index=True)
 
         # Задать xirr_value и xirr_account
         df_itog_balances[cols.XIRR_VALUE] = df_itog_balances[cols.VALUE_CURRENCY]
@@ -1257,7 +1255,7 @@ class GNUCashData:
 
 
         # пересчет в нужную валюту
-        group = self._currency_calc(sel_df, from_date=from_date, to_date=to_date, period='D', guid_name=cols.CURRENCY_GUID)
+        group = self._currency_calc(sel_df, from_date=from_date)
 
         return group
 
@@ -1421,7 +1419,12 @@ class GNUCashData:
 
         return sel_df
 
-    def _currency_calc(self, dataframe, guid_name=cols.COMMODITY_GUID):
+    def _currency_calc(self, dataframe: pandas.DataFrame,
+                       col_value=cols.VALUE,
+                       col_currency_guid=cols.COMMODITY_GUID,
+                       col_rate=cols.RATE,
+                       col_value_currency=cols.VALUE_CURRENCY
+                       ):
         """
         Добавляет в dataframe колонку с курсом валюты и колонку со стоимостью в валюте учета
         Исходный datafrmae должен содержать поля:
@@ -1439,79 +1442,89 @@ class GNUCashData:
         :param period:
         :return: DataFrame с добавленными колонками
         """
-        guid1=cols.COMMODITY_GUID
+        # guid1=cols.COMMODITY_GUID
+        # guid2=cols.CURRENCY_GUID
 
-        guid2=cols.CURRENCY_GUID
-
-
-        df = dataframe.copy()
+        df = dataframe
+        # if not inplace:
+            # df = dataframe
+        # else:
+        #     df = df.copy()
         # Получаем список всех нужных mnemonic
         # commodity_guids = df[guid_name].drop_duplicates().tolist()
         # Получаем их сгруппированные цены
         # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
-        group_prices = self.df_prices_days
+
+        # Определяем цены на нужные даты
+        # group_prices = self.df_prices_days
+        start_date = df[cols.POST_DATE].min()
+        end_date = df[cols.POST_DATE].max()
+
+        prices_on_dates = self._group_prices_by_period(start_date, end_date, 'D', col_rate=col_rate)
         # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
-        if group_prices.empty:
-            df[cols.RATE] = 1
+        if prices_on_dates.empty:
+            df[col_rate] = 1
         else:
-            df = df.merge(group_prices, left_on=[guid_name, cols.POST_DATE], right_index=True,
+            df = df.merge(prices_on_dates, left_on=[col_currency_guid, cols.POST_DATE], right_index=True,
                           how='left')
         # Заполнить пустые поля еденицей
-        df[cols.RATE] = df[cols.RATE].fillna(Decimal(1))
+        df[col_rate] = df[col_rate].fillna(Decimal(1))
+
+        # dataframe_to_excel(df, 'rates')
 
         # Пересчет в валюту представления
         # dataframe_to_excel(df, 'df_error')
-        df[cols.VALUE_CURRENCY] = (df[cols.VALUE] * df[cols.RATE]).apply(lambda x: round(x, 2))
+        df[col_value_currency] = (df[col_value] * df[col_rate]).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
         return df
 
-    def _splits_currency_calc(self):
-        """
-        Подсчитывает сумму сплита транзакции в валюте учета.
-        Добавляется колонка 
-        value_currency - сумма сплита транзакции в валюте учета
-        [cancelled]balance_currency - остаток по счету после транзакции в валюте учета
-        rate_currency - курс валюты для колонки value
-        [cancelled]rate_commodity - курс валюты для остатка по счету
-        :return: DataFrame с добавленными колонками
-        """
-
-        # dataframe = self.df_splits
-        # df = dataframe.copy()
-        # Получаем список всех нужных mnemonic
-        # commodity_guids = df[cols.COMMODITY_GUID].drop_duplicates().tolist()
-        # currency_guids = df[cols.CURRENCY_GUID].drop_duplicates().tolist()
-        # Получаем их сгруппированные цены
-        # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
-        # group_prices = group_prices.reset_index()
-        group_prices = self.df_prices_days
-
-        # Добавление колонки курс
-        if group_prices.empty:
-            # self.df_splits['rate_commodity'] = 1
-            self.df_splits[cols.RATE_CURRENCY] = 1
-        else:
-            # self.df_splits = self.df_splits.merge(group_prices, left_on=[cols.COMMODITY_GUID, cols.POST_DATE], right_index=True,
-            #               how='left')
-            # self.df_splits.rename(columns={cols.RATE: 'rate_commodity'}, inplace=True)
-            self.df_splits = self.df_splits.merge(group_prices, left_on=[cols.CURRENCY_GUID, cols.POST_DATE], right_index=True,
-                          how='left')
-            self.df_splits.rename(columns={cols.RATE: cols.RATE_CURRENCY}, inplace=True)
-        # Заполнить пустые поля еденицей
-        self.df_splits[cols.RATE_CURRENCY] = self.df_splits[cols.RATE_CURRENCY].fillna(Decimal(1))
-        # self.df_splits['rate_commodity'] = self.df_splits['rate_commodity'].fillna(Decimal(1))
-
-        # Пересчет в валюту представления
-        self.df_splits[cols.VALUE_CURRENCY] = (self.df_splits[cols.VALUE] * self.df_splits[cols.RATE_CURRENCY]).apply(lambda x: round(x, 2))
-        # self.df_splits['balance_currency'] = (self.df_splits[cols.CUM_SUM] * self.df_splits['rate_commodity']).apply(lambda x: round(x, 2))
-        # Теперь в колонке value_currency реальная сумма в рублях
-        # self.df_splits_cur = df
-        # Конец пересчета в нужную валюту
-        # return df
+    # def _splits_currency_calc(self):
+    #     """
+    #     Подсчитывает сумму сплита транзакции в валюте учета.
+    #     Добавляется колонка
+    #     value_currency - сумма сплита транзакции в валюте учета
+    #     [cancelled]balance_currency - остаток по счету после транзакции в валюте учета
+    #     rate_currency - курс валюты для колонки value
+    #     [cancelled]rate_commodity - курс валюты для остатка по счету
+    #     :return: DataFrame с добавленными колонками
+    #     """
+    #
+    #     # dataframe = self.df_splits
+    #     # df = dataframe.copy()
+    #     # Получаем список всех нужных mnemonic
+    #     # commodity_guids = df[cols.COMMODITY_GUID].drop_duplicates().tolist()
+    #     # currency_guids = df[cols.CURRENCY_GUID].drop_duplicates().tolist()
+    #     # Получаем их сгруппированные цены
+    #     # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
+    #     # group_prices = group_prices.reset_index()
+    #     group_prices = self.df_prices_days
+    #
+    #     # Добавление колонки курс
+    #     if group_prices.empty:
+    #         # self.df_splits['rate_commodity'] = 1
+    #         self.df_splits[cols.RATE_CURRENCY] = 1
+    #     else:
+    #         # self.df_splits = self.df_splits.merge(group_prices, left_on=[cols.COMMODITY_GUID, cols.POST_DATE], right_index=True,
+    #         #               how='left')
+    #         # self.df_splits.rename(columns={cols.RATE: 'rate_commodity'}, inplace=True)
+    #         self.df_splits = self.df_splits.merge(group_prices, left_on=[cols.CURRENCY_GUID, cols.POST_DATE], right_index=True,
+    #                       how='left')
+    #         self.df_splits.rename(columns={cols.RATE: cols.RATE_CURRENCY}, inplace=True)
+    #     # Заполнить пустые поля еденицей
+    #     self.df_splits[cols.RATE_CURRENCY] = self.df_splits[cols.RATE_CURRENCY].fillna(Decimal(1))
+    #     # self.df_splits['rate_commodity'] = self.df_splits['rate_commodity'].fillna(Decimal(1))
+    #
+    #     # Пересчет в валюту представления
+    #     self.df_splits[cols.VALUE_CURRENCY] = (self.df_splits[cols.VALUE] * self.df_splits[cols.RATE_CURRENCY]).apply(lambda x: round(x, 2))
+    #     # self.df_splits['balance_currency'] = (self.df_splits[cols.CUM_SUM] * self.df_splits['rate_commodity']).apply(lambda x: round(x, 2))
+    #     # Теперь в колонке value_currency реальная сумма в рублях
+    #     # self.df_splits_cur = df
+    #     # Конец пересчета в нужную валюту
+    #     # return df
 
     def _group_by_accounts(self, dataframe, glevel=1, drop_null=False):
         """
@@ -1670,7 +1683,7 @@ class GNUCashData:
         df_new = df_new.dropna()
         return df_new
 
-    def _group_prices_by_period(self, from_date, to_date, period='M', guids=None):
+    def _group_prices_by_period(self, from_date, to_date, period='M', guids=None, col_rate=cols.RATE):
         """
         Получение курса/цен активов за период
         Возвращает таблицу с ценой каждого актива на конец периода (по последней ближайшей к дате)
@@ -1738,25 +1751,25 @@ class GNUCashData:
             pass
 
         # Теперь в колонке rate курс ценной бумаги в рублях
-        group_prices.rename(columns={cols.VALUE: cols.RATE, cols.CURRENCY_GUID: 'price_currency_guid'}, inplace=True)
+        group_prices.rename(columns={cols.VALUE: col_rate, cols.CURRENCY_GUID: cols.PRICE_CURRENCY_GUID}, inplace=True)
         return group_prices
 
-    def get_balance(self, account, is_guid=False, on_date=None):
-        """
-        Возвращает баланс счета на заданную дату
-        :param account: Полное имя счета или guid счета в зависимотси от is_guid
-        :param is_guid: False - account is fullname, True - account is guid
-        :param on_date: Дата на которую считается баланс или None для окончательного баланса
-        :return: Баланс в еденицах счета
-        """
-        if is_guid:
-            sel_df = self.df_splits[(self.df_splits[cols.ACCOUNT_GUID] == account)]
-        else:
-            sel_df = self.df_splits[(self.df_splits[cols.FULLNAME] == account)]
-        if not on_date is None:
-            sel_df = sel_df[sel_df[cols.POST_DATE] <= on_date]
-        balance = sel_df[cols.QUANTITY].sum()
-        return balance
+    # def get_balance(self, account, is_guid=False, on_date=None):
+    #     """
+    #     Возвращает баланс счета на заданную дату
+    #     :param account: Полное имя счета или guid счета в зависимотси от is_guid
+    #     :param is_guid: False - account is fullname, True - account is guid
+    #     :param on_date: Дата на которую считается баланс или None для окончательного баланса
+    #     :return: Баланс в еденицах счета
+    #     """
+    #     if is_guid:
+    #         sel_df = self.df_splits[(self.df_splits[cols.ACCOUNT_GUID] == account)]
+    #     else:
+    #         sel_df = self.df_splits[(self.df_splits[cols.FULLNAME] == account)]
+    #     if not on_date is None:
+    #         sel_df = sel_df[sel_df[cols.POST_DATE] <= on_date]
+    #     balance = sel_df[cols.QUANTITY].sum()
+    #     return balance
 
     def _get_fullname_account(self, account_guid):
         """
@@ -1828,49 +1841,49 @@ class GNUCashData:
         df_obj.set_index(fields[0], inplace=True)
         return df_obj
 
-    def __to_excel(self, filename):
-        """
-        Запись таблиц DataFrame в фалй Excel. Для отладки
-        :param filename:
-        :return:
-        """
+    # def __to_excel(self, filename):
+    #     """
+    #     Запись таблиц DataFrame в фалй Excel. Для отладки
+    #     :param filename:
+    #     :return:
+    #     """
+    #
+    #     writer = pandas.ExcelWriter(filename)
+    #     self.df_accounts.to_excel(writer, "accounts")
+    #     self.df_transactions.to_excel(writer, "transactions")
+    #     self.df_commodities.to_excel(writer, "commodities")
+    #     self.df_splits.to_excel(writer, "splits")
+    #     self.df_prices.to_excel(writer, "prices")
+    #
+    #     writer.save()
 
-        writer = pandas.ExcelWriter(filename)
-        self.df_accounts.to_excel(writer, "accounts")
-        self.df_transactions.to_excel(writer, "transactions")
-        self.df_commodities.to_excel(writer, "commodities")
-        self.df_splits.to_excel(writer, "splits")
-        self.df_prices.to_excel(writer, "prices")
+    # @staticmethod
+    # def _read_dataframe_from_excel(filename, sheet='Sheet1'):
+    #     """
+    #     Чтение dataframe из Excel
+    #     :param filename:
+    #     :param sheet:
+    #     :return: DataFrame
+    #     """
+    #     xls = pandas.ExcelFile(filename)
+    #     df = xls.parse(sheet)
+    #     xls.close()
+    #     return df
 
-        writer.save()
-
-    @staticmethod
-    def _read_dataframe_from_excel(filename, sheet='Sheet1'):
-        """
-        Чтение dataframe из Excel
-        :param filename:
-        :param sheet:
-        :return: DataFrame
-        """
-        xls = pandas.ExcelFile(filename)
-        df = xls.parse(sheet)
-        xls.close()
-        return df
-
-    def _read_from_excel(self, filename):
-        """
-        Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
-        :param filename:
-        :return:
-        """
-
-        self.book_name = os.path.basename(filename)
-        xls = pandas.ExcelFile(filename)
-
-        self.df_accounts = xls.parse('accounts')
-        self.df_transactions = xls.parse('transactions')
-        self.df_commodities = xls.parse('commodities')
-        self.df_splits = xls.parse('splits')
-        self.df_prices = xls.parse('prices')
-
-        xls.close()
+    # def _read_from_excel(self, filename):
+    #     """
+    #     Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
+    #     :param filename:
+    #     :return:
+    #     """
+    #
+    #     self.book_name = os.path.basename(filename)
+    #     xls = pandas.ExcelFile(filename)
+    #
+    #     self.df_accounts = xls.parse('accounts')
+    #     self.df_transactions = xls.parse('transactions')
+    #     self.df_commodities = xls.parse('commodities')
+    #     self.df_splits = xls.parse('splits')
+    #     self.df_prices = xls.parse('prices')
+    #
+    #     xls.close()
