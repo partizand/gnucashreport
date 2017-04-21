@@ -628,10 +628,29 @@ class GNUCashData:
         df.set_index('guid', inplace=True)
         return df
 
-    def yield_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None):
+    def yield_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None, recurse=True):
+        """
+        Calculate annual return for account or account and it childrens (recurse)
+        
+        Set account name or account guid
+        if not set account_guid and account_name will use root account
+        
+        if not set to_date will use today date
+        You may use self.max_date - to set last transaction date in gnucash base
+        
+        :param account_guid: 
+        :param account_name: 
+        :param account_types: array for filter by account types
+        :param from_date: 
+        :param to_date: 
+        :param recurse: calculate children accounts returns too
+        :return: dataframe
+        """
 
         ar_xirr = self._xirr_child_calc_array(account_guid=account_guid, account_name=account_name,
-                                              account_types=account_types, from_date=from_date, to_date=to_date)
+                                              account_types=account_types,
+                                              from_date=from_date, to_date=to_date,
+                                              recurse=recurse)
 
         # Колонки в нужной последовательности
         df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME,
@@ -655,7 +674,20 @@ class GNUCashData:
 
         return df
 
-    def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
+    def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None,
+                               from_date=None, to_date=None, df_all_xirr=None, recurse=True):
+        """
+        Подсчитывает доходность счета или счетов
+        Возвращает массив словарей
+        :param account_guid: 
+        :param account_name: 
+        :param account_types: 
+        :param from_date: 
+        :param to_date: 
+        :param df_all_xirr: 
+        :param recurse: 
+        :return: array of dictionaries with annual return 
+        """
 
         root_guid = account_guid
 
@@ -671,31 +703,84 @@ class GNUCashData:
         ar_xirr = []
 
         if df_all_xirr is None:
-            child_guids = self._get_child_accounts(root_guid, account_types=account_types, recurse=True)
+            child_guids = self._get_child_accounts(root_guid, account_types=account_types,
+                                                   xirr_enable=True, recurse=True)
             account_guids = [root_guid] + child_guids
             df_all_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
 
-
         if root_guid != self.root_account_guid:
-            xirr_root = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date, df_all_xirr=df_all_xirr)
+            xirr_root = self._xirr_calc(account_guid=root_guid, account_types=account_types, df_all_xirr=df_all_xirr)
             ar_xirr += [xirr_root]
 
-        childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types, recurse=False)
-        # if root_guid != self.root_account_guid:
-        #     childs = [root_guid] + childs
+        # Считаем доходность потомков, если нужно
+        if recurse:
 
-        for child in childs:
-            # xirr_current = self._xirr_calc(root_guid, account_types=account_types, from_date=from_date, to_date=to_date)
-            # ar_xirr.append(xirr_current)
+            childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types, recurse=False)
 
-            sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types, df_all_xirr=df_all_xirr)
-            ar_xirr += sub_xirr
+            for child in childs:
+
+                sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types,
+                                                       df_all_xirr=df_all_xirr, recurse=recurse)
+                ar_xirr += sub_xirr
 
         # df_xirr = pandas.DataFrame(ar_xirr)
 
         return ar_xirr
 
-    def _get_child_accounts(self, account_guid, account_types=None, recurse=True):
+    # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
+    def _xirr_calc(self, account_guid, account_types, df_all_xirr: pandas.DataFrame):
+        """
+        Возвращает итоговую доходность по указанному счету по таблице df_all_xirr
+        :param account_guid: 
+        :param account_types: 
+        :param df_all_xirr: table with all xirr values for calculating
+        :return: dictionary with annual return
+        """
+        child_guids = self._get_child_accounts(account_guid, account_types=account_types,
+                                               xirr_enable=True, recurse=True)
+        account_guids = [account_guid] + child_guids
+
+        # if df_all_xirr is None:
+        #     df_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
+        #
+        # else:
+        df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
+
+        # dataframe_to_excel(df_xirr, 'df_xirr')
+
+        # Общая доходность
+        yield_total = self._xirr_by_dataframe(df_xirr)
+
+        # Доходность денежного потока
+        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.INCOME])):
+            yield_income = 0
+        else:
+            # Доходность без денежного потока
+            df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.INCOME]
+            without_income_yeld = self._xirr_by_dataframe(df_without_income)
+            yield_income = yield_total - without_income_yeld
+
+        # Стоимость расходов
+        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.EXPENSE])):
+            yield_expense = 0
+        else:
+            # Доходность без расходов
+            df_without_expense = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.EXPENSE]
+            yield_without_expense = self._xirr_by_dataframe(df_without_expense)
+            yield_expense = yield_without_expense - yield_total
+
+        itog = {}
+        round_prec = 4
+        itog[cols.FULLNAME] = self.df_accounts.loc[account_guid][cols.FULLNAME]
+        itog[cols.SHORTNAME] = self.df_accounts.loc[account_guid][cols.SHORTNAME]
+        itog[cols.YIELD_TOTAL] = round(yield_total, round_prec)
+        itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
+        itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
+        itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
+
+        return itog
+
+    def _get_child_accounts(self, account_guid, account_types=None, xirr_enable=None, recurse=True):
         """
         Возвращает список счетов потомков
         recurse=True - Список всех потомков
@@ -703,10 +788,15 @@ class GNUCashData:
         :param account_guid: 
         :return: 
         """
-        df = self.df_accounts.copy()
+        # df = self.df_accounts.copy()
+        # speed optimization
+        df = self.df_accounts
         # Фильтрация по типам счетов
         if account_types:
             df = df[(df[cols.ACCOUNT_TYPE]).isin(account_types)]
+        # Фильтрация по xirr_enable
+        if xirr_enable:
+            df = df[df[cols.XIRR_ENABLE] == xirr_enable]
 
         df = df[df[cols.PARENT_GUID] == account_guid]
         childs = df.index.tolist()
@@ -731,77 +821,7 @@ class GNUCashData:
         else:
             return None
 
-    def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
-        """
-        Возвращает доходность итоговую по указанному счету и его потомков за заданный период
-        :param from_date: 
-        :param to_date: 
-        :param accounts: 
-        :param df_all_xirr: для ускорения рекурсии - строки с начальными и конечными балансами со всеми счетами
-                            неуказание влияет только на скорость работы
-        :return: 
-        """
-        child_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
-        account_guids = [account_guid] + child_guids
 
-        if df_all_xirr is None:
-            df_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
-
-        else:
-            df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
-
-        # dataframe_to_excel(df_xirr, 'df_xirr')
-
-        # Общая доходность
-        yield_total = self._xirr_by_dataframe(df_xirr)
-
-
-
-        # yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
-        # yield_without_expense = self._xirr_by_dataframe(df_without_expense)
-
-        # yield_expense = yield_without_expense - yield_total
-
-        # Доходность денежного потока
-        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.INCOME])):
-            yield_income = 0
-            # yield_gain = yield_total
-        else:
-            # Доходность без денежного потока
-            df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.INCOME]
-            without_income_yeld = self._xirr_by_dataframe(df_without_income)
-            yield_income = yield_total - without_income_yeld
-            # yield_gain = yield_total - yield_income
-
-        # Стоимость расходов
-        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.EXPENSE])):
-            yield_expense = 0
-            # yield_without_expense = yield_total
-        else:
-            # Доходность без расходов
-            df_without_expense = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.EXPENSE]
-            yield_without_expense = self._xirr_by_dataframe(df_without_expense)
-            yield_expense = yield_without_expense - yield_total
-
-        itog = {}
-        round_prec = 4
-        # itog[cols.ACCOUNT_GUID] = account_guid
-        itog[cols.FULLNAME] = self.df_accounts.loc[account_guid][cols.FULLNAME]
-        itog[cols.SHORTNAME] = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-        itog[cols.YIELD_TOTAL] = round(yield_total, round_prec)
-        # itog['yield_total2'] = yield_total
-        itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
-        itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
-        # itog[cols.YIELD_CAPITAL] = round(yield_gain, round_prec)
-        itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
-        # itog['yield_without_expense'] = yield_without_expense
-
-        # print(yield_total)
-        # print(yield_income)
-        # print(yield_expense)
-        # print(yield_without_expense)
-
-        return itog
 
     # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None):
     #     """
@@ -966,7 +986,8 @@ class GNUCashData:
         :return: account_guid
         """
         # Если счет один, то он и главный
-        df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
+        # df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
+        df_asset = dataframe[dataframe[cols.XIRR_ENABLE]] # Долго
         # Нет счетов вообще
         if df_asset.empty:
             return None
@@ -986,37 +1007,37 @@ class GNUCashData:
         df = df_asset.copy()
         df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x:  math.fabs(x))
         df.sort_values('value_sort')
-        return df.iloc[-1][cols.ACCOUNT_GUID]
+        return df.iloc[0][cols.ACCOUNT_GUID]
 
 
-    def _add_xirr_value(self, df: pandas.DataFrame, on_types=ALL_XIRR_TYPES, on_xirr_enable=True, xirr_account=None):
-        """
-        Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
-        dataframe - Это отобранные строки из df_splits
-        Если xirr_account = None, то записывается account_guid строки, иначе переданный guid
-        xirr_value = value_currency * -1
-        :param dataframe: 
-        :param xirr_account: 
-        :return: 
-        """
-
-        for index, row in df.iterrows():
-
-
-            account_type = row[cols.ACCOUNT_TYPE]
-            if account_type in on_types:
-                xirr_enable = row[cols.XIRR_ENABLE]
-                if xirr_enable == on_xirr_enable:
-                    value_currency = row[cols.VALUE_CURRENCY]
-                    if value_currency != 0:
-
-                        # split[cols.XIRR_VALUE] = value_currency * -1
-                        df.loc[index, cols.XIRR_VALUE] = value_currency * -1
-                        if xirr_account: # Значит Income or Expense
-                            df.loc[index, cols.XIRR_ACCOUNT] = xirr_account
-                        else: # Значит asset
-                            account_guid = row[cols.ACCOUNT_GUID]
-                            df.loc[index, cols.XIRR_ACCOUNT] = account_guid
+    # def _add_xirr_value(self, df: pandas.DataFrame, on_types=ALL_XIRR_TYPES, on_xirr_enable=True, xirr_account=None):
+    #     """
+    #     Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
+    #     dataframe - Это отобранные строки из df_splits
+    #     Если xirr_account = None, то записывается account_guid строки, иначе переданный guid
+    #     xirr_value = value_currency * -1
+    #     :param dataframe:
+    #     :param xirr_account:
+    #     :return:
+    #     """
+    #
+    #     for index, row in df.iterrows():
+    #
+    #
+    #         account_type = row[cols.ACCOUNT_TYPE]
+    #         if account_type in on_types:
+    #             xirr_enable = row[cols.XIRR_ENABLE]
+    #             if xirr_enable == on_xirr_enable:
+    #                 value_currency = row[cols.VALUE_CURRENCY]
+    #                 if value_currency != 0:
+    #
+    #                     # split[cols.XIRR_VALUE] = value_currency * -1
+    #                     df.loc[index, cols.XIRR_VALUE] = value_currency * -1
+    #                     if xirr_account: # Значит Income or Expense
+    #                         df.loc[index, cols.XIRR_ACCOUNT] = xirr_account
+    #                     else: # Значит asset
+    #                         account_guid = row[cols.ACCOUNT_GUID]
+    #                         df.loc[index, cols.XIRR_ACCOUNT] = account_guid
 
 
     # def _add_xirr_info(self):
@@ -1146,43 +1167,39 @@ class GNUCashData:
 
 
 
-    def _add_xirr_value_old(self, dataframe, xirr_account=None):
-        """
-        Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
-        dataframe - Это отобранные строки из df_splits
-        Если xirr_account = None, то записывается account_guid строки, иначе переданный guid
-        xirr_value = value_currency * -1
-        :param dataframe: 
-        :param xirr_account: 
-        :return: 
-        """
+    # def _add_xirr_value_old(self, dataframe, xirr_account=None):
+    #     """
+    #     Добавляет в df_splits значения для xirr_value и xirr_account из dataframe
+    #     dataframe - Это отобранные строки из df_splits
+    #     Если xirr_account = None, то записывается account_guid строки, иначе переданный guid
+    #     xirr_value = value_currency * -1
+    #     :param dataframe:
+    #     :param xirr_account:
+    #     :return:
+    #     """
+    #
+    #     for index in dataframe.index.values:
+    #         value_currency = self.df_splits.loc[index, cols.VALUE_CURRENCY]
+    #         if value_currency != 0:
+    #             self.df_splits.loc[index, cols.XIRR_VALUE] = value_currency * -1
+    #             if xirr_account:
+    #                 self.df_splits.loc[index, cols.XIRR_ACCOUNT] = xirr_account
+    #             else:
+    #                 self.df_splits.loc[index, cols.XIRR_ACCOUNT] = self.df_splits.loc[index, cols.ACCOUNT_GUID]
 
-        for index in dataframe.index.values:
-            value_currency = self.df_splits.loc[index, cols.VALUE_CURRENCY]
-            if value_currency != 0:
-                self.df_splits.loc[index, cols.XIRR_VALUE] = value_currency * -1
-                if xirr_account:
-                    self.df_splits.loc[index, cols.XIRR_ACCOUNT] = xirr_account
-                else:
-                    self.df_splits.loc[index, cols.XIRR_ACCOUNT] = self.df_splits.loc[index, cols.ACCOUNT_GUID]
-
-    def _has_splits_for_xirr(self, df_tr_splits):
-        """
-        Проверка, есть ли в транзакции проводки, для которых необходимо считать xirr
-        true - есть
-        false - нет
-        :param df_tr_splits: 
-        :return: 
-        """
-        # return True
-        # all_types = df_tr_splits[cols.ACCOUNT_TYPE].drop_duplicates().tolist()
-        # for cur_type in all_types:
-        #     if cur_type in self.ALL_XIRR_TYPES:
-        #         return True
-        if any(df_tr_splits[cols.ACCOUNT_TYPE].isin(self.ALL_XIRR_TYPES)):
-            return True
-        else:
-            return False
+    # def _has_splits_for_xirr(self, df_tr_splits):
+    #     """
+    #     Проверка, есть ли в транзакции проводки, для которых необходимо считать xirr
+    #     true - есть
+    #     false - нет
+    #     :param df_tr_splits:
+    #     :return:
+    #     """
+    #
+    #     if any(df_tr_splits[cols.ACCOUNT_TYPE].isin(self.ALL_XIRR_TYPES)):
+    #         return True
+    #     else:
+    #         return False
 
 
 
@@ -1278,154 +1295,151 @@ class GNUCashData:
 
         return sel_df
 
-    def _filter_for_xirr_old(self, account_guids, from_date=None, to_date=None):
-        """
-        Отбирает проводки для подсчета доходности по xirr
-        Возвращает dataframe с полем post_date и value_currency
-        Итоговый dataframe может содержать нулевые проводки (для поиска доп доходов и комиссий)
-        Для поиска доп доходов и комиссий используйте _find_income_for_xirr
-        :param from_date: 
-        :param to_date: 
-        :param accounts: 
-        :return: 
-        """
+    # def _filter_for_xirr_old(self, account_guids, from_date=None, to_date=None):
+    #     """
+    #     Отбирает проводки для подсчета доходности по xirr
+    #     Возвращает dataframe с полем post_date и value_currency
+    #     Итоговый dataframe может содержать нулевые проводки (для поиска доп доходов и комиссий)
+    #     Для поиска доп доходов и комиссий используйте _find_income_for_xirr
+    #     :param from_date:
+    #     :param to_date:
+    #     :param accounts:
+    #     :return:
+    #     """
+    #
+    #
+    #     sel_df = (self.df_splits[(self.df_splits[cols.ACCOUNT_GUID]).isin(account_guids)]).copy()
+    #
+    #     # Фильтрация по времени
+    #     if from_date:
+    #         sel_df = sel_df[(sel_df[cols.POST_DATE] >= from_date)]
+    #     if to_date:
+    #         sel_df = sel_df[(sel_df[cols.POST_DATE] <= to_date)]
+    #
+    #     # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+    #     sel_df = self._xirr_drop_income(sel_df)
+    #
+    #     #
+    #
+    #     # Нужно добавить начальный и конечный баланс (Если не задана начальная дата, то начальный баланс не нужен)
+    #
+    #     # Можно брать баланс на дату предшествующую нужной.
+    #     # Можно ли взять баланс сразу для всех?
+    #
+    #     # Конечный баланс это cum_sum (кол-во бумаг) на последнюю дату
+    #     # Его нужно пересчитать в валюту учета
+    #
+    #     # Начальный баланс это cum_sum на день раньше from_date
+    #     # Его нужно пересчитать в валюту учета
+    #     # cum_sum может отсутствовать. Если отсутсвует, то = 0, просто ничего не нужно делать
+    #
+    #     # Для пересчета в валюту учета, нужно добавить rate на начльную и конечную даты и перемножить
+    #     # теоретически для получения курса на дату можно вызвать функцию _group_prices_by_period
+    #     # с одинаковой датой начала и конца и периодом день
+    #
+    #     # Это неправильно, нужно брать все счета, а не по только те по которым были движения
+    #     # all_acc_guids = sel_df[cols.ACCOUNT_GUID].drop_duplicates().tolist()
+    #
+    #     # Добавление начального баланса
+    #     if from_date:
+    #         start_balances = self.balance_on_date(from_date, account_guids=account_guids)
+    #         sel_df = pandas.concat([sel_df, start_balances], ignore_index=True)
+    #
+    #     # Все что участвует в транзакциях и является начальным балансом мы потратили
+    #     # Поэтому минусуем
+    #     sel_df[cols.VALUE_CURRENCY] = sel_df[cols.VALUE_CURRENCY] * (-1)
+    #
+    #     # Добавление конечного баланса
+    #     end_date = to_date
+    #     if not end_date:
+    #         end_date = self.max_date
+    #     end_balances = self.balance_on_date(end_date, account_guids=account_guids)
+    #     # Конечные балансы это то, что мы получим. Поэтому оставляем с плюсом
+    #     # end_balances[cols.VALUE_CURRENCY] = end_balances[cols.VALUE_CURRENCY] * (-1)
+    #     sel_df = pandas.concat([sel_df, end_balances], ignore_index=True)
+    #
+    #     # Отбираем нужные колонки
+    #     sel_df = pandas.DataFrame(sel_df,
+    #                               columns=[cols.POST_DATE,
+    #                                        cols.TRANSACTION_GUID,
+    #                                        cols.ACCOUNT_GUID,
+    #                                        cols.FULLNAME,
+    #                                        cols.COMMODITY_GUID,
+    #                                        cols.ACCOUNT_TYPE,
+    #                                        # cols.VALUE,
+    #                                        cols.VALUE_CURRENCY,
+    #                                        # 'balance_currency',
+    #                                        cols.SHORTNAME
+    #                                        # cols.MNEMONIC
+    #                                        ])
+    #
+    #     return sel_df
 
-        # if accounts:
-            # Выбранные счета
-            # if type(accounts) is str:
-            #     accounts = [accounts]
-        sel_df = (self.df_splits[(self.df_splits[cols.ACCOUNT_GUID]).isin(account_guids)]).copy()
+    # def _xirr_drop_income(self, dataframe):
+    #     """
+    #     Удаляет лишние записи по учету прибылей/убытков по счету
+    #     Логика работы:
+    #     Удаляются не нулевые строки у которых есть не нулевой income
+    #     :param dataframe:
+    #     :return: dataframe с убранными лишними записями
+    #     """
+    #     # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
+    #     # удалить не нулевые строки у которых есть не нулевой income? Задача попроще, но правильно ли?
+    #
+    #     # df = dataframe.copy()
+    #     df = dataframe[dataframe[cols.VALUE_CURRENCY] != 0]
+    #
+    #     df_income = self._find_income_for_xirr(df, self.INCOME)
+    #
+    #     all_tr_guids = df_income[cols.TRANSACTION_GUID].drop_duplicates().tolist()
+    #
+    #     dataframe = dataframe[~dataframe[cols.TRANSACTION_GUID].isin(all_tr_guids)]
+    #
+    #     # dataframe_to_excel(dataframe, 'dataframe')
+    #
+    #     return dataframe
 
-        # Фильтрация по времени
-        if from_date:
-            sel_df = sel_df[(sel_df[cols.POST_DATE] >= from_date)]
-        if to_date:
-            sel_df = sel_df[(sel_df[cols.POST_DATE] <= to_date)]
-
-        # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
-        sel_df = self._xirr_drop_income(sel_df)
-
-        #
-
-        # Нужно добавить начальный и конечный баланс (Если не задана начальная дата, то начальный баланс не нужен)
-
-        # Можно брать баланс на дату предшествующую нужной.
-        # Можно ли взять баланс сразу для всех?
-
-        # Конечный баланс это cum_sum (кол-во бумаг) на последнюю дату
-        # Его нужно пересчитать в валюту учета
-
-        # Начальный баланс это cum_sum на день раньше from_date
-        # Его нужно пересчитать в валюту учета
-        # cum_sum может отсутствовать. Если отсутсвует, то = 0, просто ничего не нужно делать
-
-        # Для пересчета в валюту учета, нужно добавить rate на начльную и конечную даты и перемножить
-        # теоретически для получения курса на дату можно вызвать функцию _group_prices_by_period
-        # с одинаковой датой начала и конца и периодом день
-
-        # Это неправильно, нужно брать все счета, а не по только те по которым были движения
-        # all_acc_guids = sel_df[cols.ACCOUNT_GUID].drop_duplicates().tolist()
-
-        # Добавление начального баланса
-        if from_date:
-            start_balances = self.balance_on_date(from_date, account_guids=account_guids)
-            sel_df = pandas.concat([sel_df, start_balances], ignore_index=True)
-
-        # Все что участвует в транзакциях и является начальным балансом мы потратили
-        # Поэтому минусуем
-        sel_df[cols.VALUE_CURRENCY] = sel_df[cols.VALUE_CURRENCY] * (-1)
-
-        # Добавление конечного баланса
-        end_date = to_date
-        if not end_date:
-            end_date = self.max_date
-        end_balances = self.balance_on_date(end_date, account_guids=account_guids)
-        # Конечные балансы это то, что мы получим. Поэтому оставляем с плюсом
-        # end_balances[cols.VALUE_CURRENCY] = end_balances[cols.VALUE_CURRENCY] * (-1)
-        sel_df = pandas.concat([sel_df, end_balances], ignore_index=True)
-
-        # Отбираем нужные колонки
-        sel_df = pandas.DataFrame(sel_df,
-                                  columns=[cols.POST_DATE,
-                                           cols.TRANSACTION_GUID,
-                                           cols.ACCOUNT_GUID,
-                                           cols.FULLNAME,
-                                           cols.COMMODITY_GUID,
-                                           cols.ACCOUNT_TYPE,
-                                           # cols.VALUE,
-                                           cols.VALUE_CURRENCY,
-                                           # 'balance_currency',
-                                           cols.SHORTNAME
-                                           # cols.MNEMONIC
-                                           ])
-
-        return sel_df
-
-    def _xirr_drop_income(self, dataframe):
-        """
-        Удаляет лишние записи по учету прибылей/убытков по счету
-        Логика работы:
-        Удаляются не нулевые строки у которых есть не нулевой income
-        :param dataframe: 
-        :return: dataframe с убранными лишними записями
-        """
-        # нужно удалить не нулевые строки, которым соответствует таже сумма INCOME
-        # удалить не нулевые строки у которых есть не нулевой income? Задача попроще, но правильно ли?
-
-        # df = dataframe.copy()
-        df = dataframe[dataframe[cols.VALUE_CURRENCY] != 0]
-
-        df_income = self._find_income_for_xirr(df, self.INCOME)
-
-        all_tr_guids = df_income[cols.TRANSACTION_GUID].drop_duplicates().tolist()
-
-        dataframe = dataframe[~dataframe[cols.TRANSACTION_GUID].isin(all_tr_guids)]
-
-        # dataframe_to_excel(dataframe, 'dataframe')
-
-        return dataframe
-
-    def _find_income_for_xirr(self, dataframe, account_type):
-        """
-        Находит все связанные проводки для dataframe, по типу счетов (INCOME или EXPENSE)
-        :param dataframe: filtered df_splits
-        :param account_type: INCOME or EXPENSE
-        :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
-        """
-        # find all income transaq for dataframe
-
-
-
-        df = dataframe
-        # if account_type == self.INCOME:
-        #     df = dataframe[dataframe[cols.VALUE_CURRENCY] == 0] # Возможно нужно брать все и вычитать?
-        # else:
-        #     df = dataframe[dataframe[cols.VALUE_CURRENCY] != 0]
-        all_tr_guids = df[cols.TRANSACTION_GUID].drop_duplicates().tolist()
-        sel_df = (self.df_splits[((self.df_splits[cols.ACCOUNT_TYPE]).isin([account_type])) &
-                                ((self.df_splits[cols.TRANSACTION_GUID]).isin(all_tr_guids))]).copy()
-        # sel_df = sel_df[(sel_df[cols.TRANSACTION_GUID]).isin(all_tr_guids)]
-
-        # Если не доход, то мы потратили деньги
-        if account_type != self.INCOME:
-            sel_df[cols.VALUE_CURRENCY] = sel_df[cols.VALUE_CURRENCY] * -1
-
-        # Отбираем нужные колонки
-        sel_df = pandas.DataFrame(sel_df,
-                                  columns=[cols.POST_DATE,
-                                           cols.TRANSACTION_GUID,
-                                           cols.ACCOUNT_GUID,
-                                           cols.FULLNAME,
-                                           cols.COMMODITY_GUID,
-                                           cols.ACCOUNT_TYPE,
-                                           # cols.VALUE,
-                                           cols.VALUE_CURRENCY,
-                                           # 'balance_currency',
-                                           cols.SHORTNAME
-                                           # cols.MNEMONIC
-                                           ])
-
-        return sel_df
+    # def _find_income_for_xirr(self, dataframe, account_type):
+    #     """
+    #     Находит все связанные проводки для dataframe, по типу счетов (INCOME или EXPENSE)
+    #     :param dataframe: filtered df_splits
+    #     :param account_type: INCOME or EXPENSE
+    #     :return: dataframe with transactions by accounts with account_type (INCOME or EXPENSE)
+    #     """
+    #     # find all income transaq for dataframe
+    #
+    #
+    #
+    #     df = dataframe
+    #     # if account_type == self.INCOME:
+    #     #     df = dataframe[dataframe[cols.VALUE_CURRENCY] == 0] # Возможно нужно брать все и вычитать?
+    #     # else:
+    #     #     df = dataframe[dataframe[cols.VALUE_CURRENCY] != 0]
+    #     all_tr_guids = df[cols.TRANSACTION_GUID].drop_duplicates().tolist()
+    #     sel_df = (self.df_splits[((self.df_splits[cols.ACCOUNT_TYPE]).isin([account_type])) &
+    #                             ((self.df_splits[cols.TRANSACTION_GUID]).isin(all_tr_guids))]).copy()
+    #     # sel_df = sel_df[(sel_df[cols.TRANSACTION_GUID]).isin(all_tr_guids)]
+    #
+    #     # Если не доход, то мы потратили деньги
+    #     if account_type != self.INCOME:
+    #         sel_df[cols.VALUE_CURRENCY] = sel_df[cols.VALUE_CURRENCY] * -1
+    #
+    #     # Отбираем нужные колонки
+    #     sel_df = pandas.DataFrame(sel_df,
+    #                               columns=[cols.POST_DATE,
+    #                                        cols.TRANSACTION_GUID,
+    #                                        cols.ACCOUNT_GUID,
+    #                                        cols.FULLNAME,
+    #                                        cols.COMMODITY_GUID,
+    #                                        cols.ACCOUNT_TYPE,
+    #                                        # cols.VALUE,
+    #                                        cols.VALUE_CURRENCY,
+    #                                        # 'balance_currency',
+    #                                        cols.SHORTNAME
+    #                                        # cols.MNEMONIC
+    #                                        ])
+    #
+    #     return sel_df
 
 
     def _balance_group_by_period(self, from_date, to_date, period, account_types=None, drop_null=False, accounts=None, is_guid=False):

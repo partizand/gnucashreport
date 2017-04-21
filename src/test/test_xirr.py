@@ -82,11 +82,12 @@ class XIRRTest(unittest.TestCase):
             etalon_yield_expense = test_data.get(EXPENSE, Decimal(0))
             etalon_yield_capital = test_data.get(CAPITAL, etalon_yield_total-etalon_yield_income)
 
-            xirr_yield = self.gcrep._xirr_calc(account_guid=account_guid)
-            checking_yield_total = xirr_yield[cols.YIELD_TOTAL]
-            checking_yield_income = xirr_yield[cols.YIELD_INCOME]
-            checking_yield_expense = xirr_yield[cols.YIELD_EXPENSE]
-            checking_yield_capital = xirr_yield[cols.YIELD_CAPITAL]
+            xirr_yield = self.gcrep.yield_calc(account_guid=account_guid, recurse=False)
+            # if xirr_yield.empty
+            checking_yield_total = xirr_yield.iloc[0][cols.YIELD_TOTAL]
+            checking_yield_income = xirr_yield.iloc[0][cols.YIELD_INCOME]
+            checking_yield_expense = xirr_yield.iloc[0][cols.YIELD_EXPENSE]
+            checking_yield_capital = xirr_yield.iloc[0][cols.YIELD_CAPITAL]
 
             self.assertEquals(etalon_yield_total, checking_yield_total,
                               'testing {gain} in account {shortname}'.
