@@ -72,18 +72,18 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 
 # account = 'Активы:Долгосрочные активы:ПИФы:ТД Илья Муромец'
-# account = 'Активы:Долгосрочные активы:ПИФы'
+account = 'Активы:Долгосрочные активы:ПИФы'
 # account_guid = gcrep._get_account_guid(account)
 # xirr = gcrep._xirr_calc(account_guid)
 # print(xirr)
-account = 'Активы:Долгосрочные активы:Депозиты'
+# account = 'Активы:Долгосрочные активы:Депозиты'
 # df_return = gcrep.yield_calc(account_name=account)
-df_return = gcrep.yield_calc()
-dataframe_to_excel(df_return, 'df_return')
-exit()
-account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
+# df_return = gcrep.yield_calc()
+# dataframe_to_excel(df_return, 'df_depo')
+# exit()
+# account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 df_return = gcrep.yield_calc(account_name=account)
-dataframe_to_excel(df_return, 'df_return_alfa2')
+dataframe_to_excel(df_return, 'df_return_alfa')
 exit()
 
 
