@@ -2,7 +2,7 @@ import gettext
 import locale
 import os
 from copy import copy
-from datetime import date
+from datetime import date, datetime
 from datetime import timedelta
 # datetime.timedelta
 # import datetime
@@ -507,15 +507,15 @@ class GNUCashData:
     def _add_col_total(self, dataframe, margins):
 
         # Список полей для подсчета среднего
-        cols = dataframe.columns.tolist()
+        columns = dataframe.columns.tolist()
         df_ret = dataframe.copy()
         # Добавление пустого столбца
         if margins.empty_col:
             df_ret[''] = ''
         if margins.total_col:
-            df_ret[margins.total_name] = df_ret[cols].sum(axis=1)
+            df_ret[margins.total_name] = df_ret[columns].sum(axis=1)
         if margins.mean_col:
-            df_ret[margins.mean_name] = df_ret[cols].mean(axis=1)
+            df_ret[margins.mean_name] = df_ret[columns].mean(axis=1)
 
         return df_ret
 
@@ -695,26 +695,35 @@ class GNUCashData:
 
         root_guid = account_guid
 
+        # Получение guid счета для которого считать доходность
         if not root_guid:
             if account_name:
                 root_guid = self._get_account_guid(account_name)
             else:
                 root_guid = self.root_account_guid
 
+        # Если типы счетов не заданы, все типы для xirr
+        if not account_types:
+            account_types = [self.BANK, self.ASSET, self.STOCK, self.MUTUAL, self.LIABILITY]
+
         # Теперь в root_guid счет с которого нужно начинать
         # Нужно посчитать его доходность и доходности его потомков
 
         ar_xirr = []
+        # ALL_XIRR_TYPES = [self.BANK, self.ASSET, self.STOCK, self.MUTUAL, self.LIABILITY]
 
+        # Получение списка проводок по которым считается доходность
         if df_all_xirr is None:
             child_guids = self._get_child_accounts(root_guid, account_types=account_types,
                                                    xirr_enable=True, recurse=True)
             account_guids = [root_guid] + child_guids
             df_all_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
 
+        # Подсчет доходности текущего счета
         if root_guid != self.root_account_guid:
             xirr_root = self._xirr_calc(account_guid=root_guid, account_types=account_types, df_all_xirr=df_all_xirr)
-            ar_xirr += [xirr_root]
+            if xirr_root:
+                ar_xirr += [xirr_root]
 
         # Считаем доходность потомков, если нужно
         if recurse:
@@ -726,7 +735,8 @@ class GNUCashData:
 
                 sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types,
                                                        df_all_xirr=df_all_xirr, recurse=recurse)
-                ar_xirr += sub_xirr
+                if sub_xirr:
+                    ar_xirr += sub_xirr
 
         # df_xirr = pandas.DataFrame(ar_xirr)
 
@@ -750,6 +760,8 @@ class GNUCashData:
         #
         # else:
         df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
+        if df_xirr.empty:
+            return
 
         # dataframe_to_excel(df_xirr, 'df_xirr')
 
@@ -784,7 +796,8 @@ class GNUCashData:
         itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
         itog[cols.XIRR_START_DATE] = df_xirr[cols.POST_DATE].min()
         itog[cols.XIRR_END_DATE] = df_xirr[cols.POST_DATE].max()
-        itog[cols.XIRR_DAYS] = itog[cols.XIRR_END_DATE] - itog[cols.XIRR_START_DATE]
+        itog[cols.XIRR_DAYS] = (itog[cols.XIRR_END_DATE] - itog[cols.XIRR_START_DATE]).days
+        # itog[cols.XIRR_DAYS] = days
 
         return itog
 
@@ -1096,10 +1109,13 @@ class GNUCashData:
         :return: 
         """
 
-        # Конечный баланс
+        # Дата для конечного баланса
         end_date = to_date
         if not end_date:
-            end_date = self.max_date
+            # end_date = self.max_date # Дата последней проводки в базе
+            end_date = datetime.today()  # Текущая дата
+
+        # Конечный баланс
         df_itog_balances = self.balance_on_date(end_date, account_guids=account_guids)
         # dataframe_to_excel(df_itog_balances, 'end_balance')
 
