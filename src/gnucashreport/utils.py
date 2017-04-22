@@ -49,6 +49,27 @@ def dataframe_to_html(dataframe, filename):
         text_file.write(html)
 
 
+def fill_to_last_colon(a_str: str, colon=':', filler=' '):
+    """
+    Возвращает сроку от исходной строки S, заполненную до последнего встреченного символа colon, символами filler
+
+    >>> _fill_to_last_colon('assets:current assets:cash')
+    '---------------------cash'
+
+    :param a_str: 
+    :param colon: 
+    :param filler: 
+    :return: 
+    """
+
+    level = a_str.count(colon)
+    str_fill = filler * 10 * level
+    last_index = a_str.rfind(colon)
+    # str_fill = filler * last_index
+    str_end = a_str[last_index + 1:]
+    return str_fill + str_end
+
+
 def dateformat_from_period(period: str):
     """
     Get Excel date format from period letter (D, M, Y ...)

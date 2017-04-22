@@ -13,7 +13,7 @@ import math
 import pandas
 import numpy
 import piecash
-from gnucashreport.utils import dataframe_to_excel
+from gnucashreport.utils import dataframe_to_excel, fill_to_last_colon
 
 from gnucashreport.financial import xirr, xirr_simple
 from gnucashreport.gcxmlreader import GNUCashXMLBook
@@ -655,6 +655,7 @@ class GNUCashData:
 
         # Колонки в нужной последовательности
         df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME,
+                                                cols.FULLNAME,
                                                 cols.XIRR_START_DATE,
                                                 cols.XIRR_END_DATE,
                                                 cols.XIRR_DAYS,
@@ -664,6 +665,12 @@ class GNUCashData:
                                                 cols.YIELD_EXPENSE])
 
 
+        df.sort_values(cols.FULLNAME, inplace=True)
+        # df['new_name'] = df[cols.FULLNAME].map(lambda x: fill_to_last_colon(x))
+        df[cols.SHORTNAME] = df[cols.FULLNAME].map(fill_to_last_colon)
+        df.drop(cols.FULLNAME, axis=1, inplace=True)
+        # df.set_index(cols.SHORTNAME, inplace=True, drop=True)
+        df.reset_index(inplace=True, drop=True)
 
         # Добавление MultiIndex по дате и названиям счетов
         # s = df['fullname'].str.split(':', expand=True)
