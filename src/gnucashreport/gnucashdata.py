@@ -599,7 +599,7 @@ class GNUCashData:
 
         # Сортировка по дате
         # if start_balance:
-        #     on_date = on_date + timedelta(days=-1) # TODO Проверить бы надо
+        #     on_date = on_date + timedelta(days=-1)
 
         if start_balance:
             df = (self.df_splits[(self.df_splits[cols.POST_DATE] < on_date)]).copy()
@@ -623,8 +623,9 @@ class GNUCashData:
         if not df.empty:
             df = self._currency_calc(df, col_value=cols.CUM_SUM,
                                      col_value_currency=col_value_currency)
-            # Теперь в value_currency - остаток в валюте учета (если он есть)
-            # df[cols.ACCOUNT_GUID] = df.index
+        # Убрать нулевые значения
+        df = df[df[cols.VALUE_CURRENCY] != 0]
+        df[cols.DESCRIPTION] = 'Balance on date'
         df.set_index('guid', inplace=True)
         return df
 
@@ -654,6 +655,9 @@ class GNUCashData:
 
         # Колонки в нужной последовательности
         df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME,
+                                                cols.XIRR_START_DATE,
+                                                cols.XIRR_END_DATE,
+                                                cols.XIRR_DAYS,
                                                 cols.YIELD_TOTAL,
                                                 cols.YIELD_INCOME,
                                                 cols.YIELD_CAPITAL,
@@ -694,7 +698,7 @@ class GNUCashData:
         if not root_guid:
             if account_name:
                 root_guid = self._get_account_guid(account_name)
-            elif account_types:
+            else:
                 root_guid = self.root_account_guid
 
         # Теперь в root_guid счет с которого нужно начинать
@@ -715,7 +719,8 @@ class GNUCashData:
         # Считаем доходность потомков, если нужно
         if recurse:
 
-            childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types, recurse=False)
+            childs = self._get_child_accounts(account_guid=root_guid, account_types=account_types,
+                                              xirr_enable=True, recurse=False)
 
             for child in childs:
 
@@ -746,7 +751,7 @@ class GNUCashData:
         # else:
         df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
 
-        dataframe_to_excel(df_xirr, 'df_xirr')
+        # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         yield_total = self._xirr_by_dataframe(df_xirr)
@@ -777,6 +782,9 @@ class GNUCashData:
         itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
         itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
         itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
+        itog[cols.XIRR_START_DATE] = df_xirr[cols.POST_DATE].min()
+        itog[cols.XIRR_END_DATE] = df_xirr[cols.POST_DATE].max()
+        itog[cols.XIRR_DAYS] = itog[cols.XIRR_END_DATE] - itog[cols.XIRR_START_DATE]
 
         return itog
 

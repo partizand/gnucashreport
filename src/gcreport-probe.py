@@ -50,14 +50,15 @@ gcrep = gnucashreport.GCReport()
 # rep.open_pickle()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
-gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
+# gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file(bookfile_xml)
 # gcrep.open_book_file('c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash')
+gcrep.open_book_file('test/data/xirr-test.gnucash')
 # on_date = datetime.date(2016, 12, 31)
 # df = gcrep.balance_on_date(on_date=on_date)
-dataframe_to_excel(gcrep.df_splits, 'splits')
-exit()
+# dataframe_to_excel(gcrep.df_splits, 'splits')
+# exit()
 
 
 
@@ -77,9 +78,10 @@ exit()
 # xirr = gcrep._xirr_calc(account_guid)
 # print(xirr)
 account = 'Активы:Долгосрочные активы:Депозиты'
-df_return = gcrep.yield_calc(account_name=account)
-dataframe_to_excel(df_return, 'df_return_depo2')
-
+# df_return = gcrep.yield_calc(account_name=account)
+df_return = gcrep.yield_calc()
+dataframe_to_excel(df_return, 'df_return')
+exit()
 account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 df_return = gcrep.yield_calc(account_name=account)
 dataframe_to_excel(df_return, 'df_return_alfa2')
