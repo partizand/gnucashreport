@@ -598,10 +598,13 @@ class GNUCashData:
         """
 
         # Сортировка по дате
+        # if start_balance:
+        #     on_date = on_date + timedelta(days=-1) # TODO Проверить бы надо
+
         if start_balance:
-            # date_1 = datetime.datetime.strptime(start_date, "%m/%d/%y")
-            on_date = on_date + timedelta(days=-1) # TODO Проверить бы надо
-        df = (self.df_splits[(self.df_splits[cols.POST_DATE] <= on_date)]).copy()
+            df = (self.df_splits[(self.df_splits[cols.POST_DATE] < on_date)]).copy()
+        else:
+            df = (self.df_splits[(self.df_splits[cols.POST_DATE] <= on_date)]).copy()
         # Сортировка по счетам
         if account_names:
             df = df[(df[cols.FULLNAME]).isin(account_names)]
@@ -743,7 +746,7 @@ class GNUCashData:
         # else:
         df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
 
-        # dataframe_to_excel(df_xirr, 'df_xirr')
+        dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         yield_total = self._xirr_by_dataframe(df_xirr)
