@@ -68,11 +68,11 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # dataframe_to_excel(gcrep.df_splits, 'splits')
 # exit()
 
-# account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
+account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 
 # account = 'Активы:Долгосрочные активы:ПИФы:ТД Илья Муромец'
-account = 'Активы:Долгосрочные активы:ПИФы'
+# account = 'Активы:Долгосрочные активы:ПИФы'
 # account_guid = gcrep._get_account_guid(account)
 # xirr = gcrep._xirr_calc(account_guid)
 # print(xirr)

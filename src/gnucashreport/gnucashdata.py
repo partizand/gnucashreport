@@ -773,6 +773,7 @@ class GNUCashData:
         # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
+        print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
         yield_total = self._xirr_by_dataframe(df_xirr)
 
         # Доходность денежного потока

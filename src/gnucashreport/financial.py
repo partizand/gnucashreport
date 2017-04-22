@@ -81,6 +81,8 @@ def newton(func, x0, args=(), tol=1.48e-8, maxiter=1000):
         p1 = x0*(1 + 1e-4) + 1e-4
     else:
         p1 = x0*(1 + 1e-4) - 1e-4
+
+    print(type(p1))
     q0 = func(*((p0,) + args))
     q1 = func(*((p1,) + args))
     for iter in range(maxiter):
@@ -98,7 +100,10 @@ def newton(func, x0, args=(), tol=1.48e-8, maxiter=1000):
         p1 = p
         q1 = func(*((p1,) + args))
     msg = "Failed to converge after %d iterations, value is %s" % (maxiter, p)
-    raise RuntimeError(msg)
+    # raise RuntimeError(msg)
+    print(msg)
+
+    return p
 
 
 
@@ -192,7 +197,9 @@ def xirr(cashflows, guess=0.00001, for_decimal=True):
     if for_decimal:
         # decimal to float
         chron_order = list((date, float(value)) for date, value in chron_order )
+    # res = newton(lambda r: xnpv(r, chron_order), guess)
     res = newton(lambda r: xnpv(r, chron_order), guess)
+    print(type(res))
     # res = round(res, 4)
     if for_decimal:
         return Decimal(res)
