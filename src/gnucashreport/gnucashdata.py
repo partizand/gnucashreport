@@ -654,7 +654,8 @@ class GNUCashData:
                                               recurse=recurse)
 
         # Колонки в нужной последовательности
-        df = pandas.DataFrame(ar_xirr, columns=[cols.SHORTNAME,
+        df = pandas.DataFrame(ar_xirr, columns=[
+                                                # cols.SHORTNAME,
                                                 cols.FULLNAME,
                                                 cols.XIRR_START_DATE,
                                                 cols.XIRR_END_DATE,
@@ -665,10 +666,13 @@ class GNUCashData:
                                                 cols.YIELD_EXPENSE])
 
 
+        if account_guid:
+            account_name = self.df_accounts.loc[account_guid, cols.SHORTNAME]
+
         df.sort_values(cols.FULLNAME, inplace=True)
         # df['new_name'] = df[cols.FULLNAME].map(lambda x: fill_to_last_colon(x))
-        df[cols.SHORTNAME] = df[cols.FULLNAME].map(fill_to_last_colon)
-        df.drop(cols.FULLNAME, axis=1, inplace=True)
+        df[cols.FULLNAME] = df[cols.FULLNAME].apply(fill_to_last_colon, args=(account_name,)) # map(lambda val: fill_to_last_colon(val, skip_beg=account_name))
+        # df.drop(cols.FULLNAME, axis=1, inplace=True)
         # df.set_index(cols.SHORTNAME, inplace=True, drop=True)
         df.reset_index(inplace=True, drop=True)
 
@@ -684,6 +688,8 @@ class GNUCashData:
         # df.set_index(cols, inplace=True)
 
         return df
+
+
 
     def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None,
                                from_date=None, to_date=None, df_all_xirr=None, recurse=True):
@@ -773,7 +779,7 @@ class GNUCashData:
         # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
-        print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
+        # print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
         yield_total = self._xirr_by_dataframe(df_xirr)
 
         # Доходность денежного потока

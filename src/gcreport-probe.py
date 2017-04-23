@@ -68,7 +68,7 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # dataframe_to_excel(gcrep.df_splits, 'splits')
 # exit()
 
-account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
+# account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ:Аэрофлот а.о.'
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 
 # account = 'Активы:Долгосрочные активы:ПИФы:ТД Илья Муромец'
@@ -81,9 +81,10 @@ account = 'Активы:Долгосрочные активы:Ценные бу�
 # df_return = gcrep.yield_calc()
 # dataframe_to_excel(df_return, 'df_depo')
 # exit()
-# account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
-df_return = gcrep.yield_calc(account_name=account)
-dataframe_to_excel(df_return, 'df_return_alfa')
+account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
+# df_return = gcrep.yield_calc(account_name=account)
+df_return = gcrep.yield_calc()
+dataframe_to_excel(df_return, 'df_return_all')
 exit()
 
 

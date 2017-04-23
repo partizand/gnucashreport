@@ -49,12 +49,16 @@ def dataframe_to_html(dataframe, filename):
         text_file.write(html)
 
 
-def fill_to_last_colon(a_str: str, colon=':', filler=' '):
+def fill_to_last_colon(a_str: str, skip_beg=None, colon=':', filler=' '):
     """
     Возвращает сроку от исходной строки S, заполненную до последнего встреченного символа colon, символами filler
 
-    >>> _fill_to_last_colon('assets:current assets:cash')
-    '---------------------cash'
+    >>> fill_to_last_colon('assets:current assets:cash', filler='-')
+    '--------------------cash'
+    >>> fill_to_last_colon('assets:current assets:cash', filler='-', skip_beg='assets')
+    '--------------------cash'
+    >>> fill_to_last_colon('assets:current assets:cash', filler='-', skip_beg='assets:current assets')
+    '----------cash'
 
     :param a_str: 
     :param colon: 
@@ -63,7 +67,11 @@ def fill_to_last_colon(a_str: str, colon=':', filler=' '):
     """
 
     level = a_str.count(colon)
-    str_fill = filler * 10 * level
+    if skip_beg:
+        skip_level = skip_beg.count(colon)
+    else:
+        skip_level = 0
+    str_fill = filler * 10 * (level - skip_level)
     last_index = a_str.rfind(colon)
     # str_fill = filler * last_index
     str_end = a_str[last_index + 1:]
