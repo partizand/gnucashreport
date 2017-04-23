@@ -966,19 +966,11 @@ class GNUCashData:
         Добавляет значения в поля xirr_account и xirr_value в df_splits
         Согласно правил, описанных в excel нике
         Возможно можно оптимизировать быстродействие
+        :param df_tr_splits: pandas.DataFrame
+                            Все сплиты транзакции
         :param transaction_guid: 
         :return: 
         """
-        # df_tr_splits = self.df_splits[self.df_splits[cols.TRANSACTION_GUID] == transaction_guid]
-        # для тестовыых целей. Выборочная проверка верна. Пока отключаю
-        # self._add_tr_acc_names(df_tr_splits)
-
-        # есть ли счета для xirr
-        # if not any(df_tr_splits[cols.XIRR_ENABLE]):
-        #     return
-
-        # if not self._has_splits_for_xirr(df_tr_splits):
-        #     return
 
         incexp_types = [self.INCOME, self.EXPENSE]
         df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
@@ -1025,14 +1017,14 @@ class GNUCashData:
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # И добавить все расходы/доходы у которых xirr_enable=true
-            master_guid = self._get_master_asset_guid(df_assets)
+            master_guid = self._get_master_asset_guid(df_assets, df_incexp=df_incexps)
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             return
         elif (len(df_assets) == 1) and (len(df_incexps) == 2):
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # И добавить все расходы/доходы у которых xirr_enable=true
-            master_guid = self._get_master_asset_guid(df_assets)
+            master_guid = self._get_master_asset_guid(df_assets, df_incexp=df_incexps)
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             return
         else:
@@ -1059,17 +1051,17 @@ class GNUCashData:
                         self.df_splits.loc[(tr_guid, index), cols.XIRR_ACCOUNT] = row[cols.ACCOUNT_GUID]
 
 
-    def _get_master_asset_guid(self, dataframe: pandas.DataFrame):
+    def _get_master_asset_guid(self, df_assets: pandas.DataFrame, df_incexp: pandas.DataFrame):
         """
-        dataframe - отобранные проводки из df_splits с типом asset
-        Находит из них ту, на которую писать доход/убыток
+        Находит account_guid из df_assets на который писать доход/убыток транзакции
         Возвращает account_guid для отобранного счета
-        :param dataframe: 
+        :param df_assets: проводки транзакции с типом asset
+        :param df_incexp: проводки транзакции с типом incexp
         :return: account_guid
         """
 
         # df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
-        df_asset = dataframe[dataframe[cols.XIRR_ENABLE]] # Долго
+        df_asset = df_assets[df_assets[cols.XIRR_ENABLE]] # Долго
         # Нет счетов вообще
         if df_asset.empty:
             return None
@@ -1085,11 +1077,26 @@ class GNUCashData:
         if len(df_zero) > 0:
             return df_zero.iloc[0][cols.ACCOUNT_GUID]
 
-        # Главный счет у которого value больше по модулю
-        df = df_asset.copy()
-        df['value_sort'] = df[cols.VALUE_CURRENCY].map(lambda x:  math.fabs(x))
-        df.sort_values('value_sort', inplace=True)
-        return df.iloc[-1][cols.ACCOUNT_GUID]
+        # А здесь сложно понять кто главный
+        if df_incexp.empty:
+            return None
+        # Тип доход или расход
+        incexp_type = df_incexp.iloc[0][cols.ACCOUNT_TYPE]
+        # Сортировка по возрастанию модуля суммы
+        df_asset['value_sort'] = df_asset[cols.VALUE_CURRENCY].map(lambda x: math.fabs(x))
+        df_asset.sort_values('value_sort', inplace=True)
+        if incexp_type == self.EXPENSE:
+            # Главный счет у которого value больше по модулю
+            return df_asset.iloc[-1][cols.ACCOUNT_GUID]
+        elif incexp_type == self.INCOME:
+            # Главный счет у которого value меньше по модулю
+            return df_asset.iloc[0][cols.ACCOUNT_GUID]
+        else:
+            # print('Erorr analyse master guid.')
+            msg = "Erorr analyse master guid."
+            raise RuntimeError(msg)
+            # return None  # Ошибка
+
 
     def _add_tr_acc_names(self, dataframe):
         """
