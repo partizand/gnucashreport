@@ -657,9 +657,9 @@ class GNUCashData:
         df = pandas.DataFrame(ar_xirr, columns=[
                                                 # cols.SHORTNAME,
                                                 cols.FULLNAME,
-                                                cols.XIRR_START_DATE,
-                                                cols.XIRR_END_DATE,
-                                                cols.XIRR_DAYS,
+                                                cols.START_DATE,
+                                                cols.END_DATE,
+                                                cols.DAYS,
                                                 cols.YIELD_TOTAL,
                                                 cols.YIELD_INCOME,
                                                 cols.YIELD_CAPITAL,
@@ -808,9 +808,9 @@ class GNUCashData:
         itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
         itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
         itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
-        itog[cols.XIRR_START_DATE] = df_xirr[cols.POST_DATE].min()
-        itog[cols.XIRR_END_DATE] = df_xirr[cols.POST_DATE].max()
-        itog[cols.XIRR_DAYS] = (itog[cols.XIRR_END_DATE] - itog[cols.XIRR_START_DATE]).days
+        itog[cols.START_DATE] = df_xirr[cols.POST_DATE].min()
+        itog[cols.END_DATE] = df_xirr[cols.POST_DATE].max()
+        itog[cols.DAYS] = (itog[cols.END_DATE] - itog[cols.START_DATE]).days
         # itog[cols.XIRR_DAYS] = days
 
         return itog
