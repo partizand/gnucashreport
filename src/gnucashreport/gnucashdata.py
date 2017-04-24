@@ -13,7 +13,7 @@ import math
 import pandas
 import numpy
 import piecash
-from gnucashreport.utils import dataframe_to_excel, fill_to_last_colon
+from gnucashreport.utils import dataframe_to_excel, shift_account_name
 
 from gnucashreport.financial import xirr, xirr_simple
 from gnucashreport.gcxmlreader import GNUCashXMLBook
@@ -659,13 +659,14 @@ class GNUCashData:
         df = pandas.DataFrame(ar_xirr, columns=[
                                                 # cols.SHORTNAME,
                                                 cols.FULLNAME,
-                                                cols.START_DATE,
-                                                cols.END_DATE,
-                                                cols.DAYS,
                                                 cols.YIELD_TOTAL,
                                                 cols.YIELD_INCOME,
                                                 cols.YIELD_CAPITAL,
-                                                cols.YIELD_EXPENSE])
+                                                cols.YIELD_EXPENSE,
+                                                cols.START_DATE,
+                                                cols.END_DATE,
+                                                cols.DAYS
+                                                ])
 
 
         if account_guid:
@@ -673,10 +674,10 @@ class GNUCashData:
 
         df.sort_values(cols.FULLNAME, inplace=True)
         # df['new_name'] = df[cols.FULLNAME].map(lambda x: fill_to_last_colon(x))
-        df[cols.FULLNAME] = df[cols.FULLNAME].apply(fill_to_last_colon, args=(account_name,)) # map(lambda val: fill_to_last_colon(val, skip_beg=account_name))
+        df[cols.FULLNAME] = df[cols.FULLNAME].apply(shift_account_name, args=(account_name,)) # map(lambda val: fill_to_last_colon(val, skip_beg=account_name))
         # df.drop(cols.FULLNAME, axis=1, inplace=True)
-        # df.set_index(cols.SHORTNAME, inplace=True, drop=True)
-        df.reset_index(inplace=True, drop=True)
+        df.set_index(cols.FULLNAME, inplace=True, drop=True)
+        # df.reset_index(inplace=True, drop=True)
 
         # Добавление MultiIndex по дате и названиям счетов
         # s = df['fullname'].str.split(':', expand=True)
@@ -1016,6 +1017,11 @@ class GNUCashData:
             print('Transaction with multi stock accounts. Xirr rule not set. Transaction_guid {tr_guid}'.format(tr_guid=tr_guid))
             return
         elif (len(df_assets) == 2) and (len(df_incexps) == 1):
+            # Тест
+            # Добавление признака такой транзакции
+            # incexp_type = df
+            self.df_splits.loc[tr_guid, 'tr_type'] = 'asset-asset-incexp'
+
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # И добавить все расходы/доходы у которых xirr_enable=true

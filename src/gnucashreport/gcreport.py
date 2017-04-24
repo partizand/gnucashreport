@@ -112,6 +112,11 @@ class GCReport(GNUCashData):
             # inflation
             xlsxreport.next_sheet(sheet=_('Inflation'), datetime_format='A')
             self._inflation_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A', glevel=glevel)
+
+        # ROI
+        xlsxreport.next_sheet(sheet=_('Returns'), datetime_format='D')
+        self._returns_writer(xlsxreport)
+
         xlsxreport.save()
         return
 
@@ -279,6 +284,31 @@ class GCReport(GNUCashData):
         self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
 
         xlsxreport.save()
+
+    def returns_report_excel(self, filename, from_date=None, to_date=None):
+        """
+        Saves returns report to excel file
+        :param filename: Excel file name
+        :param from_date:
+        :param to_date:
+        :return:
+        """
+
+        xlsxreport = XLSXReport(filename=filename, datetime_format='D')
+
+        self._returns_writer(xlsxreport, from_date=from_date, to_date=to_date)
+
+        xlsxreport.save()
+
+    def _returns_writer(self, xlsxreport: XLSXReport, from_date=None, to_date=None):
+        df_xirr = self.yield_calc(from_date=from_date, to_date=to_date)
+        if from_date and to_date:
+            header = _('Return on assets (per annum) {from_date} - {to_date}').\
+                format(from_date=from_date, to_date=to_date)
+        else:
+            header = _('Return on assets (per annum)')
+        xlsxreport.add_dataframe(df_xirr, name=header,
+                                 num_format=XLSXReport.PERCENTAGE_FORMAT)
 
     def _inflation_writer(self, xlsxreport: XLSXReport, from_date, to_date, period, glevel):
         """

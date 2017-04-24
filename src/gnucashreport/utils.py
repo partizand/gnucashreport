@@ -49,32 +49,31 @@ def dataframe_to_html(dataframe, filename):
         text_file.write(html)
 
 
-def fill_to_last_colon(a_str: str, skip_beg=None, colon=':', filler=' '):
+def shift_account_name(account_name: str, root_account=None, delimiter=':', filler=' '):
     """
+    Для получения сдвинутого вправо имени счета для отображения иерархии счетов
     Возвращает сроку от исходной строки S, заполненную до последнего встреченного символа colon, символами filler
 
-    >>> fill_to_last_colon('assets:current assets:cash', filler='-')
+    >>> shift_account_name('assets:current assets:cash', filler='-')
     '--------------------cash'
-    >>> fill_to_last_colon('assets:current assets:cash', filler='-', skip_beg='assets')
+    >>> shift_account_name('assets:current assets:cash', root_account='assets', filler='-')
     '--------------------cash'
-    >>> fill_to_last_colon('assets:current assets:cash', filler='-', skip_beg='assets:current assets')
+    >>> shift_account_name('assets:current assets:cash', root_account='assets:current assets', filler='-')
     '----------cash'
 
-    :param a_str: 
-    :param colon: 
     :param filler: 
     :return: 
     """
 
-    level = a_str.count(colon)
-    if skip_beg:
-        skip_level = skip_beg.count(colon)
+    level = account_name.count(delimiter)
+    if root_account:
+        skip_level = root_account.count(delimiter)
     else:
         skip_level = 0
     str_fill = filler * 10 * (level - skip_level)
-    last_index = a_str.rfind(colon)
+    last_index = account_name.rfind(delimiter)
     # str_fill = filler * last_index
-    str_end = a_str[last_index + 1:]
+    str_end = account_name[last_index + 1:]
     return str_fill + str_end
 
 

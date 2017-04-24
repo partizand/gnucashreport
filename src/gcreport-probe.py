@@ -57,7 +57,8 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # on_date = datetime.date(2016, 12, 31)
 # df = gcrep.balance_on_date(on_date=on_date)
 # dataframe_to_excel(gcrep.df_splits, 'splits')
-# exit()
+gcrep.returns_report_excel('v:/tables/returns.xlsx', from_date=from_date, to_date=to_date)
+exit()
 
 
 
