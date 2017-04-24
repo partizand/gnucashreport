@@ -307,7 +307,7 @@ class GCReport(GNUCashData):
                 format(from_date=from_date, to_date=to_date)
         else:
             header = _('Return on assets (per annum)')
-        xlsxreport.add_dataframe(df_xirr, name=header, cell_format=XLSXReport.PERCENTAGE_FORMAT)
+        xlsxreport.add_dataframe(df_xirr, name=header, cell_format=XLSXReport.PERCENTAGE_FORMAT, color=COLOR_YELLOW)
         xlsxreport.format_for_returns()
 
     def _inflation_writer(self, xlsxreport: XLSXReport, from_date, to_date, period, glevel):

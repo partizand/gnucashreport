@@ -95,7 +95,7 @@ class XLSXReport:
         # self._sheet = sheet
         # self._worksheet = None
         self._datetime_format = dateformat_from_period(datetime_format)
-        self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
+        self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=self._datetime_format)
         self._workbook = self._writer.book
         # self._cur_row = start_row
         # self._charts = []
@@ -255,12 +255,12 @@ class XLSXReport:
         :return: 
         """
         # Чутка правим форматы
-        frmt_cell1 = self._workbook.add_format({'bold': True})
-        frmt_cell1.set_align('right')
+        # frmt_cell1 = self._workbook.add_format({'bold': True})
+        # frmt_cell1.set_align('right')
         self._worksheet.set_column(firstcol=0,
-                                         lastcol=0, cell_format=frmt_cell1, width=25)
+                                         lastcol=0, width=40)
         frmt_cell = self._workbook.add_format()
-        frmt_cell.set_num_format("DD.MM.YYYY")
+        frmt_cell.set_num_format(0x0e)
         self._worksheet.set_column(firstcol=5,
                                          lastcol=6, cell_format=frmt_cell)
         frmt_cell2 = self._workbook.add_format()

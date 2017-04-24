@@ -92,6 +92,8 @@ def dateformat_from_period(period: str):
         dateformat = 'dd-mm-yyyy'
 
     if period:
+        if period.upper() == 'D':
+            dateformat = 'dd-mm-yyyy'
         if period.upper() == 'M':
             dateformat = 'mmm yyyy'
         if period.upper() == 'A':

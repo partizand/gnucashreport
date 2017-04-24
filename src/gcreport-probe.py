@@ -61,8 +61,8 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # df = gcrep.balance_on_date(on_date=on_date)
 # dataframe_to_excel(gcrep.df_splits, 'splits')
 # gcrep.returns_report_excel('v:/tables/returns.xlsx', from_date=from_date, to_date=to_date)
-gcrep.returns_report_excel('v:/tables/returns.xlsx')
-# gcrep.all_reports_excel('v:/tables/returns.xlsx')
+# gcrep.returns_report_excel('v:/tables/returns.xlsx')
+gcrep.all_reports_excel('v:/tables/returns.xlsx')
 exit()
 
 
