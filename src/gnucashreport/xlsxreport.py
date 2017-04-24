@@ -85,6 +85,9 @@ class XLSXReport:
     default_dir_reports = 'V:/tables'
 
     MONEY_FORMAT = 0x08
+    # MONEY_FORMAT = 0x08
+    # MONEY_FORMAT = '# ##0,00'
+    # MONEY_FORMAT = '# ##,##'
     PERCENTAGE_FORMAT = 0x0a
 
     def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
@@ -137,7 +140,7 @@ class XLSXReport:
         self.common_categories = None
 
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
-                      num_format=MONEY_FORMAT):
+                      cell_format=None):
         """
         Add DataFrame on current sheet, update next position to down
         :param dataframe:
@@ -147,7 +150,7 @@ class XLSXReport:
         :param header: Show DataFrame header
         :param margins:
         :param addchart: must be type of chart: 'column', 'line'. See xlsxwriter help
-        :param num_format: cell format number for data
+        :param cell_format: cell format number for data
         :return:
         """
 
@@ -172,9 +175,15 @@ class XLSXReport:
             self._worksheet = self._writer.sheets[self._sheet]
 
         frmt_bold = self._workbook.add_format({'bold': True})
-        frmt_money = self._workbook.add_format()
-        frmt_money.set_num_format(num_format)
+        frmt_cell = self._workbook.add_format()
+        if cell_format:
+            frmt_cell.set_num_format(cell_format)
+        frmt_cell_bold = self._workbook.add_format({'bold': True})
+        if cell_format:
+            frmt_cell_bold.set_num_format(cell_format)
         frmt_head = self._workbook.add_format({'bold': True})
+        if cell_format:
+            frmt_head.set_num_format(cell_format)
         frmt_head.set_align('center')
         if color:
             frmt_head.set_bg_color(color)
@@ -193,14 +202,14 @@ class XLSXReport:
                                                    last_row=points.row_itog,
                                                    first_col=points.col_begin,
                                                    last_col=points.col_all_end,
-                                                   options={'type': 'no_blanks',
+                                                   options={'type': 'no_errors',
                                                             'format': frmt_head})
-                self._worksheet.conditional_format(first_row=points.row_itog,
-                                                   last_row=points.row_itog,
-                                                   first_col=points.col_begin,
-                                                   last_col=points.col_all_end,
-                                                   options={'type': 'blanks',
-                                                            'format': frmt_head})
+                # self._worksheet.conditional_format(first_row=points.row_itog,
+                #                                    last_row=points.row_itog,
+                #                                    first_col=points.col_begin,
+                #                                    last_col=points.col_all_end,
+                #                                    options={'type': 'blanks',
+                #                                             'format': frmt_head})
             if margins.total_col or margins.mean_col:
                 # Ширина пустой колонки
                 if margins.empty_col:
@@ -212,23 +221,52 @@ class XLSXReport:
                                                    first_col=points.col_totals_begin,
                                                    # col_count - width_totals_col + 1,
                                                    last_col=points.col_totals_end,
-                                                   options={'type': 'no_blanks',
-                                                            'format': frmt_bold})
+                                                   options={'type': 'no_errors',
+                                                            'format': frmt_cell_bold})
                 # Ширина колонк с итогами
                 if points.col_totals_begin and points.col_totals_end:
                     self._worksheet.set_column(firstcol=points.col_totals_begin, lastcol=points.col_totals_end,
-                                               cell_format=frmt_money,
+                                               cell_format=frmt_cell,
                                                width=15)
+
+
 
         # index_len = len(dataframe.index.names)
         # Ширина первой колонки
         self._worksheet.set_column(firstcol=points.col_begin, lastcol=points.col_head_end, width=25)
         # Ширина колонок до итогов
         self._worksheet.set_column(firstcol=points.col_data_begin,
-                                   lastcol=points.col_data_end,
-                                   cell_format=frmt_money, width=12)
+                                   lastcol=points.col_data_end, width=12, #)
+                                   cell_format=frmt_cell)
+
+        # Формат ячеек с данными
+        # self._worksheet.conditional_format(first_row=points.row_data_begin,
+        #                                    last_row=points.row_itog,
+        #                                    first_col=points.col_data_begin,
+        #                                    last_col=points.col_data_end,
+        #                                    options={'type': 'no_errors',
+        #                                             'format': frmt_cell})
 
         self._update_cur_row(points.row_itog + 1)
+
+    def format_for_returns(self):
+        """
+        Костыль, правящий форматы для отчета по доходам
+        :return: 
+        """
+        # Чутка правим форматы
+        frmt_cell1 = self._workbook.add_format({'bold': True})
+        frmt_cell1.set_align('right')
+        self._worksheet.set_column(firstcol=0,
+                                         lastcol=0, cell_format=frmt_cell1, width=25)
+        frmt_cell = self._workbook.add_format()
+        frmt_cell.set_num_format("DD.MM.YYYY")
+        self._worksheet.set_column(firstcol=5,
+                                         lastcol=6, cell_format=frmt_cell)
+        frmt_cell2 = self._workbook.add_format()
+        frmt_cell2.set_num_format(0x00)
+        self._worksheet.set_column(firstcol=7,
+                                         lastcol=7, cell_format=frmt_cell2)
 
     def _get_chart_prop(self, points: TablePoints, name, header, addchart):
         """

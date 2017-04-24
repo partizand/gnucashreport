@@ -307,8 +307,8 @@ class GCReport(GNUCashData):
                 format(from_date=from_date, to_date=to_date)
         else:
             header = _('Return on assets (per annum)')
-        xlsxreport.add_dataframe(df_xirr, name=header,
-                                 num_format=XLSXReport.PERCENTAGE_FORMAT)
+        xlsxreport.add_dataframe(df_xirr, name=header, cell_format=XLSXReport.PERCENTAGE_FORMAT)
+        xlsxreport.format_for_returns()
 
     def _inflation_writer(self, xlsxreport: XLSXReport, from_date, to_date, period, glevel):
         """
@@ -324,15 +324,15 @@ class GCReport(GNUCashData):
         margins.set_for_inflation(cumulative=False)
         df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
                                           glevel=glevel, cumulative=False)
-        xlsxreport.add_dataframe(df_inf, name=_('Inflation annual'), margins=margins, color=COLOR_YELLOW,
-                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart='line')
+        xlsxreport.add_dataframe(df_inf, color=COLOR_YELLOW, name=_('Inflation annual'), margins=margins,
+                                 addchart='line', cell_format=XLSXReport.PERCENTAGE_FORMAT)
         xlsxreport.add_empty_row()
 
         margins.set_for_inflation(cumulative=True)
         df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
                                           glevel=glevel, cumulative=True)
-        xlsxreport.add_dataframe(df_inf, name=_('Inflation cumulative'), margins=margins, color=COLOR_YELLOW,
-                                 num_format=XLSXReport.PERCENTAGE_FORMAT, addchart='line')
+        xlsxreport.add_dataframe(df_inf, color=COLOR_YELLOW, name=_('Inflation cumulative'), margins=margins,
+                                 addchart='line', cell_format=XLSXReport.PERCENTAGE_FORMAT)
 
     def _complex_report_writer(self, xlsxreport: XLSXReport, from_date, to_date, period, glevel):
         """
@@ -358,28 +358,32 @@ class GCReport(GNUCashData):
         df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
                                             account_type=GNUCashData.INCOME,
                                             glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_income, name=_('Income'), color=COLOR_GREEN, header=True, margins=margins)
+        xlsxreport.add_dataframe(df_income, color=COLOR_GREEN, name=_('Income'), header=True, margins=margins,
+                                 cell_format=XLSXReport.MONEY_FORMAT)
         xlsxreport.add_empty_row()
 
         # expense
         df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
                                              account_type=GNUCashData.EXPENSE,
                                              glevel=glevel, margins=margins)
-        xlsxreport.add_dataframe(df_expense, name=_('Expense'), color=COLOR_YELLOW, header=True, margins=margins)
+        xlsxreport.add_dataframe(df_expense, color=COLOR_YELLOW, name=_('Expense'), header=True, margins=margins,
+                                 cell_format=XLSXReport.MONEY_FORMAT)
         xlsxreport.add_empty_row()
 
         # profit
         margins.set_for_profit()
         df_profit = self.profit_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel,
                                           margins=margins)
-        xlsxreport.add_dataframe(df_profit, color=COLOR_GREEN_DARK, header=False, margins=margins)
+        xlsxreport.add_dataframe(df_profit, color=COLOR_GREEN_DARK, header=False, margins=margins,
+                                 cell_format=XLSXReport.MONEY_FORMAT)
         xlsxreport.add_empty_row()
 
         # assets
         margins.set_for_balances()
         df_assets = self.balance_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel,
                                            margins=margins)
-        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name=_('Assets'), header=True, margins=margins)
+        xlsxreport.add_dataframe(df_assets, color=COLOR_BLUE, name=_('Assets'), header=True, margins=margins,
+                                 cell_format=XLSXReport.MONEY_FORMAT)
         xlsxreport.add_empty_row()
 
         # loans
@@ -389,13 +393,15 @@ class GCReport(GNUCashData):
                                           margins=margins)
         has_loans = not (df_loans.isnull().values.all())
         if has_loans:
-            xlsxreport.add_dataframe(df_loans, color=COLOR_ORANGE_LIGHT, header=False, margins=margins)
+            xlsxreport.add_dataframe(df_loans, color=COLOR_ORANGE_LIGHT, header=False, margins=margins,
+                                     cell_format=XLSXReport.MONEY_FORMAT)
             xlsxreport.add_empty_row()
 
         # equity
         df_profit = self.equity_by_period(from_date=from_date, to_date=to_date, period=period, glevel=glevel,
                                           margins=margins)
-        xlsxreport.add_dataframe(df_profit, color=COLOR_BLUE, header=False, margins=margins, addchart='column')
+        xlsxreport.add_dataframe(df_profit, color=COLOR_BLUE, header=False, margins=margins,
+                                 cell_format=XLSXReport.MONEY_FORMAT, addchart='column')
         xlsxreport.add_empty_row()
 
 
