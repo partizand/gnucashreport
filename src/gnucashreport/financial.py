@@ -100,13 +100,36 @@ def newton(func, x0, args=(), tol=0.00001, maxiter=1000):
         p0 = p1
         q0 = q1
         p1 = p
+
         q1 = func(*((p1,) + args))
+        while q1 == float('inf'):
+            p1 = p1 + 0.0001
+            q1 = func(*((p1,) + args))
+
         # print(type(q1))
     msg = "Failed to converge after %d iterations, value is %s" % (maxiter, p)
     raise RuntimeError(msg)
     # print(msg)
 
     # return 0
+
+# func, x0, args=(), tol=0.00001, maxiter=1000
+def bisection(funct, a, b, args=(), tol=0.00001, maxiter=1000):
+    c = (a + b) / 2.0
+    while (b - a) / 2.0 > tol and maxiter > 0:
+        maxiter -= 1
+        func_a = funct(*((a,) + args))
+        func_c = funct(*((c,) + args))
+        if func_c == 0:
+            return c
+        elif func_a * func_c < 0:
+            b = c
+        else:
+            a = c
+        c = (a + b) / 2.0
+
+    return c
+
 
 def xnpv(rate, cashflows):
     """
@@ -136,12 +159,38 @@ def xnpv(rate, cashflows):
     # Иногда возвращает комплексное число
     return sum([cf/(1+rate)**((t-t0).days/365.0) for (t, cf) in cashflows])
 
-def my_xpnv(rate, transactions):
-    years = [((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
-    residual = 0
-    for i, ta in enumerate(transactions):
-        residual += ta[1] / pow(rate, years[i])
-    return residual - 1
+def my_xnpv(rate, cashflows):
+    t0 = cashflows[0][0]  # t0 is the date of the first cash flow
+
+    # Иногда возвращает комплексное число
+    # return sum([cf / (1 + rate) ** ((t - t0).days / 365.0) for (t, cf) in cashflows])
+    res = 0
+    for t, cf in cashflows:
+        if rate <= -1.0:
+            return float('inf')
+        # res += cf / (1 + rate) ** ((t - t0).days / 365.0)
+        try:
+            years = ((t - t0).days / 365.0)
+            c_pow = math.pow((1 + rate), years)
+
+            # res += cf / math.pow((1 + rate), ((t - t0).days / 365.0))
+            res += cf / c_pow
+        except Exception:
+            # print('cf={'.format(cf))
+            print('rate+1={}'.format(rate+1))
+            print('years={}'.format(years))
+            print('c_pow={}'.format(c_pow))
+            raise RuntimeError('My raise')
+
+    return res
+
+
+    # from xirr_simple
+    # years = [((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
+    # residual = 0
+    # for i, ta in enumerate(transactions):
+    #     residual += ta[1] / pow(rate, years[i])
+    # return residual - 1
 
 def xirr(cashflows, guess=0.001, for_decimal=True):
     """
@@ -189,12 +238,22 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
     >>> round(xirr(tas_6161), 4)
     Decimal('0.6161')
     
-    Example don't work
+    # Example don't work
     >>> tas = [ (date(2009, 1, 1), Decimal('-274.4')),\
         (date(2011, 4, 12), Decimal('-6512.4')),\
         (date(2012, 9, 10), Decimal('4330'))]
-    >>> xirr(tas)
-    0
+    >>> round(xirr(tas), 4)
+    Decimal('-0.2613')
+    
+    >>> tas_cred_real = [(date(2014, 4, 3), Decimal('66000')),\
+                (date(2014, 4, 5), Decimal('-9934.9')),\
+                (date(2014, 4, 5), Decimal('-65.1')),\
+                (date(2014, 4, 24), Decimal('-497.67')),\
+                (date(2014, 4, 24), Decimal('-44502.33')),\
+                (date(2014, 5, 31), Decimal('-148.26')),\
+                (date(2014, 5, 31), Decimal('-11562.77'))]
+    >>> round(xirr(tas_cred_real), 4)
+    Decimal('0.1724')
 
     """
     
@@ -212,7 +271,11 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
         # decimal to float
         chron_order = list((date, float(value)) for date, value in chron_order )
     # res = newton(lambda r: xnpv(r, chron_order), guess)
-    res = newton(lambda r: my_xpnv(r, chron_order), guess)
+    # res = newton(lambda r: my_xpnv(r, chron_order), guess)
+    left = -0.9999
+    right = 100
+    # res = bisection(lambda r: my_xnpv(r, chron_order), a=left, b=right)
+    res = bisection(lambda r: my_xnpv(r, chron_order), a=left, b=right)
     # print(type(res))
     # res = round(res, 4)
     if for_decimal:
@@ -453,7 +516,7 @@ if __name__ == "__main__":
 
     tas_err = [(date(2009, 1, 1), -274.4),
            (date(2011, 4, 12), -6512.4),
-           (date(2012, 9, 10), 4330)]
+           (date(2012, 9, 10), 4330.0)]
 
     tas_6161 = [(date(2016, 1, 1), Decimal('-9900')),
                 (date(2016, 1, 1), Decimal('-100')),
@@ -482,8 +545,9 @@ if __name__ == "__main__":
                      (date(2014, 5, 31), -148.26),
                      (date(2014, 5, 31), -11562.77)]
 
-
-
+    # inf = float('inf')
+    # print(inf)
+    # exit()
     # x = 66000.0  - 9934.9  -44502.33 - 11562.77
     # print(Decimal('9934.90'))
     # x = Decimal(66000.00) - Decimal('9934.90') - Decimal('44502.33') - Decimal('11562.77')
@@ -492,13 +556,13 @@ if __name__ == "__main__":
     # exit()
     # x_ruby = xirr_ruby(tas_10)
     # tas_cred_0 = [(pair[0], Decimal(pair[1])) for pair in tas_cred_0]
-    x_simple = xirr_simple(tas_cred_real_float, for_decimal=False)
-    x_x = xirr(tas_cred_real_float, for_decimal=False)
+    # x_simple = xirr_simple(tas_cred_real, for_decimal=True)
+    x_x = xirr(tas_cred_real, for_decimal=True)
 
     # x = xirr(tas_err, guess=0.01, for_decimal=False)
     # print(x)
     # print(x_ruby)
-    print(x_simple)
+    # print(x_simple)
     print(x_x)
     # print(round(x, 4))
 

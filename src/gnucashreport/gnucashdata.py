@@ -782,7 +782,7 @@ class GNUCashData:
         if df_xirr.empty:
             return
 
-        dataframe_to_excel(df_xirr, 'df_xirr')
+        # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         # print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
@@ -839,7 +839,8 @@ class GNUCashData:
         df[date_field] = df[date_field].astype(date)
         # df[value_field] = df[value_field].astype(float)
         tuples = [tuple(x) for x in df.to_records(index=False)]
-        a_yield = xirr_simple(tuples)
+        # a_yield = xirr_simple(tuples)
+        a_yield = xirr(tuples)
         # a_yield = round(a_yield, 4)
         # print(a_yield)
         return Decimal(a_yield)
