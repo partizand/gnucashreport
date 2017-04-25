@@ -62,8 +62,9 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # dataframe_to_excel(gcrep.df_splits, 'splits')
 # gcrep.returns_report_excel('v:/tables/returns.xlsx', from_date=from_date, to_date=to_date)
 # gcrep.returns_report_excel('v:/tables/returns.xlsx')
-gcrep.all_reports_excel('v:/tables/returns.xlsx')
-exit()
+# gcrep.all_reports_excel('v:/tables/returns.xlsx')
+
+# exit()
 
 
 
@@ -79,14 +80,13 @@ exit()
 
 # account = 'Активы:Долгосрочные активы:ПИФы:ТД Илья Муромец'
 # account = 'Активы:Долгосрочные активы:ПИФы'
-# account_guid = gcrep._get_account_guid(account)
-# xirr = gcrep._xirr_calc(account_guid)
-# print(xirr)
+account = 'Долги:Кредит ВТБ24 (потреб)'
 # account = 'Активы:Долгосрочные активы:Депозиты'
-# df_return = gcrep.yield_calc(account_name=account)
+df_return = gcrep.yield_calc(account_name=account)
 # df_return = gcrep.yield_calc()
 # dataframe_to_excel(df_return, 'df_depo')
-# exit()
+exit()
+# account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 # df_return = gcrep.yield_calc(account_name=account)
 df_return = gcrep.yield_calc()

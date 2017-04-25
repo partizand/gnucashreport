@@ -782,7 +782,7 @@ class GNUCashData:
         if df_xirr.empty:
             return
 
-        # dataframe_to_excel(df_xirr, 'df_xirr')
+        dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         # print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
@@ -837,7 +837,7 @@ class GNUCashData:
         #     df = pandas.DataFrame(df, columns=[date_field, value_field])
         # df['date'] = df[date_field].astype('O')
         df[date_field] = df[date_field].astype(date)
-        df[value_field] = df[value_field].astype(float)
+        # df[value_field] = df[value_field].astype(float)
         tuples = [tuple(x) for x in df.to_records(index=False)]
         a_yield = xirr_simple(tuples)
         # a_yield = round(a_yield, 4)
@@ -983,6 +983,13 @@ class GNUCashData:
         incexp_types = [self.INCOME, self.EXPENSE]
         df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
         df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
+
+        # Тест. Для анализа кредитов для подсчета доходности
+        # TODO Это надо убрать
+        if any(df_assets[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
+            self.df_splits.loc[tr_guid, 'tr_type'] = 'liab'
+
+
         # df_assets = df_assets[df_assets[cols.XIRR_ENABLE]]
         # есть ли счета для xirr
         if not any(df_assets[cols.XIRR_ENABLE]):
@@ -1022,10 +1029,8 @@ class GNUCashData:
             print('Transaction with multi stock accounts. Xirr rule not set. Transaction_guid {tr_guid}'.format(tr_guid=tr_guid))
             return
         elif (len(df_assets) == 2) and (len(df_incexps) == 1):
-            # Тест
-            # Добавление признака такой транзакции
-            # incexp_type = df
-            self.df_splits.loc[tr_guid, 'tr_type'] = 'asset-asset-incexp'
+            # Тест. Добавление признака такой транзакции
+            # self.df_splits.loc[tr_guid, 'tr_type'] = 'asset-asset-incexp'
 
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
@@ -1037,7 +1042,8 @@ class GNUCashData:
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # И добавить все расходы/доходы у которых xirr_enable=true
-            master_guid = self._get_master_asset_guid(df_assets, df_incexp=df_incexps)
+            # master_guid = self._get_master_asset_guid(df_assets, df_incexp=df_incexps)
+            master_guid = df_assets.iloc[0][cols.ACCOUNT_GUID]
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             return
         else:

@@ -108,8 +108,6 @@ def newton(func, x0, args=(), tol=0.00001, maxiter=1000):
 
     # return 0
 
-
-
 def xnpv(rate, cashflows):
     """
     Calculate the net present value of a series of cashflows at irregular intervals.
@@ -138,7 +136,12 @@ def xnpv(rate, cashflows):
     # Иногда возвращает комплексное число
     return sum([cf/(1+rate)**((t-t0).days/365.0) for (t, cf) in cashflows])
 
-
+def my_xpnv(rate, transactions):
+    years = [((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
+    residual = 0
+    for i, ta in enumerate(transactions):
+        residual += ta[1] / pow(rate, years[i])
+    return residual - 1
 
 def xirr(cashflows, guess=0.001, for_decimal=True):
     """
@@ -186,12 +189,12 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
     >>> round(xirr(tas_6161), 4)
     Decimal('0.6161')
     
-    # Example don't work
-    # >>> tas = [ (date(2009, 1, 1), -274.4),\
-    #     (date(2011, 4, 12), -6512.4),\
-    #     (date(2012, 9, 10), 4330)]
-    # >>> xirr(tas)
-    # 0
+    Example don't work
+    >>> tas = [ (date(2009, 1, 1), Decimal('-274.4')),\
+        (date(2011, 4, 12), Decimal('-6512.4')),\
+        (date(2012, 9, 10), Decimal('4330'))]
+    >>> xirr(tas)
+    0
 
     """
     
@@ -209,7 +212,7 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
         # decimal to float
         chron_order = list((date, float(value)) for date, value in chron_order )
     # res = newton(lambda r: xnpv(r, chron_order), guess)
-    res = newton(lambda r: xnpv(r, chron_order), guess)
+    res = newton(lambda r: my_xpnv(r, chron_order), guess)
     # print(type(res))
     # res = round(res, 4)
     if for_decimal:
@@ -231,8 +234,9 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
     #     return optimize.brentq(lambda r: xnpv(r, cashflows), -1.0, 1e10)
 
 # http://stackoverflow.com/questions/8919718/financial-python-library-that-has-xirr-and-xnpv-function
-def xirr_simple(transactions, guess=0.1):
+def xirr_simple(transactions, for_decimal=True):
     """
+    Decimal version
     WRONG!?
     Calculate the Internal Rate of Return of a series of cashflows at irregular intervals.
     Like excel xirr function
@@ -245,51 +249,70 @@ def xirr_simple(transactions, guess=0.1):
            a guess at the solution to be used as a starting point for the numerical solution.
     :return: Returns the IRR as a single value
 
-    >>> tas_10 = [(date(2016, 1, 1), -10000),\
-           (date(2016, 12, 31), 11000)]
+    >>> tas_10 = [(date(2016, 1, 1), Decimal('-10000')),\
+           (date(2016, 12, 31), Decimal('11000'))]
     >>> round(xirr_simple(tas_10), 4)
-    0.1
+    Decimal('0.1000')
     
-    >>> tas = [ (date(2016, 1, 1), -10000),\
-        (date(2016, 1, 1), 10000),\
-        (date(2016, 12, 31), -11000),\
-        (date(2016, 12, 31), 11000)]
+    >>> tas = [ (date(2016, 1, 1), Decimal('-10000')),\
+        (date(2016, 1, 1), Decimal('10000')),\
+        (date(2016, 12, 31), Decimal('-11000')),\
+        (date(2016, 12, 31), Decimal('11000'))]
     >>> xirr_simple(tas)
-    0
+    Decimal('0')
     
-    >>> tas_6161 = [ (date(2016, 1, 1), -9900),\
-        (date(2016, 1, 1), -100),\
-        (date(2016, 6, 1), 500),\
-        (date(2016, 12, 1), 15000),\
-        (date(2016, 12, 1), -100)]
+    >>> tas_6161 = [ (date(2016, 1, 1), Decimal('-9900')),\
+        (date(2016, 1, 1), Decimal('-100')),\
+        (date(2016, 6, 1), Decimal('500')),\
+        (date(2016, 12, 1), Decimal('15000')),\
+        (date(2016, 12, 1), Decimal('-100'))]
     >>> round(xirr_simple(tas_6161), 4)
-    0.6161
+    Decimal('0.6161')
     
-    >>> tas = [ (date(2009, 1, 1), -274.4),\
-        (date(2011, 4, 12), -6512.4),\
-        (date(2012, 9, 10), 4330)]
+    >>> tas = [ (date(2009, 1, 1), Decimal('-274.4')),\
+        (date(2011, 4, 12), Decimal('-6512.4')),\
+        (date(2012, 9, 10), Decimal('4330'))]
     >>> round(xirr_simple(tas), 4) # result by openoffice and google shpreadsheet, Excel has other result
-    -0.2613
+    Decimal('-0.2613')
+    
+    >>> tas_cred_0 = [(date(2014, 4, 3), Decimal('66000')),\
+                (date(2014, 4, 5), Decimal('-9934.9')),\
+                (date(2014, 4, 24), Decimal('-44502.33')),\
+                (date(2014, 5, 31), Decimal('-11562.77'))]
+    >>> round(xirr_simple(tas_cred_0), 4)
+    Decimal('0.0000')
 
     """
     # Нулевая доходность
     s = sum([pair[1] for pair in transactions])
     if s == 0:
-        return 0
+        if for_decimal:
+            return Decimal(0)
+        else:
+            return 0
 
     # Сортировка
     transactions = sorted(transactions, key=lambda x: x[0])
-
     years = [((ta[0] - transactions[0][0]).days / 365.0) for ta in transactions]
-    residual = 1
-    step = 0.05
-    # guess = 0.05
-    # guess = guess
-    epsilon = 0.00001  # Точность
-    limit = 10000 # Макс кол-во итераций
+    if for_decimal:
+        years = [Decimal(year) for year in years]
+        residual = Decimal(1)
+        residual_cycle = Decimal(0)
+        step = Decimal('0.01')
+        step_div = Decimal(2)
+        guess = Decimal('0.1')
+        epsilon = Decimal('0.00001')  # Точность
+    else:
+        residual = 1
+        residual_cycle = 0
+        step = 0.00001
+        step_div = 2
+        guess = 0.1
+        epsilon = 0.00001  # Точность
+    limit = 100000 # Макс кол-во итераций
     while abs(residual) > epsilon and limit > 0:
         limit -= 1
-        residual = 0.0
+        residual = residual_cycle
         for i, ta in enumerate(transactions):
             residual += ta[1] / pow(guess, years[i])
         if abs(residual) > epsilon:
@@ -297,7 +320,7 @@ def xirr_simple(transactions, guess=0.1):
                 guess += step
             else:
                 guess -= step
-                step /= 2.0
+                step /= step_div
     return guess-1
 
 
@@ -432,21 +455,51 @@ if __name__ == "__main__":
            (date(2011, 4, 12), -6512.4),
            (date(2012, 9, 10), 4330)]
 
-    tas_6161 = [(date(2016, 1, 1), -9900),
-                (date(2016, 1, 1), -100),
-                (date(2016, 6, 1), 500),
-                (date(2016, 12, 1), 15000),
-                (date(2016, 12, 1), -100)]
+    tas_6161 = [(date(2016, 1, 1), Decimal('-9900')),
+                (date(2016, 1, 1), Decimal('-100')),
+                (date(2016, 6, 1), Decimal('500')),
+                (date(2016, 12, 1), Decimal('15000')),
+                (date(2016, 12, 1), Decimal('-100'))]
+
+    tas_cred_0 = [(date(2014, 4, 3), Decimal('66000')),
+                (date(2014, 4, 5), Decimal('-9934.9')),
+                (date(2014, 4, 24), Decimal('-44502.33')),
+                (date(2014, 5, 31), Decimal('-11562.77'))]
+
+    tas_cred_real = [(date(2014, 4, 3), Decimal('66000')),
+                (date(2014, 4, 5), Decimal('-9934.9')),
+                (date(2014, 4, 5), Decimal('-65.1')),
+                (date(2014, 4, 24), Decimal('-497.67')),
+                (date(2014, 4, 24), Decimal('-44502.33')),
+                (date(2014, 5, 31), Decimal('-148.26')),
+                (date(2014, 5, 31), Decimal('-11562.77'))]
+
+    tas_cred_real_float = [(date(2014, 4, 3), 66000.0),
+                     (date(2014, 4, 5), -9934.9),
+                     (date(2014, 4, 5), -65.1),
+                     (date(2014, 4, 24), -497.67),
+                     (date(2014, 4, 24), -44502.33),
+                     (date(2014, 5, 31), -148.26),
+                     (date(2014, 5, 31), -11562.77)]
 
 
+
+    # x = 66000.0  - 9934.9  -44502.33 - 11562.77
+    # print(Decimal('9934.90'))
+    # x = Decimal(66000.00) - Decimal('9934.90') - Decimal('44502.33') - Decimal('11562.77')
+    # print(type(x))
+    # print(x)
+    # exit()
     # x_ruby = xirr_ruby(tas_10)
-
-    x_simple = xirr_simple(tas_err, guess=0.1)
+    # tas_cred_0 = [(pair[0], Decimal(pair[1])) for pair in tas_cred_0]
+    x_simple = xirr_simple(tas_cred_real_float, for_decimal=False)
+    x_x = xirr(tas_cred_real_float, for_decimal=False)
 
     # x = xirr(tas_err, guess=0.01, for_decimal=False)
     # print(x)
     # print(x_ruby)
     print(x_simple)
+    print(x_x)
     # print(round(x, 4))
 
     # print(xirr(tas)) #0.0100612651650822
