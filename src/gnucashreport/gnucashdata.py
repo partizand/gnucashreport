@@ -843,8 +843,8 @@ class GNUCashData:
         a_yield = xirr(tuples)
         # a_yield = round(a_yield, 4)
         # print(a_yield)
-        return Decimal(a_yield)
-        # return a_yield
+        # return Decimal(a_yield)
+        return a_yield
 
 
     def _get_child_accounts(self, account_guid, account_types=None, xirr_enable=None, recurse=True):
