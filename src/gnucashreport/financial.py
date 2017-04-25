@@ -113,6 +113,48 @@ def newton(func, x0, args=(), tol=0.00001, maxiter=1000):
 
     # return 0
 
+def my_bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
+    """
+    Find a zero using the bisection method
+    :param funct: function
+        The function whose zero is wanted. It must be a function of a
+        single variable of the form f(x,a,b,c...), where a,b,c... are extra
+        arguments that can be passed in the `args` parameter.
+    :param left_x: 
+    :param right_x: 
+    :param args: tuple, optional
+        Extra arguments to be used in the function call.
+    :param tol: : float, optional
+        The allowable error of the zero value.
+    :param maxiter: int, optional
+        Maximum number of iterations.
+    :return: : float
+        Estimated location where function is zero.
+    """
+    mid_x = (left_x + right_x) / 2.0
+    for iter in range(maxiter):
+    # while (right_x - left_x) / 2.0 > tol and maxiter > 0:
+    #     maxiter -= 1
+
+        func_left = funct(*((left_x,) + args))
+        func_right = funct(*((right_x,) + args))
+        func_mid = funct(*((mid_x,) + args))
+        # Если знак разный то действуем как указано
+        # Если знак одинаковый, то движемся в сторону наименьшего
+        if func_mid == 0:
+            return mid_x
+        elif func_left * func_mid < 0:
+            right_x = mid_x
+        else:
+            left_x = mid_x
+        mid_x = (left_x + right_x) / 2.0
+
+        if (right_x - left_x) / 2.0 < tol:
+            print('here')
+            return mid_x
+    print('Failed to converge after {} iterations'.format(maxiter))
+    return mid_x
+
 
 def bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
     """
@@ -132,28 +174,39 @@ def bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
     :return: : float
         Estimated location where function is zero.
     """
-    c = (left_x + right_x) / 2.0
+
+    start_left_x = left_x
+    start_right_x = right_x
+    mid_x = (left_x + right_x) / 2.0
     for iter in range(maxiter):
     # while (right_x - left_x) / 2.0 > tol and maxiter > 0:
     #     maxiter -= 1
-        if right_x < left_x:
-            print('overflow')
-            return -1
-        func_a = funct(*((left_x,) + args))
-        func_c = funct(*((c,) + args))
-        if func_c == 0:
-            return c
-        elif func_a * func_c < 0:
-            right_x = c
+
+        func_left = funct(*((left_x,) + args))
+        func_right = funct(*((right_x,) + args))
+        func_mid = funct(*((mid_x,) + args))
+        # Сбой пойдет если решение лежит за left или за right
+        # Моя вставка
+        if func_left * func_right > 0:
+            if func_left > 0:
+                print('exceeded upper threshold {}'.format(start_right_x))
+                return start_right_x
+            else:
+                print('exceeded the lower threshold {}'.format(start_left_x))
+                return start_left_x
+        # Rjytw vjtq dcnfdrb
+        if func_mid == 0:
+            return mid_x
+        elif func_left * func_mid < 0:
+            right_x = mid_x
         else:
-            left_x = c
-        c = (left_x + right_x) / 2.0
+            left_x = mid_x
+        mid_x = (left_x + right_x) / 2.0
 
         if (right_x - left_x) / 2.0 < tol:
-            print('here')
-            return c
+            return mid_x
     print('Failed to converge after {} iterations'.format(maxiter))
-    return c
+    return mid_x
 
 
 def xnpv(rate, cashflows):
