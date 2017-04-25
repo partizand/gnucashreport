@@ -632,7 +632,7 @@ class GNUCashData:
         return df
 
     def yield_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None,
-                   recurse=True, str_format=False):
+                   recurse=True):
         """
         Calculate annual return for account or account and it childrens (recurse)
         
@@ -654,8 +654,8 @@ class GNUCashData:
         ar_xirr = self._xirr_child_calc_array(account_guid=account_guid, account_name=account_name,
                                               account_types=account_types,
                                               from_date=from_date, to_date=to_date,
-                                              recurse=recurse,
-                                              str_format=str_format)
+                                              recurse=recurse
+                                              )
 
         # Колонки в нужной последовательности
         df = pandas.DataFrame(ar_xirr, columns=[
@@ -697,7 +697,7 @@ class GNUCashData:
 
 
     def _xirr_child_calc_array(self, account_guid=None, account_name=None, account_types=None,
-                               from_date=None, to_date=None, df_all_xirr=None, recurse=True, str_format=False):
+                               from_date=None, to_date=None, df_all_xirr=None, recurse=True):
         """
         Подсчитывает доходность счета или счетов
         Возвращает массив словарей
@@ -740,7 +740,7 @@ class GNUCashData:
         # Подсчет доходности текущего счета
         if root_guid != self.root_account_guid:
             xirr_root = self._xirr_calc(account_guid=root_guid, account_types=account_types,
-                                        df_all_xirr=df_all_xirr, str_format=str_format)
+                                        df_all_xirr=df_all_xirr)
             if xirr_root:
                 ar_xirr += [xirr_root]
 
@@ -753,7 +753,7 @@ class GNUCashData:
             for child in childs:
 
                 sub_xirr = self._xirr_child_calc_array(account_guid=child, account_types=account_types,
-                                                       df_all_xirr=df_all_xirr, recurse=recurse, str_format=str_format)
+                                                       df_all_xirr=df_all_xirr, recurse=recurse)
                 if sub_xirr:
                     ar_xirr += sub_xirr
 
@@ -762,7 +762,7 @@ class GNUCashData:
         return ar_xirr
 
     # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
-    def _xirr_calc(self, account_guid, account_types, df_all_xirr: pandas.DataFrame, str_format=False):
+    def _xirr_calc(self, account_guid, account_types, df_all_xirr: pandas.DataFrame):
         """
         Возвращает итоговую доходность по указанному счету по таблице df_all_xirr
         :param account_guid: 
@@ -810,22 +810,41 @@ class GNUCashData:
         round_prec = 4
         itog[cols.FULLNAME] = self.df_accounts.loc[account_guid][cols.FULLNAME]
         itog[cols.SHORTNAME] = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-        if str_format:
-            itog[cols.YIELD_TOTAL] = '{:0.2f}%'.format(yield_total)
-            itog[cols.YIELD_INCOME] = '{:0.2f}%'.format(yield_income)
-            itog[cols.YIELD_EXPENSE] = '{:0.2f}%'.format(yield_expense)
-            itog[cols.YIELD_CAPITAL] = '{:0.2f}%'.format(yield_total - yield_income)
-        else:
-            itog[cols.YIELD_TOTAL] = round(yield_total, round_prec)
-            itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
-            itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
-            itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
-        itog[cols.START_DATE] = df_xirr[cols.POST_DATE].min()
-        itog[cols.END_DATE] = df_xirr[cols.POST_DATE].max()
+        itog[cols.YIELD_TOTAL] = round(yield_total, round_prec)
+        itog[cols.YIELD_INCOME] = round(yield_income, round_prec)
+        itog[cols.YIELD_EXPENSE] = round(yield_expense, round_prec)
+        itog[cols.YIELD_CAPITAL] = itog[cols.YIELD_TOTAL] - itog[cols.YIELD_INCOME]
+        itog[cols.START_DATE] = df_xirr[cols.POST_DATE].min().date()
+        itog[cols.END_DATE] = df_xirr[cols.POST_DATE].max().date()
         itog[cols.DAYS] = (itog[cols.END_DATE] - itog[cols.START_DATE]).days
         # itog[cols.XIRR_DAYS] = days
 
         return itog
+
+    def _xirr_by_dataframe(self, obj, date_field=cols.POST_DATE, value_field=cols.XIRR_VALUE):
+        """
+        Считает функцию xirr по значениям dataframe. obj может быть dataframe или массивом словарей
+        :param obj: DataFrame 
+        :param date_field: Name of date column
+        :param value_field: Name of value column
+        :return: annual yield
+        """
+        # if isinstance(obj, pandas.DataFrame):
+        df = pandas.DataFrame(obj, columns=[date_field, value_field])
+        # else:
+        #     df = pandas.concat(obj, ignore_index=True)
+        #     df.sort_values(by=date_field, inplace=True)
+        #     df = pandas.DataFrame(df, columns=[date_field, value_field])
+        # df['date'] = df[date_field].astype('O')
+        df[date_field] = df[date_field].astype(date)
+        df[value_field] = df[value_field].astype(float)
+        tuples = [tuple(x) for x in df.to_records(index=False)]
+        a_yield = xirr_simple(tuples)
+        # a_yield = round(a_yield, 4)
+        # print(a_yield)
+        return Decimal(a_yield)
+        # return a_yield
+
 
     def _get_child_accounts(self, account_guid, account_types=None, xirr_enable=None, recurse=True):
         """
@@ -923,30 +942,6 @@ class GNUCashData:
     #
     #     # return df_total
 
-    def _xirr_by_dataframe(self, obj, date_field=cols.POST_DATE, value_field=cols.XIRR_VALUE):
-        """
-        Считает функцию xirr по значениям dataframe. obj может быть просто dataframe или массивом dataframe
-        Тогда они сложатся
-        :param obj: DataFrame or array of dataframes
-        :param date_field: Name of date column
-        :param value_field: Name of value column
-        :return: annual yield
-        """
-        if isinstance(obj, pandas.DataFrame):
-            df = pandas.DataFrame(obj, columns=[date_field, value_field])
-        else:
-            df = pandas.concat(obj, ignore_index=True)
-            df.sort_values(by=date_field, inplace=True)
-            df = pandas.DataFrame(df, columns=[date_field, value_field])
-        # df['date'] = df[date_field].astype('O')
-        df[date_field] = df[date_field].astype(date)
-        df[value_field] = df[value_field].astype(float)
-        tuples = [tuple(x) for x in df.to_records(index=False)]
-        a_yield = xirr_simple(tuples)
-        # a_yield = round(a_yield, 4)
-        # print(a_yield)
-        # return Decimal(a_yield)
-        return a_yield
 
 
     def _add_xirr_info(self):
