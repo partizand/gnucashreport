@@ -113,21 +113,46 @@ def newton(func, x0, args=(), tol=0.00001, maxiter=1000):
 
     # return 0
 
-# func, x0, args=(), tol=0.00001, maxiter=1000
-def bisection(funct, a, b, args=(), tol=0.00001, maxiter=1000):
-    c = (a + b) / 2.0
-    while (b - a) / 2.0 > tol and maxiter > 0:
-        maxiter -= 1
-        func_a = funct(*((a,) + args))
+
+def bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
+    """
+    Find a zero using the bisection method
+    :param funct: function
+        The function whose zero is wanted. It must be a function of a
+        single variable of the form f(x,a,b,c...), where a,b,c... are extra
+        arguments that can be passed in the `args` parameter.
+    :param left_x: 
+    :param right_x: 
+    :param args: tuple, optional
+        Extra arguments to be used in the function call.
+    :param tol: : float, optional
+        The allowable error of the zero value.
+    :param maxiter: int, optional
+        Maximum number of iterations.
+    :return: : float
+        Estimated location where function is zero.
+    """
+    c = (left_x + right_x) / 2.0
+    for iter in range(maxiter):
+    # while (right_x - left_x) / 2.0 > tol and maxiter > 0:
+    #     maxiter -= 1
+        if right_x < left_x:
+            print('overflow')
+            return -1
+        func_a = funct(*((left_x,) + args))
         func_c = funct(*((c,) + args))
         if func_c == 0:
             return c
         elif func_a * func_c < 0:
-            b = c
+            right_x = c
         else:
-            a = c
-        c = (a + b) / 2.0
+            left_x = c
+        c = (left_x + right_x) / 2.0
 
+        if (right_x - left_x) / 2.0 < tol:
+            print('here')
+            return c
+    print('Failed to converge after {} iterations'.format(maxiter))
     return c
 
 
@@ -272,10 +297,11 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
         chron_order = list((date, float(value)) for date, value in chron_order )
     # res = newton(lambda r: xnpv(r, chron_order), guess)
     # res = newton(lambda r: my_xpnv(r, chron_order), guess)
-    left = -0.9999
+    left = -0.9999999
     right = 100
     # res = bisection(lambda r: my_xnpv(r, chron_order), a=left, b=right)
-    res = bisection(lambda r: my_xnpv(r, chron_order), a=left, b=right)
+    # res = bisection(lambda r: my_xnpv(r, chron_order), left_x=left, right_x=right)
+    res = bisection(lambda r: xnpv(r, chron_order), left_x=left, right_x=right)
     # print(type(res))
     # res = round(res, 4)
     if for_decimal:
@@ -545,6 +571,9 @@ if __name__ == "__main__":
                      (date(2014, 5, 31), -148.26),
                      (date(2014, 5, 31), -11562.77)]
 
+    tas_min100 = [(date(2016, 1, 1), -1000.0),
+              (date(2016, 6, 1), 1.0)]
+
     # inf = float('inf')
     # print(inf)
     # exit()
@@ -557,7 +586,7 @@ if __name__ == "__main__":
     # x_ruby = xirr_ruby(tas_10)
     # tas_cred_0 = [(pair[0], Decimal(pair[1])) for pair in tas_cred_0]
     # x_simple = xirr_simple(tas_cred_real, for_decimal=True)
-    x_x = xirr(tas_cred_real, for_decimal=True)
+    x_x = xirr(tas_min100, for_decimal=False)
 
     # x = xirr(tas_err, guess=0.01, for_decimal=False)
     # print(x)
