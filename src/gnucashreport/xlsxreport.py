@@ -1,8 +1,14 @@
+import collections
 import pandas
 from xlsxwriter.utility import xl_col_to_name
 
 from gnucashreport.utils import dateformat_from_period
 
+COLOR_GREEN = '#92D050'
+COLOR_GREEN_DARK = '#00B050'
+COLOR_BLUE = '#00B0F0'
+COLOR_YELLOW = '#FFFF00'
+COLOR_ORANGE_LIGHT = '#FDE9D9'
 
 class TablePoints:
     def __init__(self, dataframe, header, margins, row):
@@ -97,11 +103,12 @@ class XLSXReport:
         self._datetime_format = dateformat_from_period(datetime_format)
         self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=self._datetime_format)
         self._workbook = self._writer.book
-        # self._cur_row = start_row
-        # self._charts = []
-        # self._headers = []
-        # self.common_categories = None
+
+        # Test
+
+
         self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
+        self._set_formats()
 
     def save(self):
         """
@@ -138,6 +145,28 @@ class XLSXReport:
         self._charts = []
         self._headers = []
         self.common_categories = None
+
+    def _set_formats(self):
+        # Заголовки таблиц
+        self._format_header = self._workbook.add_format({'bold': True})
+        self._format_header.set_align('center')
+        self._format_index_left = self._workbook.add_format({'bold': True})
+        self._format_index_center = self._workbook.add_format({'bold': True})
+        self._format_index_center.set_align('center')
+        self._format_itog = self._workbook.add_format({'bold': True})
+        self._format_itog.set_align('center')
+        # Значение в валюте
+        self._format_value_currency = self._workbook.add_format()
+        self._format_value_currency.set_num_format(self.MONEY_FORMAT)
+        # Значение в процентах
+        self._format_value_perc = self._workbook.add_format()
+        self._format_value_perc.set_num_format(self.PERCENTAGE_FORMAT)
+        # Формат доходов
+        self._format_income = self._workbook.add_format({'bold': True})
+        self._format_income.set_bg_color(COLOR_GREEN)
+
+
+
 
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
                       cell_format=None):
@@ -392,3 +421,77 @@ class XLSXReport:
         for col_name in cols:
             self._worksheet.write(row, col, col_name, frmt_date)
             col += 1
+
+    def add_dataframe_test(self, df:pandas.DataFrame, startcol=None, startrow=None, header=True, index=True, ):
+        if not self._worksheet:
+            self._worksheet = self._workbook.add_worksheet()
+
+        if not startrow:
+            startrow = 0
+        if not startcol:
+            startcol = 0
+        row = startrow
+        # col = startcol
+
+
+        # col = start_col
+        if header:
+            col = startcol
+            if index:
+                index_names = df.index.names
+                self._append_line(index_names, row=row, col=col, cell_format=self._format_header)
+                col += len(index_names)
+
+            columns = df.columns.tolist()
+            self._append_line(columns, row=row, col=col, cell_format=self._format_header)
+            row += 1
+
+        for idx, df_row in df.iterrows():
+            col = startcol
+            if index:
+                if isinstance(idx, tuple):
+                    self._append_line(idx, row, col, cell_format=self._format_index_center)
+                    col += len(idx)
+                else:
+                    self._worksheet.write(row, col, idx, self._format_index_center)
+                    col += 1
+
+            self._append_line(df_row, row, col, cell_format=self._format_value_currency)
+            # for value in df_row:
+            #     self._worksheet.write(row, col, value)
+            #     col += 1
+            row += 1
+
+    def _append_line(self, line, row, col, cell_format=None):
+        # if isinstance(line, collections.Iterable):
+        for value in line:
+            self._worksheet.write(row, col, value, cell_format)
+            col += 1
+        # else:
+        #     self._worksheet.write(row, col, line)
+
+
+if __name__ == "__main__":
+    line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
+             {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
+             {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
+             {'date': '05.02.2016', 'value': 100.2, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
+             {'date': '05.03.2016', 'value': 500, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
+             {'date': '01.01.2016', 'value': 55, 'account': 'Активы:Текущие:Вклад', 'guid': '20'},
+             {'date': '01.01.2016', 'value': 57, 'account': 'Активы:Текущие:Вклад', 'guid': '20'},
+             {'date': '01.02.2016', 'value': 57, 'account': 'Активы:Текущие:Вклад', 'guid': '20'},
+             {'date': '01.01.2016', 'value': 102, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
+             {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
+             {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
+             {'date': '05.02.2016', 'value': 100.2, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
+             {'date': '05.03.2016', 'value': 500, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
+             {'date': '01.01.2016', 'value': 55, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
+             {'date': '01.01.2016', 'value': 57, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
+             {'date': '01.02.2016', 'value': 57, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
+             ]
+
+    df = pandas.DataFrame(line1)
+    df.set_index('date', append=True, inplace=True)
+    xls = XLSXReport('v:/tables/test.xlsx')
+    xls.add_dataframe_test(df)
+    xls.save()
