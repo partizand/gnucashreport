@@ -156,7 +156,7 @@ def my_bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
     return mid_x
 
 
-def bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
+def bisection(funct, args=(), left_x=-0.99999, right_x=100, tol=0.00001, maxiter=1000):
     """
     Find a zero using the bisection method
     :param funct: function
@@ -174,30 +174,36 @@ def bisection(funct, left_x, right_x, args=(), tol=0.00001, maxiter=1000):
     :return: : float
         Estimated location where function is zero.
     """
-
-    start_left_x = left_x
-    start_right_x = right_x
+    # Сбой пойдет если решение лежит за left или за right
+    # Моя вставка
+    func_left = funct(*((left_x,) + args))
+    func_right = funct(*((right_x,) + args))
+    # Если у результатов функции знак одинаковый, то это выход за пределы диапазона left_x - right_x
+    # if func_left * func_right > 0:
+    if (func_left > 0) and (func_right > 0) or (func_left < 0) and (func_right < 0):
+        if func_left > 0:
+            print('exceeded upper threshold {}'.format(right_x))
+            return right_x
+        else:
+            print('exceeded the lower threshold {}'.format(left_x))
+            return left_x
+    # Конец моей вставки
+    # start_left_x = left_x
+    # start_right_x = right_x
     mid_x = (left_x + right_x) / 2.0
     for iter in range(maxiter):
     # while (right_x - left_x) / 2.0 > tol and maxiter > 0:
     #     maxiter -= 1
 
         func_left = funct(*((left_x,) + args))
-        func_right = funct(*((right_x,) + args))
+        # func_right = funct(*((right_x,) + args))
         func_mid = funct(*((mid_x,) + args))
-        # Сбой пойдет если решение лежит за left или за right
-        # Моя вставка
-        if func_left * func_right > 0:
-            if func_left > 0:
-                print('exceeded upper threshold {}'.format(start_right_x))
-                return start_right_x
-            else:
-                print('exceeded the lower threshold {}'.format(start_left_x))
-                return start_left_x
-        # Rjytw vjtq dcnfdrb
+
         if func_mid == 0:
             return mid_x
-        elif func_left * func_mid < 0:
+        # elif func_left * func_mid < 0:
+        # Проверка, что func_left и func_mid имеют разные знаки
+        elif (func_left > 0) and (func_mid < 0) or (func_left < 0) and (func_mid > 0):
             right_x = mid_x
         else:
             left_x = mid_x
@@ -270,7 +276,7 @@ def my_xnpv(rate, cashflows):
     #     residual += ta[1] / pow(rate, years[i])
     # return residual - 1
 
-def xirr(cashflows, guess=0.001, for_decimal=True):
+def xirr(cashflows, for_decimal=True):
     """
     Rigth!
     Calculate the Internal Rate of Return of a series of cashflows at irregular intervals.
@@ -335,26 +341,22 @@ def xirr(cashflows, guess=0.001, for_decimal=True):
 
     """
     
-    # return secant_method(0.0001, lambda r: xnpv(r, cashflows), guess)
-    # return newton(lambda r: xnpv(r,cashflows), guess)
-
     # Нулевая доходность
     s = sum([pair[1] for pair in cashflows])
     if s == 0:
         return 0
-    # guess = Decimal(guess)
-    # sort
-    chron_order = sorted(cashflows, key=lambda x: x[0])
+
+    cashflows_sorted = sorted(cashflows, key=lambda x: x[0])
     if for_decimal:
         # decimal to float
-        chron_order = list((date, float(value)) for date, value in chron_order )
+        cashflows_sorted = list((date, float(value)) for date, value in cashflows_sorted )
     # res = newton(lambda r: xnpv(r, chron_order), guess)
     # res = newton(lambda r: my_xpnv(r, chron_order), guess)
     left = -0.9999999
     right = 100
     # res = bisection(lambda r: my_xnpv(r, chron_order), a=left, b=right)
     # res = bisection(lambda r: my_xnpv(r, chron_order), left_x=left, right_x=right)
-    res = bisection(lambda r: xnpv(r, chron_order), left_x=left, right_x=right)
+    res = bisection(lambda r: xnpv(r, cashflows_sorted), left_x=left, right_x=right)
     # print(type(res))
     # res = round(res, 4)
     if for_decimal:
