@@ -1091,15 +1091,16 @@ class GNUCashData:
         if len(df_asset) == 1:
             return df_asset.iloc[0][cols.ACCOUNT_GUID]
 
-        # Если есть счет с 0, то главный он
-        df_zero = df_asset[df_asset[cols.VALUE_CURRENCY] == 0]
-        if len(df_zero) > 0:
-            return df_zero.iloc[0][cols.ACCOUNT_GUID]
 
         # если есть тип stock, то он главный
         if any(df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)):
             df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)]
             return df.iloc[0][cols.ACCOUNT_GUID]
+
+        # Если есть счет с 0, то главный он
+        df_zero = df_asset[df_asset[cols.VALUE_CURRENCY] == 0]
+        if len(df_zero) > 0:
+            return df_zero.iloc[0][cols.ACCOUNT_GUID]
 
         # Если есть счет с типом liability, то главный он
         if any(df_asset[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):

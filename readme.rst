@@ -72,6 +72,42 @@ This report contain:
 
 >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
 
+Return on assets
+----------------
+
+The library may consider the profitability of accounts taking into account the hierarchy.
+Any asset accounts, not only stock. You can calculate the yield for all time or a specified period
+
+.. code-block:: python
+    # open gnucash book
+    import gnucashreport
+    gcrep = gnucashreport.GNUCashReport()
+
+    # Get return on assets
+    gcrep.open_book_file(your_gnucash_file)
+    df_return = gcrep.yield_calc()
+
+    # Save results
+    dataframe_to_excel(df_return, 'returns.xlsx')
+
+
+See the sheet 'return' in .xlsx file after launch command line tool
+
+All results are displayed in percent per annum:
+
+Total
+     The total return on asset taking into account the costs
+
+Income
+    Profitability cashflow from account. Dividends, interests on other account, etc
+
+Expense
+    The costs of servicing the account (per annum)
+
+Capital
+    Capital gains
+
+
 Explain glevel
 --------------
 
