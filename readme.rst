@@ -67,7 +67,8 @@ This report contain:
 
 - Income, expense, profit, assets, loans, equity by months each year (sheet on each year)
 - Income, expense, profit, assets, loans, equity by years on each full year
-- Inflation (annual expenditure growth)
+- Personal inflation (annual expenditure growth)
+- Return on assets
 - Some charts
 
 >>> gcrep.all_reports_excel('v:/tables/ex-test.xlsx', glevel=1)
