@@ -782,7 +782,7 @@ class GNUCashData:
         if df_xirr.empty:
             return
 
-        dataframe_to_excel(df_xirr, 'df_xirr')
+        # dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
         # print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
@@ -1036,7 +1036,7 @@ class GNUCashData:
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # И добавить все расходы/доходы у которых xirr_enable=true
-            master_guid = self._get_master_asset_guid(df_assets, df_incexp=df_incexps)
+            master_guid = self._get_master_asset_guid(df_assets)
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             return
         elif (len(df_assets) == 1) and (len(df_incexps) == 2):
@@ -1070,8 +1070,7 @@ class GNUCashData:
                     else:
                         self.df_splits.loc[(tr_guid, index), cols.XIRR_ACCOUNT] = row[cols.ACCOUNT_GUID]
 
-
-    def _get_master_asset_guid(self, df_assets: pandas.DataFrame, df_incexp: pandas.DataFrame):
+    def _get_master_asset_guid(self, df_assets: pandas.DataFrame):
         """
         Находит account_guid из df_assets на который писать доход/убыток транзакции
         Возвращает account_guid для отобранного счета
@@ -1104,24 +1103,32 @@ class GNUCashData:
             df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin([self.LIABILITY])]
             return df.iloc[0][cols.ACCOUNT_GUID]
         # А здесь сложно понять кто главный
-        if df_incexp.empty:
+        # Берем счет с отрицательной суммой
+        df = df_asset[df_asset[cols.VALUE_CURRENCY] < 0]
+        if df.empty:
+            print('Error detect master account for xirr')
             return None
-        # Тип доход или расход
-        incexp_type = df_incexp.iloc[0][cols.ACCOUNT_TYPE]
-        # Сортировка по возрастанию модуля суммы
-        df_asset['value_sort'] = df_asset[cols.VALUE_CURRENCY].map(lambda x: math.fabs(x))
-        df_asset.sort_values('value_sort', inplace=True)
-        if incexp_type == self.EXPENSE:
-            # Главный счет у которого value больше по модулю
-            return df_asset.iloc[-1][cols.ACCOUNT_GUID]
-        elif incexp_type == self.INCOME:
-            # Главный счет у которого value меньше по модулю
-            return df_asset.iloc[0][cols.ACCOUNT_GUID]
         else:
-            # print('Erorr analyse master guid.')
-            msg = "Erorr analyse master guid."
-            raise RuntimeError(msg)
-            # return None  # Ошибка
+            return df.iloc[0][cols.ACCOUNT_GUID]
+
+        # if df_incexp.empty:
+        #     return None
+        # # Тип доход или расход
+        # incexp_type = df_incexp.iloc[0][cols.ACCOUNT_TYPE]
+        # # Сортировка по возрастанию модуля суммы
+        # df_asset['value_sort'] = df_asset[cols.VALUE_CURRENCY].map(lambda x: math.fabs(x))
+        # df_asset.sort_values('value_sort', inplace=True)
+        # if incexp_type == self.EXPENSE:
+        #     # Главный счет у которого value больше по модулю
+        #     return df_asset.iloc[-1][cols.ACCOUNT_GUID]
+        # elif incexp_type == self.INCOME:
+        #     # Главный счет у которого value меньше по модулю
+        #     return df_asset.iloc[0][cols.ACCOUNT_GUID]
+        # else:
+        #     # print('Erorr analyse master guid.')
+        #     msg = "Erorr analyse master guid."
+        #     raise RuntimeError(msg)
+        #     # return None  # Ошибка
 
 
     def _add_tr_acc_names(self, dataframe):

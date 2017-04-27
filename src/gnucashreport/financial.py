@@ -356,7 +356,8 @@ def xirr(cashflows, for_decimal=True):
     right = 100
     # res = bisection(lambda r: my_xnpv(r, chron_order), a=left, b=right)
     # res = bisection(lambda r: my_xnpv(r, chron_order), left_x=left, right_x=right)
-    res = bisection(lambda r: xnpv(r, cashflows_sorted), left_x=left, right_x=right)
+    # res = bisection(lambda r: xnpv(r, cashflows_sorted), left_x=left, right_x=right)
+    res = bisection(lambda r: xnpv(r, cashflows_sorted))
     # print(type(res))
     # res = round(res, 4)
     if for_decimal:
