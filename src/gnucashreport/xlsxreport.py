@@ -1,5 +1,9 @@
 import collections
 import pandas
+from decimal import Decimal
+
+import xlsxwriter
+from gnucashreport.margins import Margins
 from xlsxwriter.utility import xl_col_to_name
 
 from gnucashreport.utils import dateformat_from_period
@@ -90,6 +94,8 @@ class TablePoints:
 class XLSXReport:
     default_dir_reports = 'V:/tables'
 
+
+
     MONEY_FORMAT = 0x08
     # MONEY_FORMAT = 0x08
     # MONEY_FORMAT = '# ##0,00'
@@ -101,13 +107,15 @@ class XLSXReport:
         # self._sheet = sheet
         # self._worksheet = None
         self._datetime_format = dateformat_from_period(datetime_format)
-        self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=self._datetime_format)
-        self._workbook = self._writer.book
+        # self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=self._datetime_format)
+        self._workbook = xlsxwriter.Workbook(filename)
+        self.next_sheet(sheet=sheet)
+        # self._worksheet = self._workbook.add_worksheet(sheet)
 
         # Test
 
 
-        self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
+        # self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
         self._set_formats()
 
     def save(self):
@@ -115,9 +123,10 @@ class XLSXReport:
         Add charts of current sheet and save file
         :return:
         """
-        self._add_headers()
+        # self._add_headers()
         self._add_charts()
-        self._writer.save()
+        self._workbook.close()
+        # _writer.save()
 
     def next_sheet(self, sheet, start_row=0, datetime_format=None):
         """
@@ -126,25 +135,26 @@ class XLSXReport:
         :param start_row:
         :return:
         """
-        self._add_headers()
+        # self._add_headers()
         self._add_charts()
+        self._worksheet = self._workbook.add_worksheet(sheet)
         # self._sheet = sheet
         # self._cur_row = start_row
         # self._worksheet = None
         # self.common_categories = None
         # if datetime_format:
         #     self._datetime_format = dateformat_from_period(datetime_format)
-        self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
+        # self._some_init(sheet=sheet, start_row=start_row, datetime_format=datetime_format)
 
-    def _some_init(self, sheet, start_row, datetime_format):
-        self._sheet = sheet
-        self._worksheet = None
-        if datetime_format:
-            self._datetime_format = dateformat_from_period(datetime_format)
-        self._cur_row = start_row
-        self._charts = []
-        self._headers = []
-        self.common_categories = None
+    # def _some_init(self, sheet, start_row, datetime_format):
+    #     # self._sheet = sheet
+    #     # self._worksheet = None
+    #     # if datetime_format:
+    #         self._datetime_format = dateformat_from_period(datetime_format)
+    #     self._cur_row = start_row
+    #     self._charts = []
+    #     self._headers = []
+    #     self.common_categories = None
 
     def _set_formats(self):
         # Заголовки таблиц
@@ -165,7 +175,106 @@ class XLSXReport:
         self._format_income = self._workbook.add_format({'bold': True})
         self._format_income.set_bg_color(COLOR_GREEN)
 
+    def add_report(self, report: pandas.DataFrame, margins:Margins=None, start_row=None, name=None, addchart=None):
+        header = True
 
+        if start_row:
+            row = start_row
+        else:
+            row = self._cur_row
+
+        points = TablePoints(dataframe=report, header=header, margins=margins, row=row)
+
+        chart_prop = self._get_chart_prop(points=points, name=name, header=header, addchart=addchart)
+
+        if header:
+            self._header_to_list(report, row, margins)
+            if not self.common_categories:
+                self.common_categories = chart_prop['categories']
+
+        if addchart:
+            self._charts.append(chart_prop)
+
+        self.add_dataframe_test(report, )
+        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.row_data_begin, header=False)
+        # Get the xlsxwriter objects from the dataframe writer object.
+        if not self._worksheet:
+            self._worksheet = self._writer.sheets[self._sheet]
+
+        frmt_bold = self._workbook.add_format({'bold': True})
+        frmt_cell = self._workbook.add_format()
+        if cell_format:
+            frmt_cell.set_num_format(cell_format)
+        frmt_cell_bold = self._workbook.add_format({'bold': True})
+        if cell_format:
+            frmt_cell_bold.set_num_format(cell_format)
+        frmt_head = self._workbook.add_format({'bold': True})
+        if cell_format:
+            frmt_head.set_num_format(cell_format)
+        frmt_head.set_align('center')
+        if color:
+            frmt_head.set_bg_color(color)
+
+        if name:
+            # self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
+            self._worksheet.write(row, 0, name, frmt_head)
+
+        # Выделение итогов
+        # width_totals_col = 0
+
+        if margins:
+            # Выделение строки с итогами
+            if (margins.total_row) or (len(report) == 1 and color):
+                self._worksheet.conditional_format(first_row=points.row_itog,
+                                                   last_row=points.row_itog,
+                                                   first_col=points.col_begin,
+                                                   last_col=points.col_all_end,
+                                                   options={'type': 'no_errors',
+                                                            'format': frmt_head})
+                # self._worksheet.conditional_format(first_row=points.row_itog,
+                #                                    last_row=points.row_itog,
+                #                                    first_col=points.col_begin,
+                #                                    last_col=points.col_all_end,
+                #                                    options={'type': 'blanks',
+                #                                             'format': frmt_head})
+            if margins.total_col or margins.mean_col:
+                # Ширина пустой колонки
+                if margins.empty_col:
+                    # empty_col = self.col_count-width_totals_col
+                    self._worksheet.set_column(firstcol=points.col_empty, lastcol=points.col_empty, width=1)
+                # Итоговые колонки жирным
+                self._worksheet.conditional_format(first_row=points.row_data_begin,
+                                                   last_row=points.row_itog,
+                                                   first_col=points.col_totals_begin,
+                                                   # col_count - width_totals_col + 1,
+                                                   last_col=points.col_totals_end,
+                                                   options={'type': 'no_errors',
+                                                            'format': frmt_cell_bold})
+                # Ширина колонк с итогами
+                if points.col_totals_begin and points.col_totals_end:
+                    self._worksheet.set_column(firstcol=points.col_totals_begin, lastcol=points.col_totals_end,
+                                               cell_format=frmt_cell,
+                                               width=15)
+
+
+
+        # index_len = len(dataframe.index.names)
+        # Ширина первой колонки
+        self._worksheet.set_column(firstcol=points.col_begin, lastcol=points.col_head_end, width=25)
+        # Ширина колонок до итогов
+        self._worksheet.set_column(firstcol=points.col_data_begin,
+                                   lastcol=points.col_data_end, width=12, #)
+                                   cell_format=frmt_cell)
+
+        # Формат ячеек с данными
+        # self._worksheet.conditional_format(first_row=points.row_data_begin,
+        #                                    last_row=points.row_itog,
+        #                                    first_col=points.col_data_begin,
+        #                                    last_col=points.col_data_end,
+        #                                    options={'type': 'no_errors',
+        #                                             'format': frmt_cell})
+
+        self._update_cur_row(points.row_itog + 1)
 
 
     def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
@@ -422,7 +531,8 @@ class XLSXReport:
             self._worksheet.write(row, col, col_name, frmt_date)
             col += 1
 
-    def add_dataframe_test(self, df:pandas.DataFrame, startcol=None, startrow=None, header=True, index=True, ):
+    def add_dataframe_test(self, df:pandas.DataFrame, startcol=None, startrow=None, header=True, index=True,
+                           header_format=None, index_format=None, float_format=None):
         if not self._worksheet:
             self._worksheet = self._workbook.add_worksheet()
 
@@ -439,55 +549,49 @@ class XLSXReport:
             col = startcol
             if index:
                 index_names = df.index.names
-                self._append_line(index_names, row=row, col=col, cell_format=self._format_header)
+                self._append_line(index_names, row=row, col=col, cell_format=header_format)
                 col += len(index_names)
 
             columns = df.columns.tolist()
-            self._append_line(columns, row=row, col=col, cell_format=self._format_header)
+            self._append_line(columns, row=row, col=col, cell_format=header_format)
             row += 1
 
         for idx, df_row in df.iterrows():
             col = startcol
             if index:
                 if isinstance(idx, tuple):
-                    self._append_line(idx, row, col, cell_format=self._format_index_center)
+                    self._append_line(idx, row, col, cell_format=index_format)
                     col += len(idx)
                 else:
-                    self._worksheet.write(row, col, idx, self._format_index_center)
+                    self._worksheet.write(row, col, idx, index_format)
                     col += 1
 
-            self._append_line(df_row, row, col, cell_format=self._format_value_currency)
-            # for value in df_row:
-            #     self._worksheet.write(row, col, value)
-            #     col += 1
+            # self._append_line(df_row, row, col, cell_format=self._format_value_currency)
+            self._append_line(df_row, row, col, float_format=float_format)
             row += 1
 
-    def _append_line(self, line, row, col, cell_format=None):
+    def _append_line(self, line, row, col, cell_format=None, float_format=None):
         # if isinstance(line, collections.Iterable):
         for value in line:
-            self._worksheet.write(row, col, value, cell_format)
+            if float_format and (isinstance(value, float) or isinstance(value, Decimal.decimal)):
+                cur_format = float_format
+            else:
+                cur_format=cell_format
+            # if isinstance(value, float):
+            #     cur_format = self._format_value_d
+            # print(type(value))
+            self._worksheet.write(row, col, value, cur_format)
             col += 1
         # else:
         #     self._worksheet.write(row, col, line)
 
 
 if __name__ == "__main__":
-    line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
-             {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
-             {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
-             {'date': '05.02.2016', 'value': 100.2, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
-             {'date': '05.03.2016', 'value': 500, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
-             {'date': '01.01.2016', 'value': 55, 'account': 'Активы:Текущие:Вклад', 'guid': '20'},
-             {'date': '01.01.2016', 'value': 57, 'account': 'Активы:Текущие:Вклад', 'guid': '20'},
-             {'date': '01.02.2016', 'value': 57, 'account': 'Активы:Текущие:Вклад', 'guid': '20'},
-             {'date': '01.01.2016', 'value': 102, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
-             {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
-             {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
-             {'date': '05.02.2016', 'value': 100.2, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
-             {'date': '05.03.2016', 'value': 500, 'account': 'Активы:Резервы:Сбер вклад', 'guid': '30'},
-             {'date': '01.01.2016', 'value': 55, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
-             {'date': '01.01.2016', 'value': 57, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
-             {'date': '01.02.2016', 'value': 57, 'account': 'Активы:Резервы:Наличность', 'guid': '40'},
+    line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.1},
+             {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.2},
+             {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.3},
+             {'date': '05.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.4},
+
              ]
 
     df = pandas.DataFrame(line1)
