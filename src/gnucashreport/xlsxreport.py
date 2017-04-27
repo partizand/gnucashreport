@@ -102,6 +102,11 @@ class XLSXReport:
     # MONEY_FORMAT = '# ##,##'
     PERCENTAGE_FORMAT = 0x0a
 
+    T_BALANCE = 'balance'
+    T_INFLATION = 'inflation'
+    T_RETURN = 'return'
+
+
     def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
         # self.filename = filename
         # self._sheet = sheet
@@ -175,7 +180,8 @@ class XLSXReport:
         self._format_income = self._workbook.add_format({'bold': True})
         self._format_income.set_bg_color(COLOR_GREEN)
 
-    def add_report(self, report: pandas.DataFrame, margins:Margins=None, start_row=None, name=None, addchart=None):
+    def add_report(self, report: pandas.DataFrame, margins:Margins=None, start_row=None,
+                   name=None, color=None, rep_type=None, addchart=None):
         header = True
 
         if start_row:
@@ -195,7 +201,7 @@ class XLSXReport:
         if addchart:
             self._charts.append(chart_prop)
 
-        self.add_dataframe_test(report, )
+        self.add_dataframe_test(report,  )
         dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.row_data_begin, header=False)
         # Get the xlsxwriter objects from the dataframe writer object.
         if not self._worksheet:
