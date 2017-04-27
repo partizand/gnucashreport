@@ -21,10 +21,10 @@ from gnucashreport.margins import Margins
 
 import gnucashreport.cols as cols
 
-#ACCOUNT_GUID = cols.ACCOUNT_GUID
-#ACCOUNT_TYPE = cols.ACCOUNT_TYPE
-# POST_DATE = cols.POST_DATE
-# FULLNAME = 'fullname'
+# Признак, что счет не участвует в расчете доходности
+MARKER_NO_INVEST = '%no_invest%'
+# Признак, что счет участвует в расчете доходности
+MARKER_INVEST = '%invest%'
 
 
 class GNUCashData:
@@ -453,9 +453,11 @@ class GNUCashData:
         Заполнение колонки xirr_enable в df_accounts
         :return: 
         """
-        # %no_xirr% - False
-        # Нет или %enable_xirr% - True
-        # Cash и Equity - false
+        # MARKER_NO_INVEST - False
+        # Нет или MARKER_INVEST - True
+        # Cash или Equity или Income или Expense - false
+
+
 
 
         if not account_guid:
@@ -463,9 +465,10 @@ class GNUCashData:
         # acc_name = self.df_accounts.loc[account_guid, cols.SHORTNAME]  # For test
         inheritance = default
         if default is None: # Установка текущего значения если default не установлен
-            # Если тип CASH или EQUITY, то False, иначе True
+            # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
             account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
-            if (account_type == self.CASH) or (account_type == self.EQUITY):
+            if (account_type == self.CASH) or (account_type == self.EQUITY) or \
+               (account_type == self.INCOME) or (account_type == self.EXPENSE):
                 current = False
             else:
                 current = True
@@ -474,10 +477,10 @@ class GNUCashData:
         # Перекрытие значениями из Notes если они есть
         notes = self.df_accounts.loc[account_guid, cols.NOTES]
         if notes:
-            if '%no_xirr' in notes:
+            if MARKER_NO_INVEST in notes:
                 current = False
                 inheritance = current
-            if '%enable_xirr' in notes:
+            if MARKER_INVEST in notes:
                 current = True
                 inheritance = current
 
