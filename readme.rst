@@ -76,7 +76,10 @@ Return on assets
 ----------------
 
 The library may consider the profitability of accounts taking into account the hierarchy.
-Any asset accounts, not only stock. You can calculate the yield for all time or a specified period
+Any asset accounts, not only stock. You can calculate the yield for all time or a specified period.
+You should mark the account of incomes and expenses for calculation of yield. Set %invest% in notes of account.
+Then the account and its descendants will be taken into when calculating profitability.
+If you mark the account %no_invest% in notes, it and its descendants will not be considered in calculating the yield
 
 .. code-block:: python
     # open gnucash book
