@@ -88,9 +88,9 @@ If you mark the account **%no_invest%** in notes, it and its descendants will no
     # open gnucash book
     import gnucashreport
     gcrep = gnucashreport.GNUCashReport()
+    gcrep.open_book_file(your_gnucash_file)
 
     # Get return on assets
-    gcrep.open_book_file(your_gnucash_file)
     df_return = gcrep.yield_calc()
 
     # Save results
