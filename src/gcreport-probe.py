@@ -57,18 +57,25 @@ gcrep = gnucashreport.GCReport()
 # rep.open_pickle()
 # print("Loading from pickle 2016 --- %s seconds ---" % (time.time() - start_time_pickle))
 
-# gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
+gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 # gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file(bookfile_xml)
-gcrep.open_book_file('test/data/xirr-test.gnucash')
+# gcrep.open_book_file('test/data/xirr-test.gnucash')
 xls = XLSXReport(filename)
+format_rep = FormatIncome(xls.workbook, from_date, to_date, 'M')
+df_balance = gcrep.turnover_by_period(from_date=format_rep.from_date,
+                                     to_date=format_rep.to_date,
+                                     period=format_rep.period,
+                                     account_type=format_rep.account_types,
+                                     margins=format_rep.margins)
+xls.add_report(df_balance, format_rep)
+xls.add_empty_row()
 format_rep = FormatAssets(xls.workbook, from_date, to_date, 'M')
 df_balance = gcrep.balance_by_period(from_date=format_rep.from_date,
                                      to_date=format_rep.to_date,
                                      period=format_rep.period,
                                      account_types=format_rep.account_types,
                                      margins=format_rep.margins)
-
 xls.add_report(df_balance, format_rep, addchart=xls.CHART_COLUMN)
 xls.close()
 exit()

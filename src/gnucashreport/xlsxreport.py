@@ -152,6 +152,7 @@ class XLSXReport:
         if not startcol:
             startcol = 0
         row = startrow
+        vtotals = format_report.margins.get_counts_vtotals()
 
         chart_prop = {}
 
@@ -172,10 +173,16 @@ class XLSXReport:
             # Установка ширины колонок полей
             self._worksheet.set_column(firstcol=col, lastcol=col + len(columns) - 1,
                                        width=format_report.column_width)
-            vtotals = format_report.margins.get_counts_vtotals()
+
+            # Ширина итоговых колонок
             if format_report.margins.empty_col:
                 self._worksheet.set_column(firstcol=col + len(columns) - vtotals, lastcol=col + len(columns) - vtotals,
                                            width=format_report.empty_width)
+                self._worksheet.set_column(firstcol=col + len(columns) - vtotals+1, lastcol=col + len(columns),
+                                           width=format_report.total_width)
+            elif vtotals > 0:
+                self._worksheet.set_column(firstcol=col + len(columns) - vtotals, lastcol=col + len(columns),
+                                           width=format_report.total_width)
             # Добавление категорий в свойства графика
             categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
                 format(sheet=self._sheet_name,
@@ -194,6 +201,7 @@ class XLSXReport:
 
 
         last_row = row + len(df) - 1
+
         for idx, df_row in df.iterrows():
             col = startcol
             # Если последняя строка, меняем формат
@@ -223,8 +231,9 @@ class XLSXReport:
                            start_row=row+1,
                            end_row=row+1)
                 chart_prop['values'] = values
+
             # Отображение данных
-            self._append_line(df_row, row, col, float_format=float_format, cell_format=cell_format)
+            self._append_line(df_row, row, col, float_format=float_format, cell_format=cell_format, vtotal_format=format_report.format_itog_col)
 
             row += 1
 
@@ -500,13 +509,19 @@ class XLSXReport:
     #
 
 
-    def _append_line(self, line, row, col, cell_format=None, float_format=None):
+    def _append_line(self, line, row, col, cell_format=None, float_format=None, vtotals=None, vtotal_format=None):
         # if isinstance(line, collections.Iterable):
+        if vtotals:
+            col_totals_start = col + len(line) - vtotals
         for value in line:
+
             if float_format and (isinstance(value, float) or isinstance(value, Decimal)):
                 cur_format = float_format
             else:
                 cur_format=cell_format
+
+            if vtotals and col_totals_start < col:
+                cur_format = vtotal_format
             # if isinstance(value, float):
             #     cur_format = self._format_value_d
             # print(type(value))

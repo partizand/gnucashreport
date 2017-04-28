@@ -27,11 +27,13 @@ class Margins:
         self.total_row = True
         self.total_col = True
         self.mean_col = True
+        self.empty_col = True
 
     def set_for_profit(self):
         self.total_row = False
         self.total_col = True
         self.mean_col = True
+        self.empty_col = True
 
     def set_for_balances(self):
         self.total_row = True
