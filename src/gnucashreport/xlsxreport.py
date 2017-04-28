@@ -3,14 +3,13 @@ import pandas
 from decimal import Decimal
 
 import xlsxwriter
+from xlsxwriter.utility import xl_col_to_name
 
-# import gnucashreport
-# from gnucashreport.gcreport import GCReport
 from gnucashreport.margins import Margins
-from gnucashreport.formatreport import FormatReport, FormatBalance, FormatIncome
+# from gnucashreport.formatreport import FormatReport, FormatBalance, FormatIncome
 from gnucashreport.tablepoints import TablePoints
 
-from gnucashreport.utils import dateformat_from_period
+# from gnucashreport.utils import dateformat_from_period
 
 COLOR_GREEN = '#92D050'
 COLOR_GREEN_DARK = '#00B050'
@@ -22,6 +21,8 @@ COLOR_ORANGE_LIGHT = '#FDE9D9'
 class XLSXReport:
     default_dir_reports = 'V:/tables'
 
+    CHART_COLUMN = 'column'
+    CHART_LINE = 'line'
 
 
     MONEY_FORMAT = 0x08
@@ -37,13 +38,13 @@ class XLSXReport:
         # self.filename = filename
         # self._sheet = sheet
         # self._worksheet = None
-        self._datetime_format = dateformat_from_period(datetime_format)
+        # self._datetime_format = dateformat_from_period(datetime_format)
         # self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=self._datetime_format)
-        self._workbook = xlsxwriter.Workbook(filename)
+        self.workbook = xlsxwriter.Workbook(filename)
         self._common_categories = None
         self._worksheet = None
         self._sheet_name = sheet_name
-        self._charts = None
+        self._charts = []
         self.add_sheet(sheet_name=sheet_name, start_row=start_row)
         # self._worksheet = self._workbook.add_worksheet(sheet)
 
@@ -60,7 +61,7 @@ class XLSXReport:
         """
         # self._add_headers()
         self._add_charts()
-        self._workbook.close()
+        self.workbook.close()
         # _writer.save()
 
     def add_sheet(self, sheet_name=None, start_row=0, datetime_format=None):
@@ -72,11 +73,11 @@ class XLSXReport:
         """
         # self._add_headers()
         self._add_charts()
-        self._worksheet = self._workbook.add_worksheet(sheet_name)
+        self._worksheet = self.workbook.add_worksheet(sheet_name)
         self._sheet_name = self._worksheet.get_name()
         self._common_categories = None
         self._cur_row = start_row
-        self._charts = None
+        self._charts = []
         # self._worksheet = None
         # self.common_categories = None
         # if datetime_format:
@@ -112,7 +113,7 @@ class XLSXReport:
     #     self._format_income = self._workbook.add_format({'bold': True})
     #     self._format_income.set_bg_color(COLOR_GREEN)
 
-    def add_report(self, report: pandas.DataFrame, cls_format, format_date, start_row=None, addchart=None):
+    def add_report(self, report: pandas.DataFrame, format_report, start_row=None, addchart=None):
 
 
         # if start_row:
@@ -122,11 +123,12 @@ class XLSXReport:
 
         # points = TablePoints(dataframe=report, header=header, margins=margins, row=row)
 
-        format_report = cls_format(self._workbook, format_date)
+        # format_report = cls_format(self.workbook, format_date)
         chart_prop = self.add_dataframe(report, format_report, startrow=start_row, startcol=0)
         # chart_prop = self._get_chart_prop(points=points, name=name, header=header, addchart=addchart)
 
         if addchart:
+            chart_prop['type'] = addchart
             self._charts.append(chart_prop)
 
 
@@ -135,7 +137,7 @@ class XLSXReport:
 
         # self._update_cur_row(points.row_itog + 1)
 
-    def add_dataframe(self, df: pandas.DataFrame, format_report: FormatReport, startcol=None, startrow=None):
+    def add_dataframe(self, df: pandas.DataFrame, format_report, startcol=None, startrow=None):
         """
         Adds dataframe on current sheet
         :param df: 
@@ -152,14 +154,6 @@ class XLSXReport:
         row = startrow
 
         chart_prop = {}
-
-        # Отбражение имени отчета
-        if format_report.report_name:
-            self._worksheet.write(row, startcol, format_report.report_name, format_report.format_name)
-            # Добавление имени в график
-            chart_name = "='{sheet}'!${col}${row}".format(sheet=self._sheet_name, col=startcol,
-                                                          row=row)
-            chart_prop['name'] = chart_name
 
         if format_report.show_header:
             col = startcol
@@ -178,14 +172,17 @@ class XLSXReport:
             # Установка ширины колонок полей
             self._worksheet.set_column(firstcol=col, lastcol=col + len(columns) - 1,
                                        width=format_report.column_width)
-
+            vtotals = format_report.margins.get_counts_vtotals()
+            if format_report.margins.empty_col:
+                self._worksheet.set_column(firstcol=col + len(columns) - vtotals, lastcol=col + len(columns) - vtotals,
+                                           width=format_report.empty_width)
             # Добавление категорий в свойства графика
             categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
                 format(sheet=self._sheet_name,
-                       start_col=col,
-                       end_col=col + len(columns) - 1,
-                       start_row=row,
-                       end_row=row)
+                       start_col=xl_col_to_name(col),
+                       end_col=xl_col_to_name(col + len(columns)-1 - vtotals),
+                       start_row=row+1,
+                       end_row=row+1)
             chart_prop['categories'] = categories
             if not self._common_categories:
                 self._common_categories = categories
@@ -194,11 +191,13 @@ class XLSXReport:
             self._append_line(columns, row=row, col=col, cell_format=format_report.format_header)
             row += 1
 
+
+
         last_row = row + len(df) - 1
         for idx, df_row in df.iterrows():
             col = startcol
             # Если последняя строка, меняем формат
-            if row == last_row:
+            if row == last_row and (format_report.margins.total_row):
                 float_format = format_report.format_itog
                 format_index = format_report.format_itog
                 cell_format = format_report.format_itog
@@ -219,15 +218,24 @@ class XLSXReport:
             if row == last_row:
                 values = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
                     format(sheet=self._sheet_name,
-                           start_col=col,
-                           end_col=col + len(df_row) - 1,
-                           start_row=row,
-                           end_row=row)
+                           start_col=xl_col_to_name(col),
+                           end_col=xl_col_to_name(col + len(df_row)-1-format_report.margins.get_counts_vtotals()),
+                           start_row=row+1,
+                           end_row=row+1)
                 chart_prop['values'] = values
             # Отображение данных
             self._append_line(df_row, row, col, float_format=float_format, cell_format=cell_format)
 
             row += 1
+
+        # Отбражение имени отчета
+        if format_report.report_name:
+            self._worksheet.write(startrow, startcol, format_report.report_name, format_report.format_name)
+            # Добавление имени в график
+            chart_name = "='{sheet}'!${col}${row}".format(sheet=self._sheet_name,
+                                                          col=xl_col_to_name(startcol),
+                                                          row=startrow+1)
+            chart_prop['name'] = chart_name
 
         self._update_cur_row(row)
         return chart_prop
@@ -424,10 +432,11 @@ class XLSXReport:
         """
         if self._charts:
             for chart in self._charts:
+                self.add_empty_row()
                 if ('categories' not in chart) and self._common_categories:
                     chart['categories'] = self._common_categories
 
-                ex_chart = self._workbook.add_chart({'type': chart['type']})
+                ex_chart = self.workbook.add_chart({'type': chart['type']})
                 # ex_chart = self._workbook.add_chart({'type': 'column'})
                 ex_chart.add_series(chart)
                 ex_chart.set_size({'x_scale': 2, 'y_scale': 1.5})
