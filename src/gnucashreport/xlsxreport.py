@@ -4,7 +4,8 @@ from decimal import Decimal
 
 import xlsxwriter
 from gnucashreport.margins import Margins
-from xlsxwriter.utility import xl_col_to_name
+from gnucashreport.formatreport import FormatReport
+from gnucashreport.tablepoints import TablePoints
 
 from gnucashreport.utils import dateformat_from_period
 
@@ -13,82 +14,6 @@ COLOR_GREEN_DARK = '#00B050'
 COLOR_BLUE = '#00B0F0'
 COLOR_YELLOW = '#FFFF00'
 COLOR_ORANGE_LIGHT = '#FDE9D9'
-
-class TablePoints:
-    def __init__(self, dataframe, header, margins, row):
-        """
-        Calculate positions for table in excel file
-        All positions are 0-started
-
-+--------------------------------------------------------------------------------------------------------------------+
-| Account header                |  Data                                | totals                                      |
-|--------------------------------------------------------------------------------------------------------------------+
-| col_begin |   | col_head_end  | col_data_begin | | |  | col_data_end | col_empty | col_total_begin | col_total_end |
-| row_begin |   |               |                | | |  |              |           |                 |               |
-+-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
-|row_data_begin |               |                | | |  |              |           |                 |               |
-+-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
-|           |   |               |                | | |  |              |           |                 |               |
-+-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
-|           |   |               |                | | |  |              |           |                 |               |
-+-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
-| row_itog  |   |               |                | | |  |              |           |                 | col_all_end   |
-+-----------+---+---------------+----------------+-+-+--+--------------+-----------+-----------------+---------------+
-
-
-        :param dataframe:
-        :param header:
-        :param margins:
-        :param row:
-        """
-
-        # Кол-во колонок названий
-        len_index = len(dataframe.index.names)
-        # Высота данных без заголовка
-        height = len(dataframe)
-        # Кол-во колонок с данными (без колонок названий)
-        col_count = len(dataframe.columns)
-
-        self.col_empty = None
-        self.col_totals_begin = None
-        self.col_totals_end = None
-
-        self.col_begin = 0
-        self.row_begin = row
-        self.row_data_begin = row
-        if header:
-            self.row_data_begin += 1
-
-        # Номер колонки с окончанием заголовка для счетов
-        self.col_head_end = self.col_begin + len_index - 1
-
-        self.col_data_begin = self.col_head_end + 1
-        self.col_data_end = self.col_data_begin + col_count - 1
-        self.col_all_end = self.col_data_begin + col_count - 1
-
-        # Строка с итоговыми значениями
-        self.row_itog = self.row_data_begin + height - 1
-
-        # self.count_vtotals = 0
-        # self.count_vtotals_without_empty = 0
-        if margins:
-            count_vtotals = margins.get_counts_vtotals()
-            if count_vtotals:
-                self.col_data_end -= count_vtotals
-                self.col_totals_begin = self.col_data_end + 1
-                self.col_totals_end = self.col_data_end + count_vtotals
-                if margins.empty_col:
-                    self.col_empty = self.col_data_end + 1
-                    self.col_totals_begin = self.col_data_end + 2
-                    self.col_empty_l = xl_col_to_name(self.col_empty)
-                self.col_totals_begin_l = xl_col_to_name(self.col_totals_begin)
-                self.col_totals_end_l = xl_col_to_name(self.col_totals_end)
-
-        # Буквы для колонок
-        self.col_begin_l = xl_col_to_name(self.col_begin)
-        self.col_data_begin_l = xl_col_to_name(self.col_data_begin)
-        self.col_data_end_l = xl_col_to_name(self.col_data_end)
-        self.col_head_end_l = xl_col_to_name(self.col_head_end)
 
 
 class XLSXReport:
@@ -102,9 +27,7 @@ class XLSXReport:
     # MONEY_FORMAT = '# ##,##'
     PERCENTAGE_FORMAT = 0x0a
 
-    T_BALANCE = 'balance'
-    T_INFLATION = 'inflation'
-    T_RETURN = 'return'
+
 
 
     def __init__(self, filename, sheet='Sheet1', datetime_format=None, start_row=0):
@@ -180,110 +103,90 @@ class XLSXReport:
         self._format_income = self._workbook.add_format({'bold': True})
         self._format_income.set_bg_color(COLOR_GREEN)
 
-    def add_report(self, report: pandas.DataFrame, margins:Margins=None, start_row=None,
-                   name=None, color=None, rep_type=None, addchart=None):
+    def add_report(self, report: pandas.DataFrame, format_report:FormatReport, start_row=None, addchart=None):
         header = True
 
-        if start_row:
-            row = start_row
-        else:
-            row = self._cur_row
+        # if start_row:
+        #     row = start_row
+        # else:
+        #     row = self._cur_row
 
-        points = TablePoints(dataframe=report, header=header, margins=margins, row=row)
+        # points = TablePoints(dataframe=report, header=header, margins=margins, row=row)
 
         chart_prop = self._get_chart_prop(points=points, name=name, header=header, addchart=addchart)
 
         if header:
-            self._header_to_list(report, row, margins)
+            # self._header_to_list(report, row, margins)
             if not self.common_categories:
                 self.common_categories = chart_prop['categories']
 
         if addchart:
             self._charts.append(chart_prop)
 
-        self.add_dataframe_test(report,  )
-        dataframe.to_excel(self._writer, sheet_name=self._sheet, startrow=points.row_data_begin, header=False)
-        # Get the xlsxwriter objects from the dataframe writer object.
-        if not self._worksheet:
-            self._worksheet = self._writer.sheets[self._sheet]
-
-        frmt_bold = self._workbook.add_format({'bold': True})
-        frmt_cell = self._workbook.add_format()
-        if cell_format:
-            frmt_cell.set_num_format(cell_format)
-        frmt_cell_bold = self._workbook.add_format({'bold': True})
-        if cell_format:
-            frmt_cell_bold.set_num_format(cell_format)
-        frmt_head = self._workbook.add_format({'bold': True})
-        if cell_format:
-            frmt_head.set_num_format(cell_format)
-        frmt_head.set_align('center')
-        if color:
-            frmt_head.set_bg_color(color)
-
-        if name:
-            # self._worksheet.write(df_start_row - 1, 0, name, frmt_head)
-            self._worksheet.write(row, 0, name, frmt_head)
-
-        # Выделение итогов
-        # width_totals_col = 0
-
-        if margins:
-            # Выделение строки с итогами
-            if (margins.total_row) or (len(report) == 1 and color):
-                self._worksheet.conditional_format(first_row=points.row_itog,
-                                                   last_row=points.row_itog,
-                                                   first_col=points.col_begin,
-                                                   last_col=points.col_all_end,
-                                                   options={'type': 'no_errors',
-                                                            'format': frmt_head})
-                # self._worksheet.conditional_format(first_row=points.row_itog,
-                #                                    last_row=points.row_itog,
-                #                                    first_col=points.col_begin,
-                #                                    last_col=points.col_all_end,
-                #                                    options={'type': 'blanks',
-                #                                             'format': frmt_head})
-            if margins.total_col or margins.mean_col:
-                # Ширина пустой колонки
-                if margins.empty_col:
-                    # empty_col = self.col_count-width_totals_col
-                    self._worksheet.set_column(firstcol=points.col_empty, lastcol=points.col_empty, width=1)
-                # Итоговые колонки жирным
-                self._worksheet.conditional_format(first_row=points.row_data_begin,
-                                                   last_row=points.row_itog,
-                                                   first_col=points.col_totals_begin,
-                                                   # col_count - width_totals_col + 1,
-                                                   last_col=points.col_totals_end,
-                                                   options={'type': 'no_errors',
-                                                            'format': frmt_cell_bold})
-                # Ширина колонк с итогами
-                if points.col_totals_begin and points.col_totals_end:
-                    self._worksheet.set_column(firstcol=points.col_totals_begin, lastcol=points.col_totals_end,
-                                               cell_format=frmt_cell,
-                                               width=15)
+        self.add_dataframe(report, format_report, startrow=start_row, startcol=0)
 
 
 
-        # index_len = len(dataframe.index.names)
-        # Ширина первой колонки
-        self._worksheet.set_column(firstcol=points.col_begin, lastcol=points.col_head_end, width=25)
-        # Ширина колонок до итогов
-        self._worksheet.set_column(firstcol=points.col_data_begin,
-                                   lastcol=points.col_data_end, width=12, #)
-                                   cell_format=frmt_cell)
+        # self._update_cur_row(points.row_itog + 1)
 
-        # Формат ячеек с данными
-        # self._worksheet.conditional_format(first_row=points.row_data_begin,
-        #                                    last_row=points.row_itog,
-        #                                    first_col=points.col_data_begin,
-        #                                    last_col=points.col_data_end,
-        #                                    options={'type': 'no_errors',
-        #                                             'format': frmt_cell})
+    def add_dataframe(self, df: pandas.DataFrame, format_report: FormatReport, startcol=None, startrow=None):
+        """
+        Adds dataframe on current sheet
+        :param df: 
+        :param format_report: 
+        :param startcol: 
+        :param startrow: 
+        :return: 
+        """
 
-        self._update_cur_row(points.row_itog + 1)
+        if not startrow:
+            startrow = self._cur_row
+        if not startcol:
+            startcol = 0
+        row = startrow
+        # col = startcol
 
 
-    def add_dataframe(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
+        # col = start_col
+        if format_report.show_header:
+            col = startcol
+            if format_report.show_index:
+                # Имена индексов
+                index_names = df.index.names
+                # Установка ширины колонок индексов
+                self._worksheet.set_column(firstcol=col, lastcol=col + len(index_names) - 1,
+                                           width=format_report.index_width)
+                # Добавление названий индексов на лист
+                self._append_line(index_names, row=row, col=col, cell_format=format_report.format_header)
+                col += len(index_names)
+
+            # Названия полей
+            columns = df.columns.tolist()
+            # Установка ширины колонок полей
+            self._worksheet.set_column(firstcol=col, lastcol=col + len(columns) - 1,
+                                       width=format_report.column_width)
+            # Добавление названий полей на лист
+            self._append_line(columns, row=row, col=col, cell_format=format_report.format_header)
+            row += 1
+
+        for idx, df_row in df.iterrows():
+            col = startcol
+            if format_report.show_index:
+                if isinstance(idx, tuple):
+                    self._append_line(idx, row, col, cell_format=format_report.format_index)
+                    col += len(idx)
+                else:
+                    self._worksheet.write(row, col, idx, format_report.format_index)
+                    col += 1
+
+            # self._append_line(df_row, row, col, cell_format=self._format_value_currency)
+            self._append_line(df_row, row, col, float_format=format_report.format_float)
+            row += 1
+
+        self._update_cur_row(row)
+
+
+    def add_dataframe_old(self, dataframe, color=None, name=None, row=None, header=True, margins=None, addchart=None,
                       cell_format=None):
         """
         Add DataFrame on current sheet, update next position to down
@@ -537,49 +440,12 @@ class XLSXReport:
             self._worksheet.write(row, col, col_name, frmt_date)
             col += 1
 
-    def add_dataframe_test(self, df:pandas.DataFrame, startcol=None, startrow=None, header=True, index=True,
-                           header_format=None, index_format=None, float_format=None):
-        if not self._worksheet:
-            self._worksheet = self._workbook.add_worksheet()
 
-        if not startrow:
-            startrow = 0
-        if not startcol:
-            startcol = 0
-        row = startrow
-        # col = startcol
-
-
-        # col = start_col
-        if header:
-            col = startcol
-            if index:
-                index_names = df.index.names
-                self._append_line(index_names, row=row, col=col, cell_format=header_format)
-                col += len(index_names)
-
-            columns = df.columns.tolist()
-            self._append_line(columns, row=row, col=col, cell_format=header_format)
-            row += 1
-
-        for idx, df_row in df.iterrows():
-            col = startcol
-            if index:
-                if isinstance(idx, tuple):
-                    self._append_line(idx, row, col, cell_format=index_format)
-                    col += len(idx)
-                else:
-                    self._worksheet.write(row, col, idx, index_format)
-                    col += 1
-
-            # self._append_line(df_row, row, col, cell_format=self._format_value_currency)
-            self._append_line(df_row, row, col, float_format=float_format)
-            row += 1
 
     def _append_line(self, line, row, col, cell_format=None, float_format=None):
         # if isinstance(line, collections.Iterable):
         for value in line:
-            if float_format and (isinstance(value, float) or isinstance(value, Decimal.decimal)):
+            if float_format and (isinstance(value, float) or isinstance(value, Decimal)):
                 cur_format = float_format
             else:
                 cur_format=cell_format
