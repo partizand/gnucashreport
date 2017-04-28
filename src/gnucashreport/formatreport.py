@@ -45,7 +45,7 @@ class FormatReport:
 class FormatBalance(FormatReport):
 
     def __init__(self, workbook: xlsxwriter.workbook, format_date):
-        super(FormatBalance).__init__(workbook=workbook)
+        super(FormatBalance, self).__init__(workbook)
         # Заголовок - это дата с нужным форматом
         self.format_header = workbook.add_format({'bold': True, 'align': 'center', 'num_format': format_date})
         # Значения - это деньги
@@ -63,11 +63,10 @@ class FormatBalance(FormatReport):
     #                                lastcol=points.col_data_end, width=12)
 
 
-
 class FormatIncome(FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, format_date):
-        super(FormatIncome).__init__(workbook=workbook, format_date=format_date)
+        super(FormatIncome, self).__init__(workbook, format_date)
         # Название отчета
         self.report_name = _('Income')
         self.format_name = workbook.add_format({'bold': True,

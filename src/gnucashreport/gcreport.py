@@ -97,7 +97,7 @@ class GCReport(GNUCashData):
         xlsxreport = XLSXReport(filename=filename, datetime_format='M')
         # sheet on each year
         for start_date, end_date in years:
-            xlsxreport.next_sheet(sheet="{year}".format(year=str(start_date.year)))
+            xlsxreport.add_sheet(sheet_name="{year}".format(year=str(start_date.year)))
             self._complex_report_writer(xlsxreport, start_date, end_date, period='M', glevel=glevel)
 
         # sheet by years
@@ -106,18 +106,18 @@ class GCReport(GNUCashData):
             start_year, end_year = full_years
             y_start_date = date(start_year, 1, 1)
             y_end_date = date(end_year, 12, 31)
-            xlsxreport.next_sheet(sheet=_('All'), datetime_format='A')
+            xlsxreport.add_sheet(sheet_name=_('All'), datetime_format='A')
             self._complex_report_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A',
                                         glevel=glevel)
             # inflation
-            xlsxreport.next_sheet(sheet=_('Inflation'), datetime_format='A')
+            xlsxreport.add_sheet(sheet_name=_('Inflation'), datetime_format='A')
             self._inflation_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A', glevel=glevel)
 
         # ROI
-        xlsxreport.next_sheet(sheet=_('Returns'), datetime_format='D')
+        xlsxreport.add_sheet(sheet_name=_('Returns'), datetime_format='D')
         self._returns_writer(xlsxreport)
 
-        xlsxreport.save()
+        xlsxreport.close()
         return
 
     @staticmethod
@@ -265,7 +265,7 @@ class GCReport(GNUCashData):
 
         self._inflation_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
 
-        xlsxreport.save()
+        xlsxreport.close()
 
     def complex_report_excel(self, filename, from_date, to_date, period, glevel=1):
         """
@@ -283,7 +283,7 @@ class GCReport(GNUCashData):
 
         self._complex_report_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
 
-        xlsxreport.save()
+        xlsxreport.close()
 
     def returns_report_excel(self, filename, from_date=None, to_date=None):
         """
@@ -298,7 +298,7 @@ class GCReport(GNUCashData):
 
         self._returns_writer(xlsxreport, from_date=from_date, to_date=to_date)
 
-        xlsxreport.save()
+        xlsxreport.close()
 
     def _returns_writer(self, xlsxreport: XLSXReport, from_date=None, to_date=None):
         df_xirr = self.yield_calc(from_date=from_date, to_date=to_date)

@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import re
 
+from gnucashreport.formatreport import FormatBalance
 from gnucashreport.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
 
@@ -39,6 +40,9 @@ to_date = datetime.date(2016, 12, 31)
 
 filename = 'v:/tables/ex-test.xlsx'
 gcrep = gnucashreport.GCReport()
+
+
+
 # start_time_sql = time.time()
 # rep.open_book_xml()
 # rep.save_pickle()
@@ -57,7 +61,10 @@ gcrep = gnucashreport.GCReport()
 # gcrep._open_book_pickle(gcrep.dir_pickle)
 # gcrep.open_book_file(bookfile_xml)
 gcrep.open_book_file('test/data/xirr-test.gnucash')
-dataframe_to_excel(gcrep.df_splits, 'df_spl')
+df_balance = gcrep.balance_by_period(from_date=from_date, to_date=to_date)
+xls = XLSXReport(filename)
+xls.add_report(df_balance, cls_format=FormatBalance, format_date='mm-yyyy')
+xls.close()
 exit()
 # on_date = datetime.date(2016, 12, 31)
 # df = gcrep.balance_on_date(on_date=on_date)
