@@ -344,7 +344,10 @@ def xirr(cashflows, for_decimal=True):
     # Нулевая доходность
     s = sum([pair[1] for pair in cashflows])
     if s == 0:
-        return 0
+        if for_decimal:
+            return Decimal('0.0')
+        else:
+            return 0.0
 
     cashflows_sorted = sorted(cashflows, key=lambda x: x[0])
     if for_decimal:

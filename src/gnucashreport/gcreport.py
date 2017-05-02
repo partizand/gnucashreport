@@ -228,7 +228,8 @@ class GCReport(GNUCashData):
                                               to_date=to_date,
                                               period=format_rep.period,
                                               account_type=format_rep.account_types,
-                                              margins=format_rep.margins)
+                                              margins=format_rep.margins,
+                                             glevel=glevel)
         xlsxreport.add_report(df_balance, format_rep)
         xlsxreport.add_empty_row()
 
@@ -238,7 +239,8 @@ class GCReport(GNUCashData):
                                              to_date=to_date,
                                              period=format_rep.period,
                                              account_type=format_rep.account_types,
-                                             margins=format_rep.margins)
+                                             margins=format_rep.margins,
+                                             glevel=glevel)
         xlsxreport.add_report(df_balance, format_rep)
         xlsxreport.add_empty_row()
 
@@ -247,28 +249,31 @@ class GCReport(GNUCashData):
         df_balance = self.profit_by_period(from_date=from_date,
                                              to_date=to_date,
                                              period=format_rep.period,
-                                             margins=format_rep.margins)
+                                             margins=format_rep.margins,
+                                           glevel=glevel)
         xlsxreport.add_report(df_balance, format_rep)
         xlsxreport.add_empty_row()
 
         # assets
         format_rep = formatreport.FormatAssets(xlsxreport.workbook, period=period)
-        df_balance = self.turnover_by_period(from_date=from_date,
+        df_balance = self.balance_by_period(from_date=from_date,
                                              to_date=to_date,
                                              period=format_rep.period,
-                                             account_type=format_rep.account_types,
-                                             margins=format_rep.margins)
+                                             account_types=format_rep.account_types,
+                                             margins=format_rep.margins,
+                                             glevel=glevel)
         xlsxreport.add_report(df_balance, format_rep)
         xlsxreport.add_empty_row()
 
         # loans
         format_rep = formatreport.FormatLoans(xlsxreport.workbook, period=period)
-        df_balance = self.turnover_by_period(from_date=from_date,
+        df_balance = self.balance_by_period(from_date=from_date,
                                              to_date=to_date,
                                              period=format_rep.period,
-                                             account_type=format_rep.account_types,
-                                             margins=format_rep.margins)
-        has_loans = not any(df_balance.isnull())
+                                             account_types=format_rep.account_types,
+                                             margins=format_rep.margins,
+                                            glevel=0)
+        has_loans = not (df_balance.isnull().values.all())
         if has_loans:
             xlsxreport.add_report(df_balance, format_rep)
             xlsxreport.add_empty_row()

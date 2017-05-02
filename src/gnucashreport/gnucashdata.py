@@ -793,7 +793,7 @@ class GNUCashData:
 
         # Доходность денежного потока
         if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.INCOME])):
-            yield_income = 0
+            yield_income = Decimal(0)
         else:
             # Доходность без денежного потока
             df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.INCOME]
@@ -802,7 +802,7 @@ class GNUCashData:
 
         # Стоимость расходов
         if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.EXPENSE])):
-            yield_expense = 0
+            yield_expense = Decimal(0)
         else:
             # Доходность без расходов
             df_without_expense = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.EXPENSE]
@@ -1543,8 +1543,8 @@ class GNUCashData:
 
         # Определяем цены на нужные даты
         # group_prices = self.df_prices_days
-        start_date = df[cols.POST_DATE].min().date()
-        end_date = df[cols.POST_DATE].max().date()
+        start_date = df[cols.POST_DATE].min()
+        end_date = df[cols.POST_DATE].max()
 
         prices_on_dates = self._group_prices_by_period(start_date, end_date, 'D', col_rate=col_rate)
         # group_prices = group_prices.reset_index()

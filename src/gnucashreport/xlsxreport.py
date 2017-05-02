@@ -1,10 +1,13 @@
 import collections
+
+import datetime
 import pandas
 from decimal import Decimal
 
 import xlsxwriter
 from xlsxwriter.utility import xl_col_to_name
 
+from gnucashreport import const
 from gnucashreport.margins import Margins
 # from gnucashreport.formatreport import FormatReport, FormatBalance, FormatIncome
 from gnucashreport.tablepoints import TablePoints
@@ -40,7 +43,7 @@ class XLSXReport:
         # self._worksheet = None
         # self._datetime_format = dateformat_from_period(datetime_format)
         # self._writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=self._datetime_format)
-        self.workbook = xlsxwriter.Workbook(filename)
+        self.workbook = xlsxwriter.Workbook(filename, {'nan_inf_to_errors': True})
         self._common_categories = None
         self._worksheet = None
         # self._sheet_name = sheet_name
@@ -234,7 +237,11 @@ class XLSXReport:
                 chart_prop['values'] = values
 
             # Отображение данных
-            self._append_line(df_row, row, col, float_format=float_format, cell_format=cell_format, vtotal_format=format_report.format_itog_col)
+            self._append_line(df_row, row, col,
+                              float_format=float_format,
+                              date_format=format_report.format_date,
+                              cell_format=cell_format,
+                              vtotal_format=format_report.format_itog_col)
 
             row += 1
 
@@ -510,7 +517,11 @@ class XLSXReport:
     #
 
 
-    def _append_line(self, line, row, col, cell_format=None, float_format=None, vtotals=None, vtotal_format=None):
+    def _append_line(self, line, row, col,
+                     cell_format=None,
+                     float_format=None,
+                     date_format=None,
+                     vtotals=None, vtotal_format=None):
         # if isinstance(line, collections.Iterable):
         if vtotals:
             col_totals_start = col + len(line) - vtotals
@@ -518,8 +529,13 @@ class XLSXReport:
 
             if float_format and (isinstance(value, float) or isinstance(value, Decimal)):
                 cur_format = float_format
+            elif date_format and isinstance(value, datetime.date):
+                cur_format = date_format
             else:
                 cur_format=cell_format
+
+            # if isinstance(value, datetime.date):
+            #     print('date')
 
             if vtotals and col_totals_start < col:
                 cur_format = vtotal_format

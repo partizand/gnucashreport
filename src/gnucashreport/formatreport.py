@@ -26,7 +26,7 @@ class FormatReport:
         self._format_bold_center = workbook.add_format({'bold': True, 'align': 'center'})
         self._format_currency = workbook.add_format({'num_format': const.MONEY_FORMAT})
         self._format_percent = workbook.add_format({'num_format': const.PERCENTAGE_FORMAT})
-
+        self._format_date = workbook.add_format({'num_format': const.DAYDATE_FORMAT})
         # Описание текущего формата
         self.format_name = self._format_bold_center
         self.format_header = self._format_bold_center
@@ -34,6 +34,7 @@ class FormatReport:
         self.format_itog = self._format_bold
         self.format_itog_col = self._format_bold
         self.format_float = None
+        self.format_date = self._format_date
         self.margins = Margins()
         self.show_header = True
         self.show_index = True
@@ -51,9 +52,9 @@ class FormatBalance(FormatReport):
         self.period = period
         # self.from_date = from_date
         # self.to_date = to_date
-        self._format_date = utils.dateformat_from_period(period)
+        self.format_date = utils.dateformat_from_period(period)
         # Заголовок - это дата с нужным форматом
-        self.format_header = workbook.add_format({'bold': True, 'align': 'center', 'num_format': self._format_date})
+        self.format_header = workbook.add_format({'bold': True, 'align': 'center', 'num_format': self.format_date})
         # Значения - это деньги
         self.format_float = self._format_currency
         # Итоговая строка - деньги, жирным
@@ -78,6 +79,14 @@ class FormatInflation(_FormatPercent):
 
     def __init__(self, workbook: xlsxwriter.workbook, cumulative=False):
         super(FormatInflation, self).__init__(workbook)
+        # Заголовок - это дата с нужным форматом
+        self.format_header = workbook.add_format({'bold': True, 'align': 'center', 'num_format': 'YYYY'})
+        # Итоговая строка - Проценты, жирным
+        self.format_itog = workbook.add_format({'bold': True, 'align': 'center', 'num_format': const.PERCENTAGE_FORMAT})
+        # Итоговая колонка - Проценты, жирным
+        self.format_itog_col = workbook.add_format({'bold': True, 'align': 'center', 'num_format': const.PERCENTAGE_FORMAT})
+        # Даты - года
+        self.format_date = 'YYYY'
         self.cumulative = cumulative
         if cumulative:
             self.report_name = _('Inflation cumulative')
@@ -91,15 +100,19 @@ class FormatInflation(_FormatPercent):
         self.margins = Margins()
         self.margins.set_for_inflation(cumulative=cumulative)
 
+
 class FormatReturns(_FormatPercent):
 
     def __init__(self, workbook: xlsxwriter.workbook, from_date, to_date):
         super(FormatReturns, self).__init__(workbook)
+        self.format_index = self._format_bold
         if from_date and to_date:
             self.report_name = _('Return on assets (per annum) {from_date} - {to_date}').\
                 format(from_date=from_date, to_date=to_date)
         else:
             self.report_name = _('Return on assets (per annum)')
+
+        self.index_width = 35  # Ширина колонки
 
 
 
