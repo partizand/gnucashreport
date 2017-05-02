@@ -34,7 +34,7 @@ class XLSXReport:
 
 
 
-    def __init__(self, filename, sheet_name='Sheet1', datetime_format=None, start_row=0):
+    def __init__(self, filename, sheet_name=None, start_row=0):
         # self.filename = filename
         # self._sheet = sheet
         # self._worksheet = None
@@ -43,9 +43,10 @@ class XLSXReport:
         self.workbook = xlsxwriter.Workbook(filename)
         self._common_categories = None
         self._worksheet = None
-        self._sheet_name = sheet_name
+        # self._sheet_name = sheet_name
         self._charts = []
-        self.add_sheet(sheet_name=sheet_name, start_row=start_row)
+        if sheet_name:
+            self.add_sheet(sheet_name=sheet_name, start_row=start_row)
         # self._worksheet = self._workbook.add_worksheet(sheet)
 
         # Test
@@ -64,7 +65,7 @@ class XLSXReport:
         self.workbook.close()
         # _writer.save()
 
-    def add_sheet(self, sheet_name=None, start_row=0, datetime_format=None):
+    def add_sheet(self, sheet_name=None, start_row=0):
         """
         Next data will be on this new sheet
         :param sheet_name:

@@ -1,9 +1,14 @@
+import calendar
 import os
 
 import pandas
 import re
 
 from decimal import Decimal
+
+from datetime import date
+
+from gnucashreport import const
 
 DIR_EXCEL = "v:/tables"
 
@@ -77,6 +82,160 @@ def shift_account_name(account_name: str, root_account=None, delimiter=':', fill
     return str_fill + str_end
 
 
+def split_by_years(from_date: date, to_date: date):
+    """
+    Splits two dates interval on array of intervals by years
+
+    >>> split_by_years(date(2014,1,2), date(2017, 1, 20))
+    [[datetime.date(2014, 2, 1), datetime.date(2014, 12, 31)], \
+[datetime.date(2015, 1, 1), datetime.date(2015, 12, 31)], \
+[datetime.date(2016, 1, 1), datetime.date(2016, 12, 31)]]
+
+    :param from_date:
+    :param to_date:
+    :return: Array of tuples date
+    """
+    dates = []
+    from_date, to_date = complete_month(from_date, to_date)
+    cur_year = from_date.year
+    not_end_cycle = True
+    while not_end_cycle:
+        first_date = date(cur_year, 1, 1)
+        end_date = date(cur_year, 12, 31)
+        if first_date < from_date:
+            first_date = from_date
+        if end_date > to_date:
+            end_date = to_date
+            # end cycle
+            not_end_cycle = False
+        if first_date >= end_date:
+            break
+        dates.append([first_date, end_date])
+        cur_year += 1
+
+    return dates
+
+
+def complete_years(from_date: date, to_date: date):
+    """
+    Return tuple of first and last year from interval, which are full ended
+    >>> complete_years(date(2016,1,2), date(2016,12,30))
+
+    >>> complete_years(date(2008,12,31), date(2017, 2, 15))
+    (2009, 2016)
+
+    :param from_date:
+    :param to_date:
+    :return:
+    """
+    # Первая дата, выравниваем год
+    from_year = from_date.year
+    if not (from_date.month == 1 and from_date.day == 1):
+        from_year += 1
+        if from_year > date.today().year:
+            return None
+
+    to_year = to_date.year
+    if not (to_date.month == 12 and to_date.day == 31):
+        to_year -= 1
+
+    if from_year > to_year:
+        return None
+
+    if from_year == to_year:
+        return None
+
+    return from_year, to_year
+
+
+def complete_month(from_date: date, to_date: date):
+    """
+    Return tuple of two dates, wich contain full months.
+    Cut interval to start and end full months
+
+    >>> complete_month(date(2016,1,2), date(2016,12,30))
+    (datetime.date(2016, 2, 1), datetime.date(2016, 11, 30))
+    >>> complete_month(date(2008,12,31), date(2017, 2, 15))
+    (datetime.date(2009, 1, 1), datetime.date(2017, 1, 31))
+    >>> complete_month(date(2008,12,31), date(2017, 1, 15))
+    (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
+
+    :param from_date:
+    :param to_date:
+    :return:
+    """
+    # Первая дата, выравниваем на месяц
+    new_from_date = from_date
+    first_day = from_date.day
+    if first_day != 1:
+        new_from_date = add_months(from_date, 1)
+        new_from_date = new_from_date.replace(day=1)
+
+    # Вторая дата выравниваем на месяц
+    new_to_date = to_date
+    _, days_in_month = calendar.monthrange(to_date.year, to_date.month)
+    if to_date.day != days_in_month:
+        new_to_date = add_months(to_date, -1)
+        _, new_days_in_month = calendar.monthrange(new_to_date.year, new_to_date.month)
+        new_to_date = new_to_date.replace(day=new_days_in_month)
+
+    return new_from_date, new_to_date
+
+
+def add_months(sourcedate: date, months):
+    """
+    Add months to date
+
+    >>> add_months(date(2016,1,2), 1)
+    datetime.date(2016, 2, 2)
+    >>> add_months(date(2016,12,31), 1)
+    datetime.date(2017, 1, 31)
+    >>> add_months(date(2017,2,28), 1)
+    datetime.date(2017, 3, 28)
+    >>> add_months(date(2017,2,28), -1)
+    datetime.date(2017, 1, 28)
+    >>> add_months(date(2017,1,1), -1)
+    datetime.date(2016, 12, 1)
+
+    :param months:
+    :return: datetime.date = sourcedate + months
+    """
+
+    month = sourcedate.month - 1 + months
+
+    year = int(sourcedate.year + month / 12)
+
+    month = month % 12 + 1
+
+    day = min(sourcedate.day, calendar.monthrange(year, month)[1])
+
+    return date(year, month, day)
+
+# def dateformat_from_period(period: str):
+#     """
+#     Get Excel date format from period letter (D, M, Y ...)
+#     :param period: May be date format, e.g. dd-mm-yyyy,
+#                     or may be period letter: D, M, Q, Y (day, month, quarter, year)
+#                     or may be None, then dd-mm-yyyy returns
+#     :return: datetime_format for excel
+#     """
+#
+#     if period:
+#         dateformat = period
+#     else:
+#         dateformat = 'dd-mm-yyyy'
+#
+#     if period:
+#         if period.upper() == 'D':
+#             dateformat = 'dd-mm-yyyy'
+#         if period.upper() == 'M':
+#             dateformat = 'mmm yyyy'
+#         if period.upper() == 'A':
+#             dateformat = 'yyyy'
+#         if period.upper() == 'Q':
+#             dateformat = 'Q YY'  # ???
+#     return dateformat
+
 def dateformat_from_period(period: str):
     """
     Get Excel date format from period letter (D, M, Y ...)
@@ -93,15 +252,14 @@ def dateformat_from_period(period: str):
 
     if period:
         if period.upper() == 'D':
-            dateformat = 'dd-mm-yyyy'
+            dateformat = const.DAYDATE_FORMAT # 'dd-mm-yyyy'
         if period.upper() == 'M':
-            dateformat = 'mmm yyyy'
+            dateformat = const.MONTHDATE_FORMAT # 'mmm yyyy'
         if period.upper() == 'A':
             dateformat = 'yyyy'
         if period.upper() == 'Q':
-            dateformat = 'Q YY'  # ???
+            dateformat = const.MONTHDATE_FORMAT # 'Q YY'  # ???
     return dateformat
-
 
 def parse_string_to_dict(string: str, parse_to_decimal=False):
     """

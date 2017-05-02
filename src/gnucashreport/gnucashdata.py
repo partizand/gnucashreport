@@ -1543,8 +1543,8 @@ class GNUCashData:
 
         # Определяем цены на нужные даты
         # group_prices = self.df_prices_days
-        start_date = df[cols.POST_DATE].min()
-        end_date = df[cols.POST_DATE].max()
+        start_date = df[cols.POST_DATE].min().date()
+        end_date = df[cols.POST_DATE].max().date()
 
         prices_on_dates = self._group_prices_by_period(start_date, end_date, 'D', col_rate=col_rate)
         # group_prices = group_prices.reset_index()

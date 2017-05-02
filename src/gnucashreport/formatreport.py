@@ -1,5 +1,6 @@
 import xlsxwriter.workbook
 import xlsxwriter.worksheet
+from gnucashreport import utils
 
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashdata import GNUCashData
@@ -45,12 +46,12 @@ class FormatReport:
 
 class FormatBalance(FormatReport):
 
-    def __init__(self, workbook: xlsxwriter.workbook, from_date, to_date, period):
+    def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatBalance, self).__init__(workbook)
         self.period = period
-        self.from_date = from_date
-        self.to_date = to_date
-        self._format_date = self._dateformat_from_period(period)
+        # self.from_date = from_date
+        # self.to_date = to_date
+        self._format_date = utils.dateformat_from_period(period)
         # Заголовок - это дата с нужным форматом
         self.format_header = workbook.add_format({'bold': True, 'align': 'center', 'num_format': self._format_date})
         # Значения - это деньги
@@ -60,36 +61,54 @@ class FormatBalance(FormatReport):
         # Итоговая колонка - деньги, жирным
         self.format_itog_col = workbook.add_format({'bold': True, 'align': 'center', 'num_format': const.MONEY_FORMAT})
 
-    def _dateformat_from_period(self, period: str):
-        """
-        Get Excel date format from period letter (D, M, Y ...)
-        :param period: May be date format, e.g. dd-mm-yyyy,
-                        or may be period letter: D, M, Q, Y (day, month, quarter, year)
-                        or may be None, then dd-mm-yyyy returns
-        :return: datetime_format for excel
-        """
 
-        if period:
-            dateformat = period
+class _FormatPercent(FormatReport):
+
+    def __init__(self, workbook: xlsxwriter.workbook):
+        super(_FormatPercent, self).__init__(workbook)
+        self.format_float = self._format_percent
+
+        self.format_name = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_YELLOW
+                                                })
+
+
+class FormatInflation(_FormatPercent):
+
+    def __init__(self, workbook: xlsxwriter.workbook, cumulative=False):
+        super(FormatInflation, self).__init__(workbook)
+        self.cumulative = cumulative
+        if cumulative:
+            self.report_name = _('Inflation cumulative')
         else:
-            dateformat = 'dd-mm-yyyy'
+            self.report_name = _('Inflation annual')
+        # self.format_name = workbook.add_format({'bold': True,
+        #                                         'align': 'center',
+        #                                         'bg_color': const.COLOR_YELLOW
+        #                                         })
 
-        if period:
-            if period.upper() == 'D':
-                dateformat = const.DAYDATE_FORMAT # 'dd-mm-yyyy'
-            if period.upper() == 'M':
-                dateformat = const.MONTHDATE_FORMAT # 'mmm yyyy'
-            if period.upper() == 'A':
-                dateformat = 'yyyy'
-            if period.upper() == 'Q':
-                dateformat = const.MONTHDATE_FORMAT # 'Q YY'  # ???
-        return dateformat
+        self.margins = Margins()
+        self.margins.set_for_inflation(cumulative=cumulative)
+
+class FormatReturns(_FormatPercent):
+
+    def __init__(self, workbook: xlsxwriter.workbook, from_date, to_date):
+        super(FormatReturns, self).__init__(workbook)
+        if from_date and to_date:
+            self.report_name = _('Return on assets (per annum) {from_date} - {to_date}').\
+                format(from_date=from_date, to_date=to_date)
+        else:
+            self.report_name = _('Return on assets (per annum)')
+
+
+
 
 
 class FormatIncome(FormatBalance):
 
-    def __init__(self, workbook: xlsxwriter.workbook, from_date, to_date, period):
-        super(FormatIncome, self).__init__(workbook, from_date, to_date, period)
+    def __init__(self, workbook: xlsxwriter.workbook, period):
+        super(FormatIncome, self).__init__(workbook, period)
         # Название отчета
         self.report_name = _('Income')
         self.format_name = workbook.add_format({'bold': True,
@@ -105,10 +124,50 @@ class FormatIncome(FormatBalance):
         self.margins.set_for_turnover()
         self.account_types = GNUCashData.INCOME
 
+class FormatExpense(FormatBalance):
+
+    def __init__(self, workbook: xlsxwriter.workbook, period):
+        super(FormatExpense, self).__init__(workbook, period)
+        # Название отчета
+        self.report_name = _('Expense')
+        self.format_name = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_YELLOW
+                                                })
+        # Итоговая строка - деньги, жирным, зеленым
+        self.format_itog = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_YELLOW,
+                                                'num_format': const.MONEY_FORMAT})
+        self.margins = Margins()
+        self.margins.set_for_turnover()
+        self.account_types = GNUCashData.EXPENSE
+
+class FormatProfit(FormatBalance):
+
+    def __init__(self, workbook: xlsxwriter.workbook, period):
+        super(FormatProfit, self).__init__(workbook, period)
+        # Название отчета
+        self.report_name = _('Profit')
+        self.show_header = False
+        self.format_name = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_GREEN_DARK
+                                                })
+        # Итоговая строка - деньги, жирным, зеленым
+        self.format_itog = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_GREEN_DARK,
+                                                'num_format': const.MONEY_FORMAT})
+        self.margins = Margins()
+        self.margins.set_for_profit()
+        # self.account_types = GNUCashData.EXPENSE
+
+
 class FormatAssets(FormatBalance):
 
-    def __init__(self, workbook: xlsxwriter.workbook, from_date, to_date, period):
-        super(FormatAssets, self).__init__(workbook, from_date, to_date, period)
+    def __init__(self, workbook: xlsxwriter.workbook, period):
+        super(FormatAssets, self).__init__(workbook, period)
         # Название отчета
         self.report_name = _('Assets')
         self.format_name = workbook.add_format({'bold': True,
@@ -124,7 +183,47 @@ class FormatAssets(FormatBalance):
         self.margins.set_for_balances()
         self.account_types = GNUCashData.ALL_ASSET_TYPES
 
+class FormatLoans(FormatBalance):
+
+    def __init__(self, workbook: xlsxwriter.workbook, period):
+        super(FormatLoans, self).__init__(workbook, period)
+        # Название отчета
+        self.report_name = _('Loans')
+        self.show_header = False
+        self.format_name = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_ORANGE_LIGHT
+                                                })
+        # Итоговая строка - деньги, жирным, зеленым
+        self.format_itog = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_ORANGE_LIGHT,
+                                                'num_format': const.MONEY_FORMAT})
+        self.margins = Margins()
+        self.margins.set_for_balances()
+        self.margins.total_row = False
+        self.account_types = [GNUCashData.LIABILITY]
 
 
+class FormatEquity(FormatBalance):
+
+    def __init__(self, workbook: xlsxwriter.workbook, period):
+        super(FormatEquity, self).__init__(workbook, period)
+        # Название отчета
+        self.report_name = _('Equity')
+        self.show_header = False
+        self.format_name = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_BLUE
+                                                })
+        # Итоговая строка - деньги, жирным, зеленым
+        self.format_itog = workbook.add_format({'bold': True,
+                                                'align': 'center',
+                                                'bg_color': const.COLOR_BLUE,
+                                                'num_format': const.MONEY_FORMAT})
+        self.margins = Margins()
+        self.margins.set_for_balances()
+        self.margins.total_row = False
+        # self.account_types = [GNUCashData.LIABILITY]
 
 
