@@ -25,7 +25,7 @@ class FormatReport:
         self._format_bold = workbook.add_format({'bold': True})
         self._format_bold_center = workbook.add_format({'bold': True, 'align': 'center'})
         self._format_currency = workbook.add_format({'num_format': const.MONEY_FORMAT})
-        self._format_percent = workbook.add_format({'num_format': const.PERCENTAGE_FORMAT})
+        self._format_percent = workbook.add_format({'align': 'center', 'num_format': const.PERCENTAGE_FORMAT})
         self._format_date = workbook.add_format({'num_format': const.DAYDATE_FORMAT})
         # Описание текущего формата
         self.format_name = self._format_bold_center
@@ -68,6 +68,9 @@ class _FormatPercent(FormatReport):
     def __init__(self, workbook: xlsxwriter.workbook):
         super(_FormatPercent, self).__init__(workbook)
         self.format_float = self._format_percent
+        # self.format_float = workbook.add_format({'align': 'center',
+        #                                         'num_format': const.PERCENTAGE_FORMAT
+        #                                         })
 
         self.format_name = workbook.add_format({'bold': True,
                                                 'align': 'center',
@@ -112,7 +115,7 @@ class FormatReturns(_FormatPercent):
         else:
             self.report_name = _('Return on assets (per annum)')
 
-        self.index_width = 50  # Ширина колонки
+        self.index_width = 40  # Ширина колонки
 
 
 

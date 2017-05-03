@@ -295,6 +295,10 @@ class GCReport(GNUCashData):
                                              period=format_rep.period,
                                              margins=format_rep.margins)
         xlsxreport.add_report(df_balance, format_rep, addchart=xlsxreport.CHART_COLUMN)
+        xlsxreport.add_empty_row()
+
+        # Returns
+        self._returns_writer(xlsxreport, from_date=from_date, to_date=to_date)
 
 
     # def _complex_report_writer_old(self, xlsxreport: XLSXReport, from_date, to_date, period, glevel):

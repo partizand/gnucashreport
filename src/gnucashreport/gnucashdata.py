@@ -681,7 +681,7 @@ class GNUCashData:
 
         df.sort_values(cols.FULLNAME, inplace=True)
         # df['new_name'] = df[cols.FULLNAME].map(lambda x: fill_to_last_colon(x))
-        df[cols.FULLNAME] = df[cols.FULLNAME].apply(shift_account_name, args=(account_name,)) # map(lambda val: fill_to_last_colon(val, skip_beg=account_name))
+        df[cols.FULLNAME] = df[cols.FULLNAME].apply(utils.shift_account_name, args=(account_name,)) # map(lambda val: fill_to_last_colon(val, skip_beg=account_name))
         # df.drop(cols.FULLNAME, axis=1, inplace=True)
         df.set_index(cols.FULLNAME, inplace=True, drop=True)
         # df.reset_index(inplace=True, drop=True)
