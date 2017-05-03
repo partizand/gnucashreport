@@ -51,7 +51,7 @@ Examples
 --------
 
 >>> import gnucashreport
->>> gcrep = gnucashreport.GNUCashReport()
+>>> gcrep = GCReport()
 
 open gnucash book (sql or xml)
 
@@ -77,7 +77,7 @@ This report contain:
 Return on assets
 ----------------
 
-This option is experimental.
+This option is experimental. A few tests written. But it looks like the truth :)
 
 The library may consider the profitability of accounts taking into account the hierarchy.
 Any asset accounts: deposit, liability, bank, not only stock. You can calculate the yield for all time or a specified period.
@@ -91,7 +91,7 @@ If you mark the account **%no_invest%** in notes, it and its descendants will no
 
     # open gnucash book
     import gnucashreport
-    gcrep = gnucashreport.GNUCashReport()
+    gcrep = GCReport()
     gcrep.open_book_file(your_gnucash_file)
 
     # Get return on assets
@@ -108,8 +108,8 @@ All results are displayed in percent per annum:
 Total
      The total return on asset taking into account the costs
 
-Income
-    Profitability cashflow from account. Dividends, interests on other account, etc
+Money flow
+    Profitability Money flow from account. Dividends, interests on other account, etc
 
 Expense
     The costs of servicing the account (per annum)
@@ -181,7 +181,7 @@ Set this options in src/test/basetest.py
     dir_testdata = folder_for_test_data
 
 
-Run the script src/test/savetestdata.py. Run only on working branch version!
+Run the script src/test/savetestdata.py. Run only on working commit version!
 
 Now you may run tests.
 
