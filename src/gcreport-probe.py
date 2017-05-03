@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import re
 
+from gnucashreport import formatreport
 from gnucashreport.formatreport import FormatBalance, FormatIncome, FormatAssets
 from gnucashreport.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
@@ -64,12 +65,17 @@ gcrep.open_book_sql(bookfile_sql, open_if_lock=True)
 
 # exit()
 # on_date = datetime.date(2016, 12, 31)
-# df = gcrep.balance_on_date(on_date=on_date)
+# df = gcrep.turnover_by_period(from_date, to_date, 'M')
 # dataframe_to_excel(gcrep.df_splits, 'splits')
 # gcrep.returns_report_excel('v:/tables/returns.xlsx', from_date=from_date, to_date=to_date)
+gcrep.inflation_excel(filename, from_date, to_date, period='M')
 # gcrep.returns_report_excel('v:/tables/returns.xlsx')
-gcrep.all_reports_excel('v:/tables/all.xlsx')
-
+# gcrep.all_reports_excel('v:/tables/all.xlsx')
+# xls = XLSXReport(filename, 'sheet1')
+# frmt = formatreport.FormatExpense(xls.workbook, period='M')
+# xls.add_report(df,frmt)
+# xls.close()
+# dataframe_to_excel(df, 'expenses')
 exit()
 
 

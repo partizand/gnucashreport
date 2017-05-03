@@ -213,10 +213,12 @@ class XLSXReport:
                 float_format = format_report.format_itog
                 format_index = format_report.format_itog
                 cell_format = format_report.format_itog
+                vtotal_format = format_report.format_itog
             else:
                 float_format = format_report.format_float
                 format_index = format_report.format_index
                 cell_format = None
+                vtotal_format = format_report.format_itog_col
             # Отображение индекса
             if format_report.show_index:
                 if isinstance(idx, tuple):
@@ -237,11 +239,13 @@ class XLSXReport:
                 chart_prop['values'] = values
 
             # Отображение данных
+
             self._append_line(df_row, row, col,
                               float_format=float_format,
                               date_format=format_report.format_date,
                               cell_format=cell_format,
-                              vtotal_format=format_report.format_itog_col)
+                              vtotals=vtotals,
+                              vtotal_format=vtotal_format)
 
             row += 1
 

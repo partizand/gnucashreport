@@ -112,7 +112,7 @@ class FormatReturns(_FormatPercent):
         else:
             self.report_name = _('Return on assets (per annum)')
 
-        self.index_width = 35  # Ширина колонки
+        self.index_width = 50  # Ширина колонки
 
 
 

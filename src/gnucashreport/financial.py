@@ -312,7 +312,7 @@ def xirr(cashflows, for_decimal=True):
         (date(2016, 12, 31), -11000),\
         (date(2016, 12, 31), 11000)]
     >>> xirr(tas)
-    0
+    Decimal('0.0')
     
     >>> tas_6161 = [ (date(2016, 1, 1), -9900),\
         (date(2016, 1, 1), -100),\

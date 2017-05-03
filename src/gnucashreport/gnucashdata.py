@@ -1295,7 +1295,10 @@ class GNUCashData:
                     group_acc = group_acc.append(df_acc)
 
         # Сбрасываем один уровень индекса (post_date)
-        group_acc = group_acc.reset_index()
+        group_acc.reset_index(inplace=True)
+
+        # Заменяем Nan нулями
+        group_acc.fillna(Decimal(0), inplace=True)
 
         return group_acc
 
@@ -1362,6 +1365,7 @@ class GNUCashData:
         group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
                                                   account_types=account_types, drop_null=drop_null)
 
+
         # пересчет в нужную валюту
         group = self._currency_calc(group_acc)
 
@@ -1403,8 +1407,14 @@ class GNUCashData:
         # Группировка по счетам
         group = self._group_by_accounts(group, glevel=glevel, drop_null=drop_null)
 
+        # Здесь появляются нули
+        # group.fillna(Decimal(0), inplace=True)
+
+
         # Добавление итогов
         group = self._add_margins(group, margins)
+
+        group.replace(0, Decimal(0), inplace=True)
 
         return group
 
@@ -1502,6 +1512,8 @@ class GNUCashData:
         # Группировка по месяцу
         sel_df.set_index(cols.POST_DATE, inplace=True)
         sel_df = sel_df.groupby([pandas.TimeGrouper(period), cols.FULLNAME, cols.COMMODITY_GUID]).value.sum().reset_index()
+
+
 
         return sel_df
 

@@ -187,7 +187,7 @@ class GCReport(GNUCashData):
         # xlsxreport.add_dataframe(df_xirr, name=header, cell_format=XLSXReport.PERCENTAGE_FORMAT, color=COLOR_YELLOW)
         # xlsxreport.format_for_returns()
 
-    def _inflation_writer(self, xlsxreport: XLSXReport, from_date, to_date, period, glevel):
+    def _inflation_writer(self, xlsxreport: XLSXReport, from_date=None, to_date=None, period='A', glevel=1):
         """
         Save inflation report to excel writer
         :param xlsxreport:
@@ -198,11 +198,22 @@ class GCReport(GNUCashData):
         :return:
         """
 
+        if not from_date:
+            from_date = self.min_date
+        if not to_date:
+            to_date = self.max_date
+        full_years = utils.complete_years(from_date, to_date)
+        if full_years:
+            start_year, end_year = full_years
+            y_start_date = date(start_year, 1, 1)
+            y_end_date = date(end_year, 12, 31)
+        else:
+            return
         rep_format = formatreport.FormatInflation(xlsxreport.workbook, cumulative=False)
 
         # margins = Margins()
         # margins.set_for_inflation(cumulative=False)
-        df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
+        df_inf = self.inflation_by_period(from_date=y_start_date, to_date=y_end_date, period=period,
                                           glevel=glevel, cumulative=rep_format.cumulative)
 
         xlsxreport.add_report(df_inf, rep_format, addchart=xlsxreport.CHART_LINE)
@@ -213,7 +224,7 @@ class GCReport(GNUCashData):
 
         rep_format = formatreport.FormatInflation(xlsxreport.workbook, cumulative=True)
         # margins.set_for_inflation(cumulative=True)
-        df_inf = self.inflation_by_period(from_date=from_date, to_date=to_date, period=period,
+        df_inf = self.inflation_by_period(from_date=y_start_date, to_date=y_end_date, period=period,
                                           glevel=glevel, cumulative=rep_format.cumulative)
         # xlsxreport.add_dataframe(df_inf, color=COLOR_YELLOW, name=_('Inflation cumulative'), margins=margins,
         #                          addchart='line', cell_format=XLSXReport.PERCENTAGE_FORMAT)
@@ -273,7 +284,8 @@ class GCReport(GNUCashData):
                                              account_types=format_rep.account_types,
                                              margins=format_rep.margins,
                                             glevel=0)
-        has_loans = not (df_balance.isnull().values.all())
+        # has_loans = not (df_balance.isnull().values.all())
+        has_loans = not all((df_balance == 0).all())
         if has_loans:
             xlsxreport.add_report(df_balance, format_rep)
             xlsxreport.add_empty_row()
