@@ -528,7 +528,7 @@ class XLSXReport:
                      vtotals=None, vtotal_format=None):
         # if isinstance(line, collections.Iterable):
         if vtotals:
-            col_totals_start = col + len(line) - vtotals
+            col_totals_start = col + len(line) - vtotals - 1
         for value in line:
 
             if float_format and (isinstance(value, float) or isinstance(value, Decimal)):
