@@ -13,7 +13,9 @@ import math
 import pandas
 import numpy
 import piecash
-from gnucashreport.utils import dataframe_to_excel, shift_account_name
+from gnucashreport import utils
+
+# from gnucashreport.utils import dataframe_to_excel, shift_account_name
 
 from gnucashreport.financial import xirr, xirr_simple
 from gnucashreport.gcxmlreader import GNUCashXMLBook
@@ -1710,6 +1712,34 @@ class GNUCashData:
         group = unst.groupby(level=glevel).sum()
 
         return group
+
+    def inflation(self, from_year=None, to_year=None, glevel=1, cumulative=False):
+        """
+        Возвращает инфляцию по годам
+        :param from_year: 
+        :param to_year: 
+        :param glevel: 
+        :param cumulative: 
+        :return: 
+        """
+        start_year, end_year = utils.complete_years(self.min_date, self.max_date)
+        if not from_year:
+            from_year = start_year
+        if not to_year:
+            to_year = end_year
+        if from_year < start_year:
+            raise RuntimeError('Start year wrong!')
+        if to_year > end_year:
+            raise RuntimeError('End year wrong!')
+
+        from_date = date(from_year, 1, 1)
+        to_date = date(to_year, 12, 31)
+
+        return self.inflation_by_period(from_date=from_date, to_date=to_date, period='A',
+                                        cumulative=cumulative, glevel=glevel)
+
+
+
 
     def inflation_by_period(self, from_date, to_date, period='A', glevel=1, cumulative=False):
         """

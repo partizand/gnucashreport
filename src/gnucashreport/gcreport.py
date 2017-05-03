@@ -112,7 +112,7 @@ class GCReport(GNUCashData):
                                         glevel=glevel)
             # inflation
             xlsxreport.add_sheet(sheet_name=_('Inflation'))
-            self._inflation_writer(xlsxreport, from_date=y_start_date, to_date=y_end_date, period='A', glevel=glevel)
+            self._inflation_writer(xlsxreport, glevel=glevel)
 
         # ROE
         xlsxreport.add_sheet(sheet_name=_('Returns'))
@@ -125,7 +125,7 @@ class GCReport(GNUCashData):
 
 
 
-    def inflation_excel(self, filename, from_date, to_date, period, glevel=1):
+    def inflation_excel(self, filename, from_year=None, to_year=None, glevel=1):
         """
         Saves inflation report by period to excel file
         :param filename:
@@ -138,7 +138,7 @@ class GCReport(GNUCashData):
 
         xlsxreport = XLSXReport(filename=filename, sheet_name=_('Inflation'))
 
-        self._inflation_writer(xlsxreport, from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        self._inflation_writer(xlsxreport, from_year=from_year, to_year=to_year, glevel=glevel)
 
         xlsxreport.close()
 
@@ -187,7 +187,7 @@ class GCReport(GNUCashData):
         # xlsxreport.add_dataframe(df_xirr, name=header, cell_format=XLSXReport.PERCENTAGE_FORMAT, color=COLOR_YELLOW)
         # xlsxreport.format_for_returns()
 
-    def _inflation_writer(self, xlsxreport: XLSXReport, from_date=None, to_date=None, period='A', glevel=1):
+    def _inflation_writer(self, xlsxreport: XLSXReport, from_year=None, to_year=None, glevel=1):
         """
         Save inflation report to excel writer
         :param xlsxreport:
@@ -198,23 +198,22 @@ class GCReport(GNUCashData):
         :return:
         """
 
-        if not from_date:
-            from_date = self.min_date
-        if not to_date:
-            to_date = self.max_date
-        full_years = utils.complete_years(from_date, to_date)
-        if full_years:
-            start_year, end_year = full_years
-            y_start_date = date(start_year, 1, 1)
-            y_end_date = date(end_year, 12, 31)
-        else:
-            return
+        # if not from_date:
+        #     from_date = self.min_date
+        # if not to_date:
+        #     to_date = self.max_date
+        # full_years = utils.complete_years(from_date, to_date)
+        # if full_years:
+        #     start_year, end_year = full_years
+        #     y_start_date = date(start_year, 1, 1)
+        #     y_end_date = date(end_year, 12, 31)
+        # else:
+        #     return
         rep_format = formatreport.FormatInflation(xlsxreport.workbook, cumulative=False)
 
         # margins = Margins()
         # margins.set_for_inflation(cumulative=False)
-        df_inf = self.inflation_by_period(from_date=y_start_date, to_date=y_end_date, period=period,
-                                          glevel=glevel, cumulative=rep_format.cumulative)
+        df_inf = self.inflation(from_year=from_year, to_year=to_year, glevel=glevel, cumulative=rep_format.cumulative)
 
         xlsxreport.add_report(df_inf, rep_format, addchart=xlsxreport.CHART_LINE)
 
@@ -224,8 +223,7 @@ class GCReport(GNUCashData):
 
         rep_format = formatreport.FormatInflation(xlsxreport.workbook, cumulative=True)
         # margins.set_for_inflation(cumulative=True)
-        df_inf = self.inflation_by_period(from_date=y_start_date, to_date=y_end_date, period=period,
-                                          glevel=glevel, cumulative=rep_format.cumulative)
+        df_inf = self.inflation(from_year=from_year, to_year=to_year, glevel=glevel, cumulative=rep_format.cumulative)
         # xlsxreport.add_dataframe(df_inf, color=COLOR_YELLOW, name=_('Inflation cumulative'), margins=margins,
         #                          addchart='line', cell_format=XLSXReport.PERCENTAGE_FORMAT)
 
