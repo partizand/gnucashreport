@@ -45,6 +45,7 @@ xlsx_file
 
 --open_if_lock     Open sqlite base even if opened other user
 
+It's save all reports to excel file. (As all_reports_excel function)
 
 Examples
 --------
@@ -61,7 +62,7 @@ save all splits to Excel (with account name, decription, currency mnemonic and o
 >>> from gnucashreport.utils import dataframe_to_excel
 >>> dataframe_to_excel(gcrep.df_splits, 'v:/tables/splits.xlsx')
 
-Save reports by years in xlsx file:
+Save complex reports in xlsx file:
 
 This report contain:
 
@@ -75,6 +76,8 @@ This report contain:
 
 Return on assets
 ----------------
+
+This option is experimental.
 
 The library may consider the profitability of accounts taking into account the hierarchy.
 Any asset accounts: deposit, liability, bank, not only stock. You can calculate the yield for all time or a specified period.

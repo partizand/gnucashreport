@@ -637,7 +637,7 @@ class GNUCashData:
         return df
 
     def yield_calc(self, account_guid=None, account_name=None, account_types=None, from_date=None, to_date=None,
-                   recurse=True):
+                   recurse=True, rename_col=True):
         """
         Calculate annual return for account or account and it childrens (recurse)
         
@@ -675,6 +675,16 @@ class GNUCashData:
                                                 cols.DAYS
                                                 ])
 
+        # Переименовать колонки для отображения
+        if rename_col:
+            df.rename_axis({cols.YIELD_TOTAL: _('Total'),
+                            cols.YIELD_INCOME: _('Income flow'),
+                            cols.YIELD_CAPITAL: _('Capital'),
+                            cols.YIELD_EXPENSE: _('Expense'),
+                            cols.START_DATE: _('Start date'),
+                            cols.END_DATE: _('End date'),
+                            cols.DAYS: _('Days')
+                            }, inplace=True, axis=1 )
 
         if account_guid:
             account_name = self.df_accounts.loc[account_guid, cols.SHORTNAME]

@@ -92,7 +92,7 @@ class XIRRTest(unittest.TestCase):
 
             xirr_yield = self.gcrep.yield_calc(account_guid=account_guid,
                                                from_date=from_date, to_date=to_date,
-                                               recurse=False)
+                                               recurse=False, rename_col=False)
             # if xirr_yield.empty
             checking_yield_total = xirr_yield.iloc[0][cols.YIELD_TOTAL]
             checking_yield_income = xirr_yield.iloc[0][cols.YIELD_INCOME]

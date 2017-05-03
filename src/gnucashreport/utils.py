@@ -13,7 +13,7 @@ from gnucashreport import const
 DIR_EXCEL = "v:/tables"
 
 
-def dataframe_to_excel(dataframe, filename, sheet='Sheet1', datetime_format='dd-mm-yyyy'):
+def dataframe_to_excel(dataframe, filename, sheet='Sheet1'):
     """
     Записывает dataFrame в excel. Можно указывать только имя файла без расширения
     :param dataframe:
@@ -24,13 +24,14 @@ def dataframe_to_excel(dataframe, filename, sheet='Sheet1', datetime_format='dd-
                     or may be None, then dd-mm-yyyy sets
     :return:
     """
+    # datetime_format = 'dd-mm-yyyy'
     if not filename.endswith('.xlsx'):
         filename = os.path.join(DIR_EXCEL, filename + ".xlsx")
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     # writer = pandas.ExcelWriter(filename, engine='xlsxwriter', datetime_format=datetime_format)
-    dateformat = dateformat_from_period(datetime_format)
-    writer = pandas.ExcelWriter(filename, datetime_format=dateformat)
+    # dateformat = dateformat_from_period(datetime_format)
+    writer = pandas.ExcelWriter(filename, datetime_format='dd-mm-yyyy')
 
     # Convert the dataframe to an XlsxWriter Excel object.
     dataframe.to_excel(writer, sheet_name=sheet)
@@ -236,30 +237,7 @@ def add_months(sourcedate: date, months):
 #             dateformat = 'Q YY'  # ???
 #     return dateformat
 
-def dateformat_from_period(period: str):
-    """
-    Get Excel date format from period letter (D, M, Y ...)
-    :param period: May be date format, e.g. dd-mm-yyyy,
-                    or may be period letter: D, M, Q, Y (day, month, quarter, year)
-                    or may be None, then dd-mm-yyyy returns
-    :return: datetime_format for excel
-    """
 
-    if period:
-        dateformat = period
-    else:
-        dateformat = 'dd-mm-yyyy'
-
-    if period:
-        if period.upper() == 'D':
-            dateformat = const.DAYDATE_FORMAT # 'dd-mm-yyyy'
-        if period.upper() == 'M':
-            dateformat = const.MONTHDATE_FORMAT # 'mmm yyyy'
-        if period.upper() == 'A':
-            dateformat = 'yyyy'
-        if period.upper() == 'Q':
-            dateformat = const.MONTHDATE_FORMAT # 'Q YY'  # ???
-    return dateformat
 
 def parse_string_to_dict(string: str, parse_to_decimal=False):
     """

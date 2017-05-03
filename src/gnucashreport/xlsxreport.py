@@ -10,15 +10,15 @@ from xlsxwriter.utility import xl_col_to_name
 from gnucashreport import const
 from gnucashreport.margins import Margins
 # from gnucashreport.formatreport import FormatReport, FormatBalance, FormatIncome
-from gnucashreport.tablepoints import TablePoints
+# from gnucashreport.tablepoints import TablePoints
 
 # from gnucashreport.utils import dateformat_from_period
 
-COLOR_GREEN = '#92D050'
-COLOR_GREEN_DARK = '#00B050'
-COLOR_BLUE = '#00B0F0'
-COLOR_YELLOW = '#FFFF00'
-COLOR_ORANGE_LIGHT = '#FDE9D9'
+# COLOR_GREEN = '#92D050'
+# COLOR_GREEN_DARK = '#00B050'
+# COLOR_BLUE = '#00B0F0'
+# COLOR_YELLOW = '#FFFF00'
+# COLOR_ORANGE_LIGHT = '#FDE9D9'
 
 
 class XLSXReport:
@@ -541,7 +541,7 @@ class XLSXReport:
             # if isinstance(value, datetime.date):
             #     print('date')
 
-            if vtotals and col_totals_start < col:
+            if vtotals and col > col_totals_start:
                 cur_format = vtotal_format
             # if isinstance(value, float):
             #     cur_format = self._format_value_d
@@ -551,20 +551,3 @@ class XLSXReport:
         # else:
         #     self._worksheet.write(row, col, line)
 
-
-if __name__ == "__main__":
-    line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.1},
-             {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.2},
-             {'date': '01.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.3},
-             {'date': '05.02.2016', 'value': 100, 'account': 'Активы:Текущие:Карта', 'guid': '10', 'perc': 0.4},
-
-             ]
-
-    # gcrep = GCReport()
-    # _ = lambda x: x
-    df = pandas.DataFrame(line1)
-    # df.set_index('date', append=True, inplace=True)
-    xls = XLSXReport('v:/tables/test.xlsx')
-    # format_report = FormatReport()
-    xls.add_report(df, FormatIncome, 'dd-mm-yyyy')
-    xls.close()

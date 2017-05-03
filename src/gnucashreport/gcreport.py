@@ -6,13 +6,13 @@ from gnucashreport.gnucashdata import GNUCashData
 from gnucashreport.margins import Margins
 from gnucashreport.xlsxreport import XLSXReport
 
-from gnucashreport.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
+# from gnucashreport.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
 
-COLOR_GREEN = '#92D050'
-COLOR_GREEN_DARK = '#00B050'
-COLOR_BLUE = '#00B0F0'
-COLOR_YELLOW = '#FFFF00'
-COLOR_ORANGE_LIGHT = '#FDE9D9'
+# COLOR_GREEN = '#92D050'
+# COLOR_GREEN_DARK = '#00B050'
+# COLOR_BLUE = '#00B0F0'
+# COLOR_YELLOW = '#FFFF00'
+# COLOR_ORANGE_LIGHT = '#FDE9D9'
 
 
 class GCReport(GNUCashData):
