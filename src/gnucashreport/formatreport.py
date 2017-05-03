@@ -56,7 +56,7 @@ class FormatReport:
         self._format_bold_center = workbook.add_format({'bold': True, 'align': 'center'})
         self._format_currency = workbook.add_format({'num_format': MONEY_FORMAT})
         self._format_percent = workbook.add_format({'align': 'center', 'num_format': PERCENTAGE_FORMAT})
-        self._format_date = workbook.add_format({'num_format': const.DAYDATE_FORMAT})
+        self._format_date = workbook.add_format({'num_format': DAYDATE_FORMAT})
         # Описание текущего формата
         self.format_name = self._format_bold_center
         self.format_header = self._format_bold_center

@@ -109,7 +109,7 @@ Total
      The total return on asset taking into account the costs
 
 Money flow
-    Profitability Money flow from account. Dividends, interests on other account, etc
+    Profitability money flow from account. Dividends, interests on other account, etc
 
 Expense
     The costs of servicing the account (per annum)
