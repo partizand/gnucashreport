@@ -5,61 +5,95 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2017-02-22 14:58+0300\n"
-"PO-Revision-Date: 2017-02-22 15:04+0300\n"
+"POT-Creation-Date: 2017-05-03 16:43+0300\n"
+"PO-Revision-Date: 2017-05-03 16:46+0300\n"
+"Last-Translator: \n"
 "Language-Team: \n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 1.8.12\n"
-"Last-Translator: \n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Language: ru\n"
-"X-Poedit-Basepath: ..\n"
+"X-Generator: Poedit 2.0.1\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Poedit-Basepath: ../../..\n"
 "X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: locale\n"
+"X-Poedit-SearchPathExcluded-1: __pycache__\n"
 
-#: src/gnucashreport\gnucashdata.py:423 src/gnucashreport\gnucashdata.py:891
-#: src/gnucashreport\margins.py:13
-msgid "Total"
-msgstr "Всего"
-
-#: src/gnucashreport\gnucashdata.py:474 src/gnucashreport\margins.py:20
-msgid "Equity"
-msgstr "Капитал"
-
-#: src/gnucashreport\gnucashdata.py:653 src/gnucashreport\margins.py:19
-msgid "Profit"
-msgstr "Прибыль"
-
-#: src/gnucashreport\gnucashreport.py:106
-msgid "All"
-msgstr "Все"
-
-#: src/gnucashreport\gnucashreport.py:110
-msgid "Inflation"
-msgstr "Инфляция"
-
-#: src/gnucashreport\gnucashreport.py:294
-msgid "Inflation annual"
-msgstr "Инфляция ежегодно"
-
-#: src/gnucashreport\gnucashreport.py:301
+#: formatreport.py:125
 msgid "Inflation cumulative"
 msgstr "Инфляция нарастающая"
 
-#: src/gnucashreport\gnucashreport.py:328
+#: formatreport.py:127
+msgid "Inflation annual"
+msgstr "Инфляция ежегодно"
+
+#: formatreport.py:142
+msgid "Return on assets (per annum)"
+msgstr "Доходность (процентов годовых)"
+
+#: formatreport.py:160
 msgid "Income"
 msgstr "Доходы"
 
-#: src/gnucashreport\gnucashreport.py:335
+#: formatreport.py:179 gnucashdata.py:683
 msgid "Expense"
 msgstr "Расходы"
 
-#: src/gnucashreport\gnucashreport.py:349
+#: formatreport.py:198 gnucashdata.py:1458 margins.py:19
+msgid "Profit"
+msgstr "Прибыль"
+
+#: formatreport.py:219
 msgid "Assets"
 msgstr "Активы"
 
-#: src/gnucashreport\margins.py:16
+#: formatreport.py:238
+msgid "Loans"
+msgstr "Долги"
+
+#: formatreport.py:260 gnucashdata.py:582 margins.py:20
+msgid "Equity"
+msgstr "Капитал"
+
+#: gcreport.py:110
+msgid "All"
+msgstr "Все"
+
+#: gcreport.py:114 gcreport.py:139
+msgid "Inflation"
+msgstr "Инфляция"
+
+#: gcreport.py:118
+msgid "Returns"
+msgstr "Доходность"
+
+#: gnucashdata.py:531 gnucashdata.py:680 gnucashdata.py:1794 margins.py:13
+msgid "Total"
+msgstr "Всего"
+
+#: gnucashdata.py:681
+msgid "Money flow"
+msgstr "Денежный поток"
+
+#: gnucashdata.py:682
+msgid "Capital"
+msgstr "Прирост капитала"
+
+#: gnucashdata.py:684
+msgid "Start date"
+msgstr "Дата начала"
+
+#: gnucashdata.py:685
+msgid "End date"
+msgstr "Дата окончания"
+
+#: gnucashdata.py:686
+msgid "Days"
+msgstr "Дней"
+
+#: margins.py:16
 msgid "Average"
-msgstr "Средне"
+msgstr "Среднее"
