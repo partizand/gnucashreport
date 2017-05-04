@@ -7,14 +7,11 @@ import subprocess
 import re
 
 # Public to test pypi
-test_public = True
+test_public = False
 suf_test = ['-r', 'pypitest']
 # sdist command
 cmd_sdist = ['python', 'setup.py', 'sdist', 'bdist_wheel', '--universal']
 
-# public command
-cmd_public = ['twine', 'upload', 'dist/*']
-cmd_public_test = cmd_public + suf_test
 
 
 def find_version(filename):
@@ -26,6 +23,17 @@ def find_version(filename):
             return version_match.group(1)
         raise RuntimeError("Unable to find version string.")
 
+ver = find_version('src/gnucashreport/__init__.py')
+reg_name = 'gnucashreport-{}-py2.py3-none-any.whl'.format(ver)
+
+# public command
+cmd_public = ['twine', 'upload', 'dist/{}'.format(reg_name)]
+cmd_public_test = cmd_public + suf_test
+
+# register command
+
+cmd_register = ['twine.exe', 'register', 'dist/{}'.format(reg_name)]
+cmd_register_test = cmd_register + suf_test
 
 def run_all_test():
     print('Run all tests...')
@@ -81,18 +89,15 @@ def public():
 
     return ret
 
-ver = find_version('src/gnucashreport/__init__.py')
 
-# register command
-reg_name = 'gnucashreport-{}-py2.py3-none-any.whl'.format(ver)
-cmd_register = ['twine.exe', 'register', 'dist/gnucashreport-0.1.0-py2.py3-none-any.whl']
-cmd_register_test = cmd_register + suf_test
+
+
 
 
 print('Publishing version {}'.format(ver))
 
 # Run all tests
-run_all_test()
+# run_all_test()
 
 # build
 build()

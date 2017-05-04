@@ -95,10 +95,7 @@ If you mark the account **%no_invest%** in notes, it and its descendants will no
     gcrep.open_book_file(your_gnucash_file)
 
     # Get return on assets
-    df_return = gcrep.yield_calc()
-
-    # Save results
-    dataframe_to_excel(df_return, 'returns.xlsx')
+    gcrep.returns_report_excel('returns.xlsx')
 
 
 See the sheet 'return' in .xlsx file after launch command line tool
@@ -186,6 +183,8 @@ Run the script src/test/savetestdata.py. Run only on working commit version!
 Now you may run tests.
 
     setup.py test
+
+Profitability test use special GnuCash book file in test/data/xirr-test.gnucash
 
 license
 -------
