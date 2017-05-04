@@ -4,7 +4,7 @@ import xlsxwriter.worksheet
 
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashdata import GNUCashData
-import gnucashreport.const as const
+# import gnucashreport.const as const
 
 COLOR_GREEN = '#92D050'
 COLOR_GREEN_DARK = '#00B050'
@@ -44,7 +44,8 @@ def _dateformat_from_period(period: str):
             dateformat = MONTHDATE_FORMAT # 'Q YY'  # ???
     return dateformat
 
-class FormatReport:
+
+class _FormatReport:
 
     # MONEY_FORMAT = 0x08
     # PERCENTAGE_FORMAT = 0x0a
@@ -75,10 +76,10 @@ class FormatReport:
         self.empty_width = 1
 
 
-class FormatBalance(FormatReport):
+class _FormatBalance(_FormatReport):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
-        super(FormatBalance, self).__init__(workbook)
+        super(_FormatBalance, self).__init__(workbook)
         self.period = period
         # self.from_date = from_date
         # self.to_date = to_date
@@ -93,7 +94,7 @@ class FormatBalance(FormatReport):
         self.format_itog_col = workbook.add_format({'bold': True, 'align': 'center', 'num_format': MONEY_FORMAT})
 
 
-class _FormatPercent(FormatReport):
+class _FormatPercent(_FormatReport):
 
     def __init__(self, workbook: xlsxwriter.workbook):
         super(_FormatPercent, self).__init__(workbook)
@@ -152,7 +153,7 @@ class FormatReturns(_FormatPercent):
 
 
 
-class FormatIncome(FormatBalance):
+class FormatIncome(_FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatIncome, self).__init__(workbook, period)
@@ -171,7 +172,7 @@ class FormatIncome(FormatBalance):
         self.margins.set_for_turnover()
         self.account_types = GNUCashData.INCOME
 
-class FormatExpense(FormatBalance):
+class FormatExpense(_FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatExpense, self).__init__(workbook, period)
@@ -190,7 +191,7 @@ class FormatExpense(FormatBalance):
         self.margins.set_for_turnover()
         self.account_types = GNUCashData.EXPENSE
 
-class FormatProfit(FormatBalance):
+class FormatProfit(_FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatProfit, self).__init__(workbook, period)
@@ -211,7 +212,7 @@ class FormatProfit(FormatBalance):
         # self.account_types = GNUCashData.EXPENSE
 
 
-class FormatAssets(FormatBalance):
+class FormatAssets(_FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatAssets, self).__init__(workbook, period)
@@ -230,7 +231,7 @@ class FormatAssets(FormatBalance):
         self.margins.set_for_balances()
         self.account_types = GNUCashData.ALL_ASSET_TYPES
 
-class FormatLoans(FormatBalance):
+class FormatLoans(_FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatLoans, self).__init__(workbook, period)
@@ -252,7 +253,7 @@ class FormatLoans(FormatBalance):
         self.account_types = [GNUCashData.LIABILITY]
 
 
-class FormatEquity(FormatBalance):
+class FormatEquity(_FormatBalance):
 
     def __init__(self, workbook: xlsxwriter.workbook, period):
         super(FormatEquity, self).__init__(workbook, period)

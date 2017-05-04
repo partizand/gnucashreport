@@ -1,10 +1,9 @@
-import calendar
 from datetime import date, datetime, timedelta
 
 from gnucashreport import formatreport, utils
 from gnucashreport.gnucashdata import GNUCashData
-from gnucashreport.margins import Margins
 from gnucashreport.xlsxreport import XLSXReport
+
 
 # from gnucashreport.utils import dataframe_to_excel, dataframe_to_html, dateformat_from_period
 

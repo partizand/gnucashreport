@@ -7,7 +7,7 @@ from decimal import Decimal
 import xlsxwriter
 from xlsxwriter.utility import xl_col_to_name
 
-from gnucashreport import const
+# from gnucashreport import const
 from gnucashreport.margins import Margins
 # from gnucashreport.formatreport import FormatReport, FormatBalance, FormatIncome
 # from gnucashreport.tablepoints import TablePoints

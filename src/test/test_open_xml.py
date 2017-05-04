@@ -3,6 +3,7 @@ import unittest
 from test.baseopentest import BaseOpenTest
 
 
+@unittest.skip('Skip open xml test')
 class SQLOpenTest(unittest.TestCase, BaseOpenTest):
     """
     Тестирование чтения данных из xml

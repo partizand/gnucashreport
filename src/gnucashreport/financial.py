@@ -33,10 +33,12 @@ def bisection(funct, args=(), left_x=-0.99999, right_x=100, tol=0.00001, maxiter
     # if func_left * func_right > 0:
     if (func_left > 0) and (func_right > 0) or (func_left < 0) and (func_right < 0):
         if func_left > 0:
-            print('exceeded upper threshold {}'.format(right_x))
+            warnings.warn('exceeded upper threshold {}'.format(right_x))
+            # print('exceeded upper threshold {}'.format(right_x))
             return right_x
         else:
-            print('exceeded the lower threshold {}'.format(left_x))
+            warnings.warn('exceeded the lower threshold {}'.format(left_x))
+            # print('exceeded the lower threshold {}'.format(left_x))
             return left_x
     # Конец моей вставки
     # start_left_x = left_x

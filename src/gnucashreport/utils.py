@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from datetime import date
 
-from gnucashreport import const
+# from gnucashreport import const
 
 DIR_EXCEL = "v:/tables"
 
@@ -236,7 +236,6 @@ def add_months(sourcedate: date, months):
 #         if period.upper() == 'Q':
 #             dateformat = 'Q YY'  # ???
 #     return dateformat
-
 
 
 def parse_string_to_dict(string: str, parse_to_decimal=False):

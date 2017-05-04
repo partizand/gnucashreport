@@ -8,7 +8,7 @@ from decimal import Decimal
 import re
 
 from gnucashreport import formatreport
-from gnucashreport.formatreport import FormatBalance, FormatIncome, FormatAssets
+from gnucashreport.formatreport import _FormatBalance, FormatIncome, FormatAssets
 from gnucashreport.gnucashdata import GNUCashData
 from xlsxwriter.utility import xl_rowcol_to_cell
 
