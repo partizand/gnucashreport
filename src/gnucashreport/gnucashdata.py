@@ -17,7 +17,7 @@ from gnucashreport import utils
 
 # from gnucashreport.utils import dataframe_to_excel, shift_account_name
 
-from gnucashreport.financial import xirr, xirr_simple
+from gnucashreport.financial import xirr
 from gnucashreport.gcxmlreader import GNUCashXMLBook
 from gnucashreport.margins import Margins
 
