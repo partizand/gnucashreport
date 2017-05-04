@@ -25,9 +25,9 @@ bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
 bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
 
 
-from_date = datetime.date(2016, 1, 1)
+from_date = datetime.date(2015, 1, 1)
 
-to_date = datetime.date(2016, 12, 31)
+to_date = datetime.date(2015, 12, 31)
 
 # a = 0.14
 # print('{:0.2f}%'.format(a))
@@ -92,11 +92,11 @@ exit()
 
 # account = 'Активы:Долгосрочные активы:ПИФы:ТД Илья Муромец'
 # account = 'Активы:Долгосрочные активы:ПИФы'
-account = 'Долги:Кредит ВТБ24 (потреб)'
-# account = 'Активы:Долгосрочные активы:Депозиты'
-df_return = gcrep.yield_calc(account_name=account)
+# account = 'Долги:Кредит ВТБ24 (потреб)'
+account = 'Активы:Текущие активы:Карта ВТБ'
+df_return = gcrep.yield_calc(account_name=account, from_date=from_date, to_date=to_date)
 # df_return = gcrep.yield_calc()
-# dataframe_to_excel(df_return, 'df_depo')
+dataframe_to_excel(df_return, 'df_vtb')
 exit()
 # account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
 account = 'Активы:Долгосрочные активы:Ценные бумаги:Альфа-Директ'
