@@ -20,6 +20,7 @@ from gnucashreport import utils
 from gnucashreport.financial import xirr
 from gnucashreport.gcxmlreader import GNUCashXMLBook
 from gnucashreport.margins import Margins
+from gnucashreport.gnucashbook import GNUCashBook
 
 import gnucashreport.cols as cols
 
@@ -78,10 +79,14 @@ class GNUCashData:
         self.df_prices = pandas.DataFrame()
 
         self.book_name = None
-        self.root_account_guid = None
+
 
         # internalization
         self.set_locale()
+
+        self.book = GNUCashBook()
+        self.root_account_guid = None
+
 
     @staticmethod
     def set_locale():

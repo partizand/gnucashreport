@@ -4,19 +4,16 @@ import gzip
 from dateutil.parser import parse as parse_date
 from xml.etree import ElementTree
 
+from .gnucashbook import GNUCashBook
 
-class GNUCashXMLBook:
+class GNUCashXMLBook(GNUCashBook):
     """
     Reads contents of GNUCash xml file into arrays
     """
 
-    def __init__(self):
-        self.commodities = []
-        self.prices = []
-        self.accounts = []
-        self.transactions = []
-        self.splits = []
-        self.root_account_guid = None
+    @staticmethod
+    def get_commodity_guid(space, name):
+        return space + ":" + name
 
     def read_from_xml(self, filename):
         """
@@ -155,7 +152,8 @@ class GNUCashXMLBook:
     def _commodity_from_tree(self, tree):
         name = tree.find('{http://www.gnucash.org/XML/cmdty}id').text
         space = tree.find('{http://www.gnucash.org/XML/cmdty}space').text
-        return Commodity(name=name, space=space)
+        guid = self.get_commodity_guid(space=space, name=name)
+        return self.Commodity(guid=guid, name=name, space=space)
 
     # <gnc:transaction version="2.0.0">
     #   <trn:id type="guid">0ca8dd03d731d95319f0d6d09ff6b45d</trn:id>
@@ -248,20 +246,20 @@ class GNUCashXMLBook:
                                    cmdty + "space").text
         currency_name = tree.find(pr + "currency/" +
                                   cmdty + "id").text
-        currency_guid = Commodity.get_commodity_guid(space=currency_space, name=currency_name)
+        currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
         # currency = commoditydict[(currency_space, currency_name)]
 
         commodity_space = tree.find(pr + "commodity/" +
                                     cmdty + "space").text
         commodity_name = tree.find(pr + "commodity/" +
                                    cmdty + "id").text
-        commodity_guid = Commodity.get_commodity_guid(space=commodity_space, name=commodity_name)
+        commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
         # commodity = commoditydict[(commodity_space, commodity_name)]
 
         date = parse_date(tree.find(pr + "time/" +
                                     ts + "date").text)
 
-        price = Price(guid=guid, commodity_guid=commodity_guid, currency_guid=currency_guid, date=date, source=source,
+        price = self.Price(guid=guid, commodity_guid=commodity_guid, currency_guid=currency_guid, date=date, source=source,
                       price_type=price_type, value=value)
 
         return price
@@ -319,9 +317,9 @@ class GNUCashXMLBook:
             commodity_scu = tree.find(act + 'commodity-scu').text
             # commodity = commoditydict[(commodity_space, commodity_name)]
 
-            commodity_guid = Commodity.get_commodity_guid(space=commodity_space, name=commodity_name)
+            commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
 
-        account = Account(name=name,
+        account = self.Account(name=name,
                           description=description,
                           guid=guid,
                           actype=actype,
@@ -397,7 +395,7 @@ class GNUCashXMLBook:
                                    cmdty + "space").text
         currency_name = tree.find(trn + "currency/" +
                                   cmdty + "id").text
-        currency_guid = Commodity.get_commodity_guid(space=currency_space, name=currency_name)
+        currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
         # currency = commoditydict[(currency_space, currency_name)]
         date = parse_date(tree.find(trn + "date-posted/" +
                                     ts + "date").text)
@@ -405,7 +403,7 @@ class GNUCashXMLBook:
                                             ts + "date").text)
         description = tree.find(trn + "description").text
         slots = self._slots_from_tree(tree.find(trn + "slots"))
-        transaction = Transaction(guid=guid,
+        transaction = self.Transaction(guid=guid,
                                   currency_guid=currency_guid,
                                   date=date,
                                   date_entered=date_entered,
@@ -444,7 +442,7 @@ class GNUCashXMLBook:
         account_guid = tree.find(split + "account").text
         # account = accountdict[account_guid]
         slots = self._slots_from_tree(tree.find(split + "slots"))
-        split = Split(guid=guid,
+        split = self.Split(guid=guid,
                       memo=memo,
                       reconcile_state=reconciled_state,
                       reconcile_date=reconcile_date,
@@ -494,138 +492,4 @@ class GNUCashXMLBook:
         return decimal.Decimal(num) / decimal.Decimal(denum)
 
 
-class Commodity(object):
-    """
-    A commodity is something that's stored in GNU Cash accounts.
 
-    Consists of a name (or id) and a space (namespace).
-    """
-
-    def __init__(self, name, space=None):
-        self.guid = self.get_commodity_guid(space, name)
-        self.mnemonic = name
-        self.name = name
-        self.space = space
-
-    @staticmethod
-    def get_commodity_guid(space, name):
-        return space + ":" + name
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return "<Commodity {}>".format(self.guid)
-
-
-class Price(object):
-    """
-    A commodity is something that's stored in GNU Cash accounts.
-
-    Consists of a name (or id) and a space (namespace).
-    """
-
-    def __init__(self, guid, commodity_guid, currency_guid, date, source, price_type, value):
-        self.guid = guid
-        self.commodity_guid = commodity_guid
-        self.currency_guid = currency_guid
-        self.date = date
-        self.source = source
-        self.price_type = price_type
-        self.value = value
-
-    def __str__(self):
-        return self.guid
-
-    def __repr__(self):
-        return "<Price {}>".format(self.guid)
-
-
-class Account(object):
-    """
-    An account is part of a tree structure of accounts and contains splits.
-    """
-
-    def __init__(self, name, guid, actype, hidden, parent_guid=None,
-                 commodity_guid=None, commodity_scu=None,
-                 description=None, notes=None):
-        self.name = name
-        self.guid = guid
-        self.actype = actype
-        self.description = description
-        self.parent_guid = parent_guid
-        # self.children = []
-        self.commodity_guid = commodity_guid
-        self.commodity_scu = commodity_scu
-        self.hidden = hidden
-        self.notes = notes
-        # self.splits = []
-        # self.slots = slots or {}
-
-    def __repr__(self):
-        return "<Account {}>".format(self.guid)
-
-
-class Transaction(object):
-    """
-    A transaction is a balanced group of splits.
-    """
-
-    def __init__(self, guid=None, currency_guid=None,
-                 date=None, date_entered=None, description=None):
-        self.guid = guid
-        self.currency_guid = currency_guid
-        self.date = date
-        self.date_entered = date_entered
-        self.description = description
-        # self.splits = splits or []
-        # self.slots = slots or {}
-
-    def __repr__(self):
-        return u"<Transaction {}>".format(self.guid)
-
-    def __lt__(self, other):
-        # For sorted() only
-        if isinstance(other, Transaction):
-            return self.date < other.date
-        else:
-            False
-
-
-class Split(object):
-    """
-    A split is one entry in a transaction.
-    """
-
-    def __init__(self, guid=None, memo=None,
-                 reconcile_state=None, reconcile_date=None, value=None,
-                 quantity=None, account_guid=None, transaction_guid=None,
-                 ):
-        self.guid = guid
-        self.reconcile_state = reconcile_state
-        self.reconcile_date = reconcile_date
-        self.value = value
-        self.quantity = quantity
-        self.account_guid = account_guid
-        # self.transaction = transaction
-        self.transaction_guid = transaction_guid
-        self.memo = memo
-        # self.slots = slots
-
-    def __repr__(self):
-        return "<Split {}>".format(self.guid)
-
-        # def __lt__(self, other):
-        #     # For sorted() only
-        #     if isinstance(other, Split):
-        #         return self.transaction < other.transaction
-        #     else:
-        #         False
-
-
-if __name__ == '__main__':
-    filename = 'U:/xml_book/GnuCash-base.gnucash'
-    book = GNUCashXMLBook()
-    book.read_from_xml(filename)
-
-    print(book.prices)
