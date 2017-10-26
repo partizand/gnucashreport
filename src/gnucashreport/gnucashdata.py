@@ -233,7 +233,7 @@ class GNUCashData:
 
         # read contens of the book
         book = GNUCashXMLBook()
-        book.read_from_xml(xml_file)
+        book.read_book(xml_file)
 
         # Accounts
 
