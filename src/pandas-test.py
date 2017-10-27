@@ -57,6 +57,16 @@ def read_from_excel(filename, sheet):
 #index = list(map(chr, range(97, 97+len(line1))))
 #index = list(range(10))
 
+# Test add row to dataframe
+df = pandas.DataFrame(columns=['guid', 'col1', 'col2'])
+df.set_index('guid', inplace=True)
+# print(df)
+df.loc['123'] = {'col1':1, 'col2':2}
+# df.append({'col1':1, 'col2':2}, ignore_index=True)
+print(df)
+
+exit()
+
 rep = GNUCashData()
 
 # Исходный DataFrame

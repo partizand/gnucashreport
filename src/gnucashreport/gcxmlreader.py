@@ -1,10 +1,14 @@
 import decimal
 import gzip
+import pandas
+
+from operator import attrgetter
 
 from dateutil.parser import parse as parse_date
 from xml.etree import ElementTree
 
 from gnucashreport.abstractreader import AbstractReader
+import gnucashreport.cols as cols
 
 class GNUCashXMLBook(AbstractReader):
     """
@@ -12,6 +16,7 @@ class GNUCashXMLBook(AbstractReader):
     """
 
     def __init__(self):
+
         self.commodities = []
         self.prices = []
         self.accounts = []
@@ -27,6 +32,208 @@ class GNUCashXMLBook(AbstractReader):
     def _parse_number(numstring):
         num, denum = numstring.split("/")
         return decimal.Decimal(num) / decimal.Decimal(denum)
+
+    @staticmethod
+    def _object_to_dataframe(pieobject, fields, slot_names=None):
+        """
+        Преобразовывае объект piecash в DataFrame с заданными полями
+        :param pieobject:
+        :param fields:
+        :return:
+        """
+        # build dataframe
+        # fields_getter = [attrgetter(fld) for fld in fields]
+        fields_getter = [(fld, attrgetter(fld)) for fld in fields]
+
+        # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
+
+        # у строки есть массив slots
+        # в поле name = notes
+        # в поле value = значение
+
+
+        # Разложение цикла
+        array = []
+        for sp in pieobject:
+            line = {}
+            for field in fields:
+                line[field] = getattr(sp, field, None)
+            # for fld, fg in fields_getter:
+            #     line[fld] = fg(sp)
+            if slot_names:
+                for slot_name in slot_names:
+                    line[slot_name] = None
+                for slot in sp.slots:
+                    if slot.name in slot_names:
+                        line[slot.name] = slot.value
+
+            array.append(line)
+
+        # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
+        # df_obj = pandas.DataFrame(array, columns=all_fields)
+        if array:
+            df_obj = pandas.DataFrame(array)
+        else:
+            if slot_names:
+                all_fields = fields + slot_names
+            else:
+                all_fields = fields
+            df_obj = pandas.DataFrame(columns=all_fields)
+        df_obj.set_index(fields[0], inplace=True)
+        return df_obj
+
+    def _create_df(self, fields):
+        df = pandas.DataFrame(columns=fields)
+        df.set_index(fields[0], inplace=True)
+        return df
+
+    def _create_dfs(self):
+        # Accounts
+
+        fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
+                  "commodity_guid", "commodity_scu",
+                  "parent_guid", "description", "hidden", "notes"]
+
+        self.df_accounts = self._create_df(fields)
+
+
+
+        # Transactions
+
+        fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, "description"]
+
+        self.df_transactions = self._create_df(fields)
+        # self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
+
+        # Splits
+        fields = [cols.GUID, "transaction_guid", "account_guid",
+                  "memo", "reconcile_state", "value", "quantity"]
+
+        self.df_splits = self._create_df(fields)
+
+        # commodity
+
+        fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
+        self.df_commodities = self._create_df(fields)
+        # self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
+        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+
+        # Prices
+        fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
+                  "date", "source", "type", "value"]
+        self.df_prices = self._create_df(fields)
+        # self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
+
+        # Accounts
+
+        fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
+                  "commodity_guid", "commodity_scu",
+                  "parent_guid", "description", "hidden", "notes"]
+
+        self.df_accounts = self._object_to_dataframe(book.accounts, fields)
+        # self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
+        # self.root_account_guid = book.root_account_guid
+
+        # Transactions
+
+        fields = [cols.GUID, cols.CURRENCY_GUID, "date", "description"]
+
+        self.df_transactions = self._object_to_dataframe(book.transactions, fields)
+        self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
+
+        # Splits
+        fields = [cols.GUID, "transaction_guid", "account_guid",
+                  "memo", "reconcile_state", "value", "quantity"]
+
+        self.df_splits = self._object_to_dataframe(book.splits, fields)
+
+        # commodity
+
+        fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
+        self.df_commodities = self._object_to_dataframe(self.commodities, fields)
+        # self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
+        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+
+        # Prices
+        fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
+                  "date", "source", "price_type", "value"]
+        self.df_prices = self._object_to_dataframe(book.prices, fields)
+        self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
+
+    def _to_dataframes(self):
+        # Accounts
+
+        fields = [cols.GUID, cols.SHORTNAME, "actype",
+                  "commodity_guid", "commodity_scu",
+                  "parent_guid", "description", "hidden", "notes"]
+
+
+        self.df_accounts = self._object_to_dataframe(book.accounts, fields)
+        self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
+        self.root_account_guid = book.root_account_guid
+
+        # Transactions
+
+        fields = [cols.GUID, cols.CURRENCY_GUID, "date", "description"]
+
+        self.df_transactions = self._object_to_dataframe(book.transactions, fields)
+        self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
+
+        # Splits
+        fields = [cols.GUID, "transaction_guid", "account_guid",
+                  "memo", "reconcile_state", "value", "quantity"]
+
+        self.df_splits = self._object_to_dataframe(book.splits, fields)
+
+        # commodity
+
+        fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
+        self.df_commodities = self._object_to_dataframe(self.commodities, fields)
+        # self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
+        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+
+        # Prices
+        fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
+                  "date", "source", "price_type", "value"]
+        self.df_prices = self._object_to_dataframe(book.prices, fields)
+        self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
+
+        # Accounts
+
+        fields = [cols.GUID, cols.SHORTNAME, "actype",
+                  "commodity_guid", "commodity_scu",
+                  "parent_guid", "description", "hidden", "notes"]
+
+        self.df_accounts = self._object_to_dataframe(book.accounts, fields)
+        self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
+        self.root_account_guid = book.root_account_guid
+
+        # Transactions
+
+        fields = [cols.GUID, cols.CURRENCY_GUID, "date", "description"]
+
+        self.df_transactions = self._object_to_dataframe(book.transactions, fields)
+        self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
+
+        # Splits
+        fields = [cols.GUID, "transaction_guid", "account_guid",
+                  "memo", "reconcile_state", "value", "quantity"]
+
+        self.df_splits = self._object_to_dataframe(book.splits, fields)
+
+        # commodity
+
+        fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
+        self.df_commodities = self._object_to_dataframe(self.commodities, fields)
+        # self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
+        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+
+        # Prices
+        fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
+                  "date", "source", "price_type", "value"]
+        self.df_prices = self._object_to_dataframe(book.prices, fields)
+        self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
+
 
     def read_book(self, filename):
         """
@@ -121,7 +328,10 @@ class GNUCashXMLBook(AbstractReader):
         # commoditydict = {}
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}commodity'):
             comm = self._commodity_from_tree(child)
+            # self.df_commodities.append(comm)
+
             self.commodities.append(comm)
+
             # commoditydict[(comm.space, comm.name)] = comm
 
         # ret_dict['commodities'] = commodities
@@ -163,10 +373,13 @@ class GNUCashXMLBook(AbstractReader):
     # - cmdty:xcode => optional, e.g. "template"
     # - cmdty:fraction => optional, e.g. "1"
     def _commodity_from_tree(self, tree):
-        name = tree.find('{http://www.gnucash.org/XML/cmdty}id').text
-        space = tree.find('{http://www.gnucash.org/XML/cmdty}space').text
-        guid = self.get_commodity_guid(space=space, name=name)
-        return self.Commodity(guid=guid, name=name, space=space)
+        mnemonic = tree.find('{http://www.gnucash.org/XML/cmdty}id').text
+        namespace = tree.find('{http://www.gnucash.org/XML/cmdty}space').text
+        guid = self.get_commodity_guid(space=namespace, name=mnemonic)
+        # comm = {'guid': guid, 'name': name, 'space': space }
+
+
+        return self.Commodity(guid=guid, namespace=namespace, mnemonic=mnemonic)
 
     # <gnc:transaction version="2.0.0">
     #   <trn:id type="guid">0ca8dd03d731d95319f0d6d09ff6b45d</trn:id>
@@ -292,7 +505,7 @@ class GNUCashXMLBook(AbstractReader):
 
         name = tree.find(act + 'name').text
         guid = tree.find(act + 'id').text
-        actype = tree.find(act + 'type').text
+        account_type = tree.find(act + 'type').text
         description = tree.find(act + "description")
         if description is not None:
             description = description.text
@@ -315,7 +528,7 @@ class GNUCashXMLBook(AbstractReader):
         # hidden = slots['hidden']
         # {'reconcile-info': {'include-children': 0, 'last-date': 1324151999, 'last-interval': {'days': 7, 'months': 0}},
         #  'color': 'Not Set', 'hidden': 'true', 'placeholder': 'true'}
-        if actype == 'ROOT':
+        if account_type == 'ROOT':
             parent_guid = None
             commodity = None
             commodity_scu = None
@@ -335,7 +548,7 @@ class GNUCashXMLBook(AbstractReader):
         account = self.Account(name=name,
                           description=description,
                           guid=guid,
-                          actype=actype,
+                          account_type=account_type,
                           hidden=hidden,
                           commodity_guid=commodity_guid,
                           commodity_scu=commodity_scu,
@@ -410,7 +623,7 @@ class GNUCashXMLBook(AbstractReader):
                                   cmdty + "id").text
         currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
         # currency = commoditydict[(currency_space, currency_name)]
-        date = parse_date(tree.find(trn + "date-posted/" +
+        post_date = parse_date(tree.find(trn + "date-posted/" +
                                     ts + "date").text)
         date_entered = parse_date(tree.find(trn + "date-entered/" +
                                             ts + "date").text)
@@ -418,7 +631,7 @@ class GNUCashXMLBook(AbstractReader):
         slots = self._slots_from_tree(tree.find(trn + "slots"))
         transaction = self.Transaction(guid=guid,
                                   currency_guid=currency_guid,
-                                  date=date,
+                                  post_date=post_date,
                                   date_entered=date_entered,
                                   description=description)
 
@@ -514,16 +727,16 @@ class GNUCashXMLBook(AbstractReader):
         Consists of a name (or id) and a space (namespace).
         """
 
-        def __init__(self, guid, name, space=None):
+        def __init__(self, guid, mnemonic, namespace):
             self.guid = guid
-            self.mnemonic = name
-            self.name = name
-            self.space = space
+            self.mnemonic = mnemonic
+            # self.name = name
+            self.namespace = namespace
 
 
 
         def __str__(self):
-            return self.name
+            return self.mnemonic
 
         def __repr__(self):
             return "<Commodity {}>".format(self.guid)
@@ -557,12 +770,12 @@ class GNUCashXMLBook(AbstractReader):
         An account is part of a tree structure of accounts and contains splits.
         """
 
-        def __init__(self, name, guid, actype, hidden, parent_guid=None,
+        def __init__(self, name, guid, account_type, hidden, parent_guid=None,
                      commodity_guid=None, commodity_scu=None,
                      description=None, notes=None):
             self.name = name
             self.guid = guid
-            self.actype = actype
+            self.account_type = account_type
             self.description = description
             self.parent_guid = parent_guid
             self.commodity_guid = commodity_guid
@@ -581,10 +794,10 @@ class GNUCashXMLBook(AbstractReader):
         """
 
         def __init__(self, guid=None, currency_guid=None,
-                     date=None, date_entered=None, description=None):
+                     post_date=None, date_entered=None, description=None):
             self.guid = guid
             self.currency_guid = currency_guid
-            self.date = date
+            self.post_date = post_date
             self.date_entered = date_entered
             self.description = description
             # self.splits = splits or []
