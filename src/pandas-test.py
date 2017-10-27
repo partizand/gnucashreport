@@ -1,8 +1,11 @@
+import decimal
 import pandas
 import numpy
 import pytz
 from decimal import Decimal
 # import gnucashreport
+
+from datetime import datetime
 
 
 from gnucashreport.gnucashdata import GNUCashData
@@ -57,13 +60,23 @@ def read_from_excel(filename, sheet):
 #index = list(map(chr, range(97, 97+len(line1))))
 #index = list(range(10))
 
+cur_date = datetime.now()
+
+xml_date = "2016-12-31 00:00:00 +0300"
+pd_date = pandas.to_datetime(xml_date)
+
+value = decimal.Decimal('1')
 # Test add row to dataframe
 df = pandas.DataFrame(columns=['guid', 'col1', 'col2'])
-df.set_index('guid', inplace=True)
+# df.set_index('guid', inplace=True)
 # print(df)
-df.loc['123'] = {'col1':1, 'col2':2}
-# df.append({'col1':1, 'col2':2}, ignore_index=True)
-print(df)
+dict1 = {'guid': 1, 'col1':pd_date, 'col2':value, 'dec':decimal.Decimal('0.1')}
+dict2 = {'guid': 2, 'col1':pd_date, 'col2':value, 'dec':decimal.Decimal('0.1')}
+# df.loc['123'] = {'col1':1, 'col2':2}
+df = df.append(dict1, ignore_index=True)
+df = df.append(dict2, ignore_index=True)
+df['col3'] = df['col2'].astype(Decimal)
+print(type(df.loc[0]['dec']))
 
 exit()
 
