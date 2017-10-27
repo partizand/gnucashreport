@@ -12,17 +12,17 @@ import gnucashreport.cols as cols
 
 class GNUCashXMLBook(AbstractReader):
     """
-    Reads contents of GNUCash xml file into arrays
+    Reads contents of GNUCash xml file into dataframes
     """
 
-    def __init__(self):
-
-        self.commodities = []
-        self.prices = []
-        self.accounts = []
-        self.transactions = []
-        self.splits = []
-        self.root_account_guid = None
+    # def __init__(self):
+    #
+    #     self.commodities = []
+    #     self.prices = []
+    #     self.accounts = []
+    #     self.transactions = []
+    #     self.splits = []
+    #     self.root_account_guid = None
 
     @staticmethod
     def get_commodity_guid(space, name):
@@ -33,127 +33,41 @@ class GNUCashXMLBook(AbstractReader):
         num, denum = numstring.split("/")
         return decimal.Decimal(num) / decimal.Decimal(denum)
 
-    @staticmethod
-    def _object_to_dataframe(pieobject, fields, slot_names=None):
-        """
-        Преобразовывае объект piecash в DataFrame с заданными полями
-        :param pieobject:
-        :param fields:
-        :return:
-        """
-        # build dataframe
-        # fields_getter = [attrgetter(fld) for fld in fields]
-        fields_getter = [(fld, attrgetter(fld)) for fld in fields]
-
-        # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
-
-        # у строки есть массив slots
-        # в поле name = notes
-        # в поле value = значение
 
 
-        # Разложение цикла
-        array = []
-        for sp in pieobject:
-            line = {}
-            for field in fields:
-                line[field] = getattr(sp, field, None)
-            # for fld, fg in fields_getter:
-            #     line[fld] = fg(sp)
-            if slot_names:
-                for slot_name in slot_names:
-                    line[slot_name] = None
-                for slot in sp.slots:
-                    if slot.name in slot_names:
-                        line[slot.name] = slot.value
-
-            array.append(line)
-
-        # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
-        # df_obj = pandas.DataFrame(array, columns=all_fields)
-        if array:
-            df_obj = pandas.DataFrame(array)
-        else:
-            if slot_names:
-                all_fields = fields + slot_names
-            else:
-                all_fields = fields
-            df_obj = pandas.DataFrame(columns=all_fields)
-        df_obj.set_index(fields[0], inplace=True)
-        return df_obj
-
-    def _create_df(self, fields):
-        df = pandas.DataFrame(columns=fields)
-        # df.set_index(fields[0], inplace=True)
-        return df
+    # def _create_df(self, fields):
+    #     df = pandas.DataFrame(columns=fields)
+    #     # df.set_index(fields[0], inplace=True)
+    #     return df
 
     def _create_dfs(self):
         # Accounts
 
         fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
-                  "commodity_guid", "commodity_scu",
-                  "parent_guid", "description", "hidden", "notes"]
-
-        self.df_accounts = self._create_df(fields)
-
-
+                  cols.COMMODITY_GUID, "commodity_scu",
+                  cols.PARENT_GUID, cols.DESCRIPTION, cols.HIDDEN, "notes"]
+        self.df_accounts = pandas.DataFrame(columns=fields)
 
         # Transactions
 
-        fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, "description"]
-
-        self.df_transactions = self._create_df(fields)
-        # self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
-
-        # Splits
-        fields = [cols.GUID, "transaction_guid", "account_guid",
-                  "memo", "reconcile_state", "value", "quantity"]
-
-        self.df_splits = self._create_df(fields)
-
-        # commodity
-
-        fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
-        self.df_commodities = self._create_df(fields)
-        # self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
-        # self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
-
-        # Prices
-        fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
-                  "date", "source", "type", "value"]
-        self.df_prices = self._create_df(fields)
-
-        # Accounts
-
-        fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
-                  "commodity_guid", "commodity_scu",
-                  "parent_guid", "description", "hidden", "notes"]
-
-        self.df_accounts = self._create_df(fields)
-        # self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
-        # self.root_account_guid = book.root_account_guid
-
-        # Transactions
-
-        fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, "description"]
-
-        self.df_transactions = self._create_df(fields)
+        fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, cols.DESCRIPTION]
+        self.df_transactions = pandas.DataFrame(columns=fields)
 
         # Splits
         fields = [cols.GUID, cols.TRANSACTION_GUID, cols.ACCOUNT_GUID,
-                   "memo", "reconcile_state", cols.VALUE, cols.QUANTITY]
+                  "memo", "reconcile_state", cols.VALUE, cols.QUANTITY]
 
-        self.df_splits = self._create_df(fields)
+        self.df_splits = pandas.DataFrame(columns=fields)
 
         # commodity
 
         fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
-        self.df_commodities = self._object_to_dataframe(self.commodities, fields)
+        self.df_commodities = pandas.DataFrame(columns=fields)
 
         # Prices
         fields = [cols.GUID, cols.COMMODITY_GUID, cols.CURRENCY_GUID,
                   "date", "source", "type", cols.VALUE]
-        self.df_prices = self._create_df(fields)
+        self.df_prices = pandas.DataFrame(columns=fields)
 
 
     def read_book(self, filename):
@@ -184,7 +98,7 @@ class GNUCashXMLBook(AbstractReader):
         root = tree.getroot()
         if root.tag != 'gnc-v2':
             raise ValueError("File stream was not a valid GNU Cash v2 XML file")
-        self._create_dfs()  # Create dataframes with field and indexes
+        self._create_dfs()  # Create dataframes with fields
         self._book_from_tree(root.find("{http://www.gnucash.org/XML/gnc}book"))
 
     # <gnc:pricedb version="1">
@@ -297,8 +211,8 @@ class GNUCashXMLBook(AbstractReader):
         if namespace.lower() != 'template':
             mnemonic = tree.find('{http://www.gnucash.org/XML/cmdty}id').text
             guid = self.get_commodity_guid(space=namespace, name=mnemonic)
-            comm = {cols.NAMESPACE: namespace, cols.MNEMONIC: mnemonic}
-            self.df_commodities.loc[guid] = comm
+            comm = {cols.GUID: guid, cols.NAMESPACE: namespace, cols.MNEMONIC: mnemonic}
+            self.df_commodities = self.df_commodities.append(comm, ignore_index=True)
 
 
         # return self.Commodity(guid=guid, namespace=namespace, mnemonic=mnemonic)
