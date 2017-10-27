@@ -8,9 +8,11 @@ from dateutil.parser import parse as parse_date
 from xml.etree import ElementTree
 
 from gnucashreport.abstractreader import AbstractReader
+from gnucashreport.gnucashbook import GNUCashBook
 import gnucashreport.cols as cols
 
-class GNUCashXMLBook(AbstractReader):
+
+class GNUCashBookXML(GNUCashBook):
     """
     Reads contents of GNUCash xml file into dataframes
     """
@@ -100,6 +102,7 @@ class GNUCashXMLBook(AbstractReader):
             raise ValueError("File stream was not a valid GNU Cash v2 XML file")
         self._create_dfs()  # Create dataframes with fields
         self._book_from_tree(root.find("{http://www.gnucash.org/XML/gnc}book"))
+        self._get_guid_rootaccount()
 
     # <gnc:pricedb version="1">
     #   <price>
@@ -678,7 +681,7 @@ class GNUCashXMLBook(AbstractReader):
 
 
 if __name__ == "__main__":
-    book_xml = GNUCashXMLBook()
+    book_xml = GNUCashBookXML()
     filename = "c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash"
     book_xml.read_book(filename)
     print(book_xml.df_splits)

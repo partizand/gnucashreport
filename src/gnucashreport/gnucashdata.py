@@ -18,9 +18,12 @@ from gnucashreport import utils
 # from gnucashreport.utils import dataframe_to_excel, shift_account_name
 
 from gnucashreport.financial import xirr
-from gnucashreport.gcxmlreader import GNUCashXMLBook
+from gnucashreport.gnucashbookxml import GNUCashBookXML
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashbook import GNUCashBook
+import gnucashreport.gnucashbook as gnucashbook
+from gnucashreport.gnucashbookxml import GNUCashBookXML
+from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
 
 import gnucashreport.cols as cols
 
@@ -39,25 +42,25 @@ class GNUCashData:
 
     time_debug = True
 
-    # GnuCash account types
-    CASH = 'CASH'
-    BANK = 'BANK'
-    ASSET = 'ASSET'
-    STOCK = 'STOCK'
-    MUTUAL = 'MUTUAL'
-    INCOME = 'INCOME'
-    EXPENSE = 'EXPENSE'
-    EQUITY = 'EQUITY'
-    LIABILITY = 'LIABILITY'
-    ROOT = 'ROOT'
-    # GNUCash all account assets types
-    ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
-
-    # All account types for calc yield by xirr
-    ALL_XIRR_TYPES = [BANK, ASSET, STOCK, MUTUAL, LIABILITY]
-    ASSET_XIRR_TYPES = [BANK, ASSET, LIABILITY]
-    STOCK_XIRR_TYPES = [STOCK, MUTUAL]
-    INCEXP_XIRR_TYPES = [INCOME, EXPENSE]
+    # # GnuCash account types
+    # CASH = 'CASH'
+    # BANK = 'BANK'
+    # ASSET = 'ASSET'
+    # STOCK = 'STOCK'
+    # MUTUAL = 'MUTUAL'
+    # INCOME = 'INCOME'
+    # EXPENSE = 'EXPENSE'
+    # EQUITY = 'EQUITY'
+    # LIABILITY = 'LIABILITY'
+    # ROOT = 'ROOT'
+    # # GNUCash all account assets types
+    # ALL_ASSET_TYPES = [CASH, BANK, ASSET, STOCK, MUTUAL]
+    #
+    # # All account types for calc yield by xirr
+    # ALL_XIRR_TYPES = [BANK, ASSET, STOCK, MUTUAL, LIABILITY]
+    # ASSET_XIRR_TYPES = [BANK, ASSET, LIABILITY]
+    # STOCK_XIRR_TYPES = [STOCK, MUTUAL]
+    # INCEXP_XIRR_TYPES = [INCOME, EXPENSE]
 
     # Данные для генерации тестовых данных и тестирования
     dir_pickle = 'V:/test_data'
@@ -78,14 +81,14 @@ class GNUCashData:
         self.df_splits = pandas.DataFrame()
         self.df_prices = pandas.DataFrame()
 
-        self.book_name = None
+        # self.book_name = None
 
 
         # internalization
         self.set_locale()
 
-        self.book = GNUCashBook()
-        self.root_account_guid = None
+        self.book = None
+        # self.root_account_guid = None
 
 
     @staticmethod
@@ -104,7 +107,8 @@ class GNUCashData:
         dir_locale = os.path.join(dir_path, 'locale')
         gettext.install('gnucashreport', localedir=dir_locale)
 
-    def open_book_file(self, filename, readonly=True, open_if_lock=False,):
+    # def open_book_file(self, filename, readonly=True, open_if_lock=False,):
+    def open_book_file(self, filename,):
         """
         Open GnuCash database file. Autodetect type: sqlite or xml
         :param filename:
@@ -119,61 +123,76 @@ class GNUCashData:
         # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
         # including the nul terminator character at the end.
         # Read sqllite signature
-        with open(filename, "rb") as f:
-            bytes = f.read(16)
-        if bytes == b'SQLite format 3\x00':
-            self.open_book_sql(sqlite_file=filename, readonly=readonly, open_if_lock=open_if_lock)
+        book_type= gnucashbook.get_gnucashbook_type(filename)
+        if book_type == gnucashbook.BOOKTYPE_XML:
+            self.book = GNUCashBookXML()
         else:
-            self._open_book_xml(filename)
+            self.book = GNUCashBookSQLite()
+        self.book.read_book(filename)
 
-    def _open_book_xml(self, xml_file):
-        """
-        Opens gnucash book from xml file
-        :param xml_file:
-        :return:
-        """
-        self._read_book_xml(xml_file)
+        self.df_accounts = self.book.df_accounts
+        self.df_commodities = self.book.df_commodities
+        self.df_prices = self.book.df_prices
+        self.df_transactions = self.book.df_transactions
+        self.df_splits = self.book.df_splits
+
         self._after_read()
 
-    def open_book_sql(self,
-                      sqlite_file=None,
-                      uri_conn=None,
-                      readonly=True,
-                      open_if_lock=False,
-                      do_backup=True,
-                      db_type=None,
-                      db_user=None,
-                      db_password=None,
-                      db_name=None,
-                      db_host=None,
-                      db_port=None,
-                       **kwargs):
-        """
-        Opens gnucash book from sql. See piecash help for sql details
-        :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
-        :param str uri_conn: a sqlalchemy connection string
-        :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
-        :param bool open_if_lock: open the file even if it is locked by another user
-            (using open_if_lock=True with readonly=False is not recommended)
-        :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
-            (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
-        :raises GnucashException: if the document does not exist
-        :raises GnucashException: if there is a lock on the file and open_if_lock is False
-        :return:
-        """
-        self._read_book_sql(sqlite_file=sqlite_file,
-                               uri_conn=uri_conn,
-                               readonly=readonly,
-                               open_if_lock=open_if_lock,
-                               do_backup=do_backup,
-                               db_type=db_type,
-                               db_user=db_user,
-                               db_password=db_password,
-                               db_name=db_name,
-                               db_host=db_host,
-                               db_port=db_port,
-                               **kwargs)
-        self._after_read()
+        # with open(filename, "rb") as f:
+        #     bytes = f.read(16)
+        # if bytes == b'SQLite format 3\x00':
+        #     self.open_book_sql(sqlite_file=filename, readonly=readonly, open_if_lock=open_if_lock)
+        # else:
+        #     self._open_book_xml(filename)
+
+    # def _open_book_xml(self, xml_file):
+    #     """
+    #     Opens gnucash book from xml file
+    #     :param xml_file:
+    #     :return:
+    #     """
+    #     self._read_book_xml(xml_file)
+    #     self._after_read()
+    #
+    # def open_book_sql(self,
+    #                   sqlite_file=None,
+    #                   uri_conn=None,
+    #                   readonly=True,
+    #                   open_if_lock=False,
+    #                   do_backup=True,
+    #                   db_type=None,
+    #                   db_user=None,
+    #                   db_password=None,
+    #                   db_name=None,
+    #                   db_host=None,
+    #                   db_port=None,
+    #                    **kwargs):
+    #     """
+    #     Opens gnucash book from sql. See piecash help for sql details
+    #     :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
+    #     :param str uri_conn: a sqlalchemy connection string
+    #     :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
+    #     :param bool open_if_lock: open the file even if it is locked by another user
+    #         (using open_if_lock=True with readonly=False is not recommended)
+    #     :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
+    #         (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
+    #     :raises GnucashException: if the document does not exist
+    #     :raises GnucashException: if there is a lock on the file and open_if_lock is False
+    #     :return:
+    #     """
+    #     self._read_book_sql(sqlite_file=sqlite_file,
+    #                            uri_conn=uri_conn,
+    #                            readonly=readonly,
+    #                            open_if_lock=open_if_lock,
+    #                            do_backup=do_backup,
+    #                            db_type=db_type,
+    #                            db_user=db_user,
+    #                            db_password=db_password,
+    #                            db_name=db_name,
+    #                            db_host=db_host,
+    #                            db_port=db_port,
+    #                            **kwargs)
+    #     self._after_read()
 
     def _open_book_pickle(self, folder):
         """
@@ -207,14 +226,14 @@ class GNUCashData:
         # print(guid)
         # self.root_account_guid = gnucash_book.root_account.guid
 
-    def _get_guid_rootaccount(self):
-        """
-        Get root account guid from df_accounts
-        :return:
-        """
-        df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
-                                   (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
-        self.root_account_guid = df_root.index.values[0]
+    # def _get_guid_rootaccount(self):
+    #     """
+    #     Get root account guid from df_accounts
+    #     :return:
+    #     """
+    #     df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
+    #                                (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
+    #     self.root_account_guid = df_root.index.values[0]
 
     def _dataframe_from_pickle(self, filename, folder=None):
         """
@@ -229,143 +248,143 @@ class GNUCashData:
         df = pandas.read_pickle(fullfilename)
         return df
 
-    def _read_book_xml(self, xml_file):
-
-        # read contens of the book
-        book = GNUCashXMLBook()
-        book.read_book(xml_file)
-
-        # Accounts
-
-        fields = [cols.GUID, cols.SHORTNAME, "actype",
-                  "commodity_guid", "commodity_scu",
-                  "parent_guid", "description", "hidden", "notes"]
-
-        self.df_accounts = self._object_to_dataframe(book.accounts, fields)
-        self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
-        self.root_account_guid = book.root_account_guid
-
-        # Transactions
-
-        fields = [cols.GUID, cols.CURRENCY_GUID, "date", "description"]
-
-        self.df_transactions = self._object_to_dataframe(book.transactions, fields)
-        self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
-
-        # Splits
-        fields = [cols.GUID, "transaction_guid", "account_guid",
-                  "memo", "reconcile_state", "value", "quantity"]
-
-        self.df_splits = self._object_to_dataframe(book.splits, fields)
-
-        # commodity
-
-        fields = [cols.GUID, "space", "mnemonic"]
-        self.df_commodities = self._object_to_dataframe(book.commodities, fields)
-        self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
-        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
-
-        # Prices
-        fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
-                  "date", "source", "price_type", "value"]
-        self.df_prices = self._object_to_dataframe(book.prices, fields)
-        self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
-
-    def _read_book_sql(self,
-                       sqlite_file=None,
-                       uri_conn=None,
-                       readonly=True,
-                       open_if_lock=False,
-                       do_backup=True,
-                       db_type=None,
-                       db_user=None,
-                       db_password=None,
-                       db_name=None,
-                       db_host=None,
-                       db_port=None,
-                       **kwargs):
-        """Open an existing GnuCash sql book, read data to DataFrames
-
-        :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
-        :param str uri_conn: a sqlalchemy connection string
-        :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
-        :param bool open_if_lock: open the file even if it is locked by another user
-            (using open_if_lock=True with readonly=False is not recommended)
-        :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
-            (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
-        :raises GnucashException: if the document does not exist
-        :raises GnucashException: if there is a lock on the file and open_if_lock is False
-        :return:
-        """
-
-        self.book_name = os.path.basename(sqlite_file)
-        with piecash.open_book(sqlite_file=sqlite_file,
-                               uri_conn=uri_conn,
-                               readonly=readonly,
-                               open_if_lock=open_if_lock,
-                               do_backup=do_backup,
-                               db_type=db_type,
-                               db_user=db_user,
-                               db_password=db_password,
-                               db_name=db_name,
-                               db_host=db_host,
-                               db_port=db_port,
-                               **kwargs
-                               ) as gnucash_book:
-            # Read data tables in dataframes
-
-            # commodities
-
-            t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
-                piecash.Commodity.namespace != "template").all()
-            fields = [cols.GUID, "namespace", "mnemonic",
-                      "fullname", "cusip", "fraction",
-                      "quote_flag", "quote_source", "quote_tz"]
-            self.df_commodities = self._object_to_dataframe(t_commodities, fields)
-
-            # Accounts
-
-            self.root_account_guid = gnucash_book.root_account.guid
-            t_accounts = gnucash_book.session.query(piecash.Account).all()
-            fields = [cols.GUID, cols.SHORTNAME, "type", "placeholder",
-                      "commodity_guid", "commodity_scu",
-                      "parent_guid", "description", "hidden"]
-            self.df_accounts = self._object_to_dataframe(t_accounts, fields, slot_names=['notes'])
-            # rename to real base name of field from piecash name
-            self.df_accounts.rename(columns={'type': cols.ACCOUNT_TYPE}, inplace=True)
-            # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
-
-            # slots
-            # t_slots = gnucash_book.session.query(piecash.).all()
-            # fields = [cols.GUID, cols.SHORTNAME, "type", "placeholder",
-            #           "commodity_guid", "commodity_scu",
-            #           "parent_guid", "description", "hidden"]
-            # self.df_accounts = self._object_to_dataframe(t_accounts, fields)
-
-            # Transactions
-
-            t_transactions = gnucash_book.session.query(piecash.Transaction).all()
-            fields = [cols.GUID, cols.CURRENCY_GUID, "num",
-                      "post_date", "description"]
-            self.df_transactions = self._object_to_dataframe(t_transactions, fields)
-
-            # Splits
-
-            t_splits = gnucash_book.session.query(piecash.Split).all()
-            fields = [cols.GUID, "transaction_guid", "account_guid",
-                      "memo", "action", "reconcile_state",
-                      "value",
-                      "quantity", "lot_guid"]
-            self.df_splits = self._object_to_dataframe(t_splits, fields)
-
-            # Prices
-
-            # Get from piecash
-            t_prices = gnucash_book.session.query(piecash.Price).all()
-            # Some fields not correspond to real names in DB
-            fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
-                      "date", "source", "type", "value"]
-            self.df_prices = self._object_to_dataframe(t_prices, fields)
+    # def _read_book_xml(self, xml_file):
+    #
+    #     # read contens of the book
+    #     book = GNUCashXMLBook()
+    #     book.read_book(xml_file)
+    #
+    #     # Accounts
+    #
+    #     fields = [cols.GUID, cols.SHORTNAME, "actype",
+    #               "commodity_guid", "commodity_scu",
+    #               "parent_guid", "description", "hidden", "notes"]
+    #
+    #     self.df_accounts = self._object_to_dataframe(book.accounts, fields)
+    #     self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
+    #     self.root_account_guid = book.root_account_guid
+    #
+    #     # Transactions
+    #
+    #     fields = [cols.GUID, cols.CURRENCY_GUID, "date", "description"]
+    #
+    #     self.df_transactions = self._object_to_dataframe(book.transactions, fields)
+    #     self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
+    #
+    #     # Splits
+    #     fields = [cols.GUID, "transaction_guid", "account_guid",
+    #               "memo", "reconcile_state", "value", "quantity"]
+    #
+    #     self.df_splits = self._object_to_dataframe(book.splits, fields)
+    #
+    #     # commodity
+    #
+    #     fields = [cols.GUID, "space", "mnemonic"]
+    #     self.df_commodities = self._object_to_dataframe(book.commodities, fields)
+    #     self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
+    #     self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+    #
+    #     # Prices
+    #     fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
+    #               "date", "source", "price_type", "value"]
+    #     self.df_prices = self._object_to_dataframe(book.prices, fields)
+    #     self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
+    #
+    # def _read_book_sql(self,
+    #                    sqlite_file=None,
+    #                    uri_conn=None,
+    #                    readonly=True,
+    #                    open_if_lock=False,
+    #                    do_backup=True,
+    #                    db_type=None,
+    #                    db_user=None,
+    #                    db_password=None,
+    #                    db_name=None,
+    #                    db_host=None,
+    #                    db_port=None,
+    #                    **kwargs):
+    #     """Open an existing GnuCash sql book, read data to DataFrames
+    #
+    #     :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
+    #     :param str uri_conn: a sqlalchemy connection string
+    #     :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
+    #     :param bool open_if_lock: open the file even if it is locked by another user
+    #         (using open_if_lock=True with readonly=False is not recommended)
+    #     :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
+    #         (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
+    #     :raises GnucashException: if the document does not exist
+    #     :raises GnucashException: if there is a lock on the file and open_if_lock is False
+    #     :return:
+    #     """
+    #
+    #     self.book_name = os.path.basename(sqlite_file)
+    #     with piecash.open_book(sqlite_file=sqlite_file,
+    #                            uri_conn=uri_conn,
+    #                            readonly=readonly,
+    #                            open_if_lock=open_if_lock,
+    #                            do_backup=do_backup,
+    #                            db_type=db_type,
+    #                            db_user=db_user,
+    #                            db_password=db_password,
+    #                            db_name=db_name,
+    #                            db_host=db_host,
+    #                            db_port=db_port,
+    #                            **kwargs
+    #                            ) as gnucash_book:
+    #         # Read data tables in dataframes
+    #
+    #         # commodities
+    #
+    #         t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
+    #             piecash.Commodity.namespace != "template").all()
+    #         fields = [cols.GUID, "namespace", "mnemonic",
+    #                   "fullname", "cusip", "fraction",
+    #                   "quote_flag", "quote_source", "quote_tz"]
+    #         self.df_commodities = self._object_to_dataframe(t_commodities, fields)
+    #
+    #         # Accounts
+    #
+    #         self.root_account_guid = gnucash_book.root_account.guid
+    #         t_accounts = gnucash_book.session.query(piecash.Account).all()
+    #         fields = [cols.GUID, cols.SHORTNAME, "type", "placeholder",
+    #                   "commodity_guid", "commodity_scu",
+    #                   "parent_guid", "description", "hidden"]
+    #         self.df_accounts = self._object_to_dataframe(t_accounts, fields, slot_names=['notes'])
+    #         # rename to real base name of field from piecash name
+    #         self.df_accounts.rename(columns={'type': cols.ACCOUNT_TYPE}, inplace=True)
+    #         # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
+    #
+    #         # slots
+    #         # t_slots = gnucash_book.session.query(piecash.).all()
+    #         # fields = [cols.GUID, cols.SHORTNAME, "type", "placeholder",
+    #         #           "commodity_guid", "commodity_scu",
+    #         #           "parent_guid", "description", "hidden"]
+    #         # self.df_accounts = self._object_to_dataframe(t_accounts, fields)
+    #
+    #         # Transactions
+    #
+    #         t_transactions = gnucash_book.session.query(piecash.Transaction).all()
+    #         fields = [cols.GUID, cols.CURRENCY_GUID, "num",
+    #                   "post_date", "description"]
+    #         self.df_transactions = self._object_to_dataframe(t_transactions, fields)
+    #
+    #         # Splits
+    #
+    #         t_splits = gnucash_book.session.query(piecash.Split).all()
+    #         fields = [cols.GUID, "transaction_guid", "account_guid",
+    #                   "memo", "action", "reconcile_state",
+    #                   "value",
+    #                   "quantity", "lot_guid"]
+    #         self.df_splits = self._object_to_dataframe(t_splits, fields)
+    #
+    #         # Prices
+    #
+    #         # Get from piecash
+    #         t_prices = gnucash_book.session.query(piecash.Price).all()
+    #         # Some fields not correspond to real names in DB
+    #         fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
+    #                   "date", "source", "type", "value"]
+    #         self.df_prices = self._object_to_dataframe(t_prices, fields)
 
             # dataframe_to_excel(self.df_accounts, 'accounts-source-sql')
 
@@ -1007,8 +1026,8 @@ class GNUCashData:
 
         # Тест. Для анализа кредитов для подсчета доходности
         # TODO Это надо убрать
-        if any(df_assets[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
-            self.df_splits.loc[tr_guid, 'tr_type'] = 'liab'
+        # if any(df_assets[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
+        #     self.df_splits.loc[tr_guid, 'tr_type'] = 'liab'
 
 
         # df_assets = df_assets[df_assets[cols.XIRR_ENABLE]]
@@ -1365,8 +1384,8 @@ class GNUCashData:
 
         return group
 
-    def balance_by_period(self, from_date, to_date, period='M', account_types=ALL_ASSET_TYPES, glevel=1,
-                          margins:Margins = None, drop_null=False):
+    def balance_by_period(self, from_date, to_date, period='M', account_types=GNUCashBook.ALL_ASSET_TYPES, glevel=1,
+                          margins: Margins = None, drop_null=False):
         """
         Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
         :param from_date:
@@ -1396,7 +1415,7 @@ class GNUCashData:
 
         return group
 
-    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=EXPENSE, glevel=1,
+    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=GNUCashBook.EXPENSE, glevel=1,
                            margins: Margins = None, drop_null=False):
 
         """
@@ -1415,7 +1434,7 @@ class GNUCashData:
                                                 account_type=account_type)
 
         # inverse income
-        if account_type == self.INCOME:
+        if account_type == GNUCashBook.INCOME:
             sel_df[cols.VALUE] = sel_df[cols.VALUE].apply(lambda x: -1 * x)
 
         # пересчет в нужную валюту
