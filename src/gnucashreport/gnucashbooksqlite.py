@@ -1,6 +1,5 @@
 import pandas
 
-from gnucashreport.abstractreader import AbstractReader
 from gnucashreport.gnucashbook import GNUCashBook
 import gnucashreport.cols as cols
 

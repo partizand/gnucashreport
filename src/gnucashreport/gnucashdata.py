@@ -88,7 +88,7 @@ class GNUCashData:
         self.set_locale()
 
         self.book = None
-        # self.root_account_guid = None
+        self.root_account_guid = None
 
 
     @staticmethod
@@ -135,6 +135,8 @@ class GNUCashData:
         self.df_prices = self.book.df_prices
         self.df_transactions = self.book.df_transactions
         self.df_splits = self.book.df_splits
+
+        self.root_account_guid = self.book.root_account_guid
 
         self._after_read()
 
@@ -1020,12 +1022,12 @@ class GNUCashData:
         :return: 
         """
 
-        incexp_types = [self.INCOME, self.EXPENSE]
+        incexp_types = [GNUCashBook.INCOME, GNUCashBook.EXPENSE]
         df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
         df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
 
         # Тест. Для анализа кредитов для подсчета доходности
-        # TODO Это надо убрать
+        # Это надо убрать
         # if any(df_assets[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
         #     self.df_splits.loc[tr_guid, 'tr_type'] = 'liab'
 
@@ -1056,7 +1058,7 @@ class GNUCashData:
 
         # Multi transaction
         # has one stock
-        df_stocks = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)]
+        df_stocks = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(GNUCashBook.STOCK_XIRR_TYPES)]
         if len(df_stocks) == 1:
             # Тут нужно добавить все asset у которых xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
@@ -1129,8 +1131,8 @@ class GNUCashData:
 
 
         # если есть тип stock, то он главный
-        if any(df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)):
-            df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin(self.STOCK_XIRR_TYPES)]
+        if any(df_asset[cols.ACCOUNT_TYPE].isin(GNUCashBook.STOCK_XIRR_TYPES)):
+            df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin(GNUCashBook.STOCK_XIRR_TYPES)]
             return df.iloc[0][cols.ACCOUNT_GUID]
 
         # Если есть счет с 0, то главный он
@@ -1139,8 +1141,8 @@ class GNUCashData:
             return df_zero.iloc[0][cols.ACCOUNT_GUID]
 
         # Если есть счет с типом liability, то главный он
-        if any(df_asset[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
-            df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin([self.LIABILITY])]
+        if any(df_asset[cols.ACCOUNT_TYPE].isin([GNUCashBook.LIABILITY])):
+            df = df_asset[df_asset[cols.ACCOUNT_TYPE].isin([GNUCashBook.LIABILITY])]
             return df.iloc[0][cols.ACCOUNT_GUID]
         # А здесь сложно понять кто главный
         # Берем счет с отрицательной суммой
@@ -1171,16 +1173,16 @@ class GNUCashData:
         #     # return None  # Ошибка
 
 
-    def _add_tr_acc_names(self, dataframe):
-        """
-        Для тестовых целей, пишет в поле tr_acc_names все имена счетов участвующие в транзакции через запятую
-        Для поиска всех связанных со счетом split в excel
-        :param dataframe: 
-        :return: 
-        """
-        tr_acc_names = dataframe[cols.SHORTNAME].drop_duplicates().tolist()
-        tr_acc_names = ','.join(tr_acc_names)
-        self.df_splits.loc[dataframe.index.values, 'tr_acc_names'] = tr_acc_names
+    # def _add_tr_acc_names(self, dataframe):
+    #     """
+    #     Для тестовых целей, пишет в поле tr_acc_names все имена счетов участвующие в транзакции через запятую
+    #     Для поиска всех связанных со счетом split в excel
+    #     :param dataframe:
+    #     :return:
+    #     """
+    #     tr_acc_names = dataframe[cols.SHORTNAME].drop_duplicates().tolist()
+    #     tr_acc_names = ','.join(tr_acc_names)
+    #     self.df_splits.loc[dataframe.index.values, 'tr_acc_names'] = tr_acc_names
 
     def _get_all_for_xirr(self, account_guids, from_date=None, to_date=None):
         """
@@ -1367,7 +1369,7 @@ class GNUCashData:
             sel_df = sel_df[(sel_df[cols.FULLNAME]).isin(accounts)]
         else:
             # отбираем все счета с активами
-            sel_df = sel_df[(sel_df[cols.ACCOUNT_TYPE]).isin(self.ALL_ASSET_TYPES)]
+            sel_df = sel_df[(sel_df[cols.ACCOUNT_TYPE]).isin(GNUCashBook.ALL_ASSET_TYPES)]
 
         # Фильтрация по времени
         # min_date, max_date = self._get_daterange()
@@ -1468,7 +1470,7 @@ class GNUCashData:
         :return: pivot DataFrame
         """
 
-        income_and_expense = [GNUCashData.INCOME, GNUCashData.EXPENSE]
+        income_and_expense = [GNUCashBook.INCOME, GNUCashBook.EXPENSE]
 
         # Группировка по периоду
         sel_df = self._turnover_group_by_period(from_date=from_date, to_date=to_date, period=period,
@@ -1790,7 +1792,7 @@ class GNUCashData:
         margins = Margins()
         margins.total_row = True
         df = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-                                     account_type=self.EXPENSE, glevel=glevel, margins=margins)
+                                     account_type=GNUCashBook.EXPENSE, glevel=glevel, margins=margins)
 
         # Empty Dataframe with same columns and index
         df_inf = pandas.DataFrame(index=df.index, columns=df.columns[1:])
@@ -1951,57 +1953,57 @@ class GNUCashData:
         else:
             return 'error'
 
-    @staticmethod
-    def _object_to_dataframe(pieobject, fields, slot_names=None):
-        """
-        Преобразовывае объект piecash в DataFrame с заданными полями
-        :param pieobject:
-        :param fields:
-        :return:
-        """
-        # build dataframe
-        # fields_getter = [attrgetter(fld) for fld in fields]
-        fields_getter = [(fld, attrgetter(fld)) for fld in fields]
-
-        # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
-
-        # у строки есть массив slots
-        # в поле name = notes
-        # в поле value = значение
-
-
-        # Разложение цикла
-        array = []
-        for sp in pieobject:
-            line = {}
-            for field in fields:
-                line[field] = getattr(sp, field, None)
-            # for fld, fg in fields_getter:
-            #     line[fld] = fg(sp)
-            if slot_names:
-                for slot_name in slot_names:
-                    line[slot_name] = None
-                for slot in sp.slots:
-                    if slot.name in slot_names:
-                        line[slot.name] = slot.value
-
-
-            array.append(line)
-
-
-
-        # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
-        # df_obj = pandas.DataFrame(array, columns=all_fields)
-        if array:
-            df_obj = pandas.DataFrame(array)
-        else:
-            if slot_names:
-                all_fields = fields + slot_names
-            else:
-                all_fields = fields
-            df_obj = pandas.DataFrame(columns=all_fields)
-        df_obj.set_index(fields[0], inplace=True)
-        return df_obj
+    # @staticmethod
+    # def _object_to_dataframe(pieobject, fields, slot_names=None):
+    #     """
+    #     Преобразовывае объект piecash в DataFrame с заданными полями
+    #     :param pieobject:
+    #     :param fields:
+    #     :return:
+    #     """
+    #     # build dataframe
+    #     # fields_getter = [attrgetter(fld) for fld in fields]
+    #     fields_getter = [(fld, attrgetter(fld)) for fld in fields]
+    #
+    #     # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
+    #
+    #     # у строки есть массив slots
+    #     # в поле name = notes
+    #     # в поле value = значение
+    #
+    #
+    #     # Разложение цикла
+    #     array = []
+    #     for sp in pieobject:
+    #         line = {}
+    #         for field in fields:
+    #             line[field] = getattr(sp, field, None)
+    #         # for fld, fg in fields_getter:
+    #         #     line[fld] = fg(sp)
+    #         if slot_names:
+    #             for slot_name in slot_names:
+    #                 line[slot_name] = None
+    #             for slot in sp.slots:
+    #                 if slot.name in slot_names:
+    #                     line[slot.name] = slot.value
+    #
+    #
+    #         array.append(line)
+    #
+    #
+    #
+    #     # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
+    #     # df_obj = pandas.DataFrame(array, columns=all_fields)
+    #     if array:
+    #         df_obj = pandas.DataFrame(array)
+    #     else:
+    #         if slot_names:
+    #             all_fields = fields + slot_names
+    #         else:
+    #             all_fields = fields
+    #         df_obj = pandas.DataFrame(columns=all_fields)
+    #     df_obj.set_index(fields[0], inplace=True)
+    #     return df_obj
 
     # def __to_excel(self, filename):
     #     """

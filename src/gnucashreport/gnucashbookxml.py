@@ -7,7 +7,6 @@ from operator import attrgetter
 from dateutil.parser import parse as parse_date
 from xml.etree import ElementTree
 
-from gnucashreport.abstractreader import AbstractReader
 from gnucashreport.gnucashbook import GNUCashBook
 import gnucashreport.cols as cols
 
