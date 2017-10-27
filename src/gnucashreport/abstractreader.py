@@ -11,6 +11,8 @@ class AbstractReader:
         self.df_splits = None
         self.df_prices = None
 
+        self.root_account_guid = None
+
     @abc.abstractmethod
     def read_book(self, filename):
         return

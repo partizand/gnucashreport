@@ -267,8 +267,8 @@ class GNUCashXMLBook(AbstractReader):
             # self.prices.append(price)
 
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}account'):
-            acc = self._account_from_tree(child)
-            self.accounts.append(acc)
+            self._account_from_tree(child)
+            # self.accounts.append(acc)
 
         # ret_dict['accounts'] = accounts
 
@@ -276,8 +276,8 @@ class GNUCashXMLBook(AbstractReader):
         # splits = []
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}'
                                   'transaction'):
-            transaction = self._transaction_from_tree(child)
-            self.transactions.append(transaction)
+            self._transaction_from_tree(child)
+            # self.transactions.append(transaction)
 
     # Implemented:
     # - cmdty:id
@@ -368,60 +368,38 @@ class GNUCashXMLBook(AbstractReader):
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
         ts = '{http://www.gnucash.org/XML/ts}'
 
-        guid = tree.find(pr + "id").text
-        source = tree.find(pr + "source").text
+        price = {}
+
+        price[cols.GUID] = tree.find(pr + "id").text
+        price["source"] = tree.find(pr + "source").text
         tree_type = tree.find(pr + "type")
         if tree_type:
-            price_type = tree_type.text
-        else:
-            price_type = None
-        str_value = tree.find(pr + "value").text
-        value = self._parse_number(str_value)
+            price["type"] = tree_type.text
+        # else:
+        #     price_type = None
+        price[cols.VALUE] = self._parse_number(tree.find(pr + "value").text)
 
-        currency_space = tree.find(pr + "currency/" +
-                                   cmdty + "space").text
-        currency_name = tree.find(pr + "currency/" +
-                                  cmdty + "id").text
-        currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
-        # currency = commoditydict[(currency_space, currency_name)]
+        currency_space = tree.find(pr + "currency/" + cmdty + "space").text
+        currency_name = tree.find(pr + "currency/" + cmdty + "id").text
+        price[cols.CURRENCY_GUID] = self.get_commodity_guid(space=currency_space, name=currency_name)
 
-        commodity_space = tree.find(pr + "commodity/" +
-                                    cmdty + "space").text
-        commodity_name = tree.find(pr + "commodity/" +
-                                   cmdty + "id").text
-        commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
-        # commodity = commoditydict[(commodity_space, commodity_name)]
+        commodity_space = tree.find(pr + "commodity/" + cmdty + "space").text
+        commodity_name = tree.find(pr + "commodity/" + cmdty + "id").text
+        price[cols.COMMODITY_GUID] = self.get_commodity_guid(space=commodity_space, name=commodity_name)
 
-        xml_date = tree.find(pr + "time/" + ts + "date").text
-
-        # print('xml_date={}'.format(xml_date))
+        # xml_date = tree.find(pr + "time/" + ts + "date").text
 
         # date = parse_date(tree.find(pr + "time/" +
         #                             ts + "date").text)
 
-        pd_date = pandas.to_datetime(xml_date)
+        price["date"] = pandas.to_datetime(tree.find(pr + "time/" + ts + "date").text)
         # pd_date = pandas.to_datetime(pd_date.date())
 
 
         # price = self.Price(guid=guid, commodity_guid=commodity_guid, currency_guid=currency_guid, date=date, source=source,
         #               price_type=price_type, value=value)
-        # print('date = {}'.format(date))
-        price = {cols.GUID: guid,
-                    cols.COMMODITY_GUID: commodity_guid,
-                 cols.CURRENCY_GUID: currency_guid,
-                 "date": pd_date,
-                 "source": source,
-                 "type": price_type,
-                 "value": value
-                 }
-
-        # df = pandas.DataFrame(price)
-
 
         self.df_prices =  self.df_prices.append(price, ignore_index=True)
-
-
-        # self.df_prices.loc[guid] = price
 
         # return price
 
@@ -437,69 +415,60 @@ class GNUCashXMLBook(AbstractReader):
     def _account_from_tree(self, tree):
         act = '{http://www.gnucash.org/XML/act}'
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
-
-        name = tree.find(act + 'name').text
-        guid = tree.find(act + 'id').text
+        account = {}
+        account[cols.SHORTNAME] = tree.find(act + 'name').text
+        account[cols.GUID] = tree.find(act + 'id').text
         account_type = tree.find(act + 'type').text
-        description = tree.find(act + "description")
-        if description is not None:
-            description = description.text
+        account[cols.ACCOUNT_TYPE] = account_type
+        descr = tree.find(act + "description")
+        if descr is not None:
+            account[cols.DESCRIPTION] = descr.text
+
         slots = self._slots_from_tree(tree.find(act + 'slots'))
 
         if 'hidden' in slots.keys():
             hid = slots['hidden']
             if hid.lower() == 'true':
-                hidden = True
+                account[cols.HIDDEN] = True
             else:
-                hidden = False
+                account[cols.HIDDEN] = False
         else:
-            hidden = False
+            account[cols.HIDDEN] = False
 
         if 'notes' in slots.keys():
-            notes = slots['notes']
-        else:
-            notes = None
+            account["notes"] = slots['notes']
+        # else:
+        #     notes = None
 
         # hidden = slots['hidden']
         # {'reconcile-info': {'include-children': 0, 'last-date': 1324151999, 'last-interval': {'days': 7, 'months': 0}},
         #  'color': 'Not Set', 'hidden': 'true', 'placeholder': 'true'}
         if account_type == 'ROOT':
-            parent_guid = None
-            commodity = None
-            commodity_scu = None
-            commodity_guid = None
-            self.root_account_guid = guid
+            # parent_guid = None
+            # commodity = None
+            # commodity_scu = None
+            # commodity_guid = None
+            self.root_account_guid = account[cols.GUID]
         else:
-            parent_guid = tree.find(act + 'parent').text
-            commodity_space = tree.find(act + 'commodity/' +
-                                        cmdty + 'space').text
-            commodity_name = tree.find(act + 'commodity/' +
-                                       cmdty + 'id').text
-            commodity_scu = tree.find(act + 'commodity-scu').text
-            # commodity = commoditydict[(commodity_space, commodity_name)]
+            account[cols.PARENT_GUID] = tree.find(act + 'parent').text
+            commodity_space = tree.find(act + 'commodity/' + cmdty + 'space').text
+            commodity_name = tree.find(act + 'commodity/' + cmdty + 'id').text
+            account[cols.COMMODITY_GUID] = self.get_commodity_guid(space=commodity_space, name=commodity_name)
+            account["commodity_scu"] = tree.find(act + 'commodity-scu').text
 
-            commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
 
-        account = self.Account(name=name,
-                          description=description,
-                          guid=guid,
-                          account_type=account_type,
-                          hidden=hidden,
-                          commodity_guid=commodity_guid,
-                          commodity_scu=commodity_scu,
-                          parent_guid=parent_guid,
-                          notes=notes)
 
-        account = {cols.GUID: guid,
-                   cols.SHORTNAME: name,
-                   cols.ACCOUNT_TYPE: account_type,
-                   "commodity_guid": commodity_guid,
-                   "commodity_scu": commodity_scu,
-                  "parent_guid": parent_guid,
-                   "description": description,
-                   "hidden": hidden,
-                   "notes": notes,
-                  }
+        # account = self.Account(name=name,
+        #                   description=description,
+        #                   guid=guid,
+        #                   account_type=account_type,
+        #                   hidden=hidden,
+        #                   commodity_guid=commodity_guid,
+        #                   commodity_scu=commodity_scu,
+        #                   parent_guid=parent_guid,
+        #                   notes=notes)
+
+
 
         self.df_accounts = self.df_accounts.append(account, ignore_index=True)
 
@@ -562,22 +531,20 @@ class GNUCashXMLBook(AbstractReader):
         trn = '{http://www.gnucash.org/XML/trn}'
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
         ts = '{http://www.gnucash.org/XML/ts}'
-        split = '{http://www.gnucash.org/XML/split}'
+        # split = '{http://www.gnucash.org/XML/split}'
+        transaction = {}
 
-        guid = tree.find(trn + "id").text
-        currency_space = tree.find(trn + "currency/" +
-                                   cmdty + "space").text
-        currency_name = tree.find(trn + "currency/" +
-                                  cmdty + "id").text
-        currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
+        transaction[cols.GUID] = tree.find(trn + "id").text
+        currency_space = tree.find(trn + "currency/" + cmdty + "space").text
+        currency_name = tree.find(trn + "currency/" + cmdty + "id").text
+        transaction[cols.CURRENCY_GUID] = self.get_commodity_guid(space=currency_space, name=currency_name)
         # currency = commoditydict[(currency_space, currency_name)]
-        xml_date = tree.find(trn + "date-posted/" + ts + "date").text
         # post_date = parse_date(tree.find(trn + "date-posted/" +
         #                             ts + "date").text)
-        post_date = pandas.to_datetime(xml_date)
+        transaction[cols.POST_DATE] = pandas.to_datetime(tree.find(trn + "date-posted/" + ts + "date").text)
         # date_entered = parse_date(tree.find(trn + "date-entered/" +
         #                                     ts + "date").text)
-        description = tree.find(trn + "description").text
+        transaction[cols.DESCRIPTION] = tree.find(trn + "description").text
         # slots = self._slots_from_tree(tree.find(trn + "slots"))
         # transaction = self.Transaction(guid=guid,
         #                           currency_guid=currency_guid,
@@ -585,21 +552,14 @@ class GNUCashXMLBook(AbstractReader):
         #                           date_entered=date_entered,
         #                           description=description)
 
-        # fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, "description"]
-
-        transaction = {cols.GUID: guid,
-                       cols.CURRENCY_GUID: currency_guid,
-                       cols.POST_DATE: post_date,
-                       "description": description}
-
         self.df_transactions = self.df_transactions.append(transaction, ignore_index=True)
 
         for subtree in tree.findall(trn + "splits/" + trn + "split"):
-            split = self._split_from_tree(tree=subtree, transaction_guid=transaction.guid)
-            self.splits.append(split)
+            self._split_from_tree(tree=subtree, transaction_guid=transaction[cols.GUID])
+            # self.splits.append(split)
             # transaction.splits.append(split)
 
-        return transaction
+        # return transaction
 
 
 
@@ -613,44 +573,39 @@ class GNUCashXMLBook(AbstractReader):
     # - split:account
     # - split:slots
     def _split_from_tree(self, tree, transaction_guid):
-        split = '{http://www.gnucash.org/XML/split}'
+        splt_path = '{http://www.gnucash.org/XML/split}'
         ts = "{http://www.gnucash.org/XML/ts}"
-        splt = {}
-
-        splt[cols.GUID] = tree.find(split + "id").text # guid
-        memo = tree.find(split + "memo")
+        split = {}
+        split[cols.TRANSACTION_GUID] = transaction_guid
+        split[cols.GUID] = tree.find(splt_path + "id").text # guid
+        memo = tree.find(splt_path + "memo")
         if memo is not None:
-            splt["memo"] = memo.text
+            split["memo"] = memo.text
+
+        split["reconcile_state"] = tree.find(splt_path + "reconciled-state").text
+        # Not used
+        # reconcile_date = tree.find(split + "reconcile-date/" + ts + "date")
+        # if reconcile_date is not None:
+        #     reconcile_date = parse_date(reconcile_date.text)
+
+        split[cols.VALUE] = self._parse_number(tree.find(splt_path + "value").text)
+        split[cols.QUANTITY] = self._parse_number(tree.find(splt_path + "quantity").text)
+        split[cols.ACCOUNT_GUID] = tree.find(splt_path + "account").text
+        # slots = self._slots_from_tree(tree.find(split + "slots"))
+        # split = self.Split(guid=guid,
+        #               memo=memo,
+        #               reconcile_state=reconciled_state,
+        #               reconcile_date=reconcile_date,
+        #               value=value,
+        #               quantity=quantity,
+        #               account_guid=account_guid,
+        #               transaction_guid=transaction_guid
+        #               )
+
+        self.df_splits = self.df_splits.append(split, ignore_index=True)
 
 
-        reconciled_state = tree.find(split + "reconciled-state").text
-        reconcile_date = tree.find(split + "reconcile-date/" + ts + "date")
-        if reconcile_date is not None:
-            reconcile_date = parse_date(reconcile_date.text)
-        value = self._parse_number(tree.find(split + "value").text)
-        quantity = self._parse_number(tree.find(split + "quantity").text)
-        account_guid = tree.find(split + "account").text
-        # account = accountdict[account_guid]
-        slots = self._slots_from_tree(tree.find(split + "slots"))
-        split = self.Split(guid=guid,
-                      memo=memo,
-                      reconcile_state=reconciled_state,
-                      reconcile_date=reconcile_date,
-                      value=value,
-                      quantity=quantity,
-                      account_guid=account_guid,
-                      transaction_guid=transaction_guid
-                      )
-
-        fields = [cols.GUID, "transaction_guid", "account_guid",
-                  "memo", "reconcile_state", "value", "quantity"]
-
-        split = {cols.GUID, cols.TRANSACTION_GUID, cols.ACCOUNT_GUID,
-                   "memo", "reconcile_state", cols.VALUE, cols.QUANTITY
-
-        }
-
-        return split
+        # return split
 
     # Implemented:
     # - slot
@@ -812,7 +767,7 @@ if __name__ == "__main__":
     book_xml = GNUCashXMLBook()
     filename = "c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash"
     book_xml.read_book(filename)
-    print(book_xml.df_prices['value'])
+    print(book_xml.df_splits)
 
 
 
