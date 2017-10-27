@@ -18,12 +18,13 @@ from gnucashreport import utils
 # from gnucashreport.utils import dataframe_to_excel, shift_account_name
 
 from gnucashreport.financial import xirr
-from gnucashreport.gnucashbookxml import GNUCashBookXML
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashbook import GNUCashBook
 import gnucashreport.gnucashbook as gnucashbook
 from gnucashreport.gnucashbookxml import GNUCashBookXML
 from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
+
+# GNUCashBook = gnucashbook.GNUCashBook
 
 import gnucashreport.cols as cols
 

@@ -58,7 +58,7 @@ class GNUCashBook:
 
     def __init__(self):
 
-        self.book = None
+        # self.book = None
 
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
@@ -66,7 +66,7 @@ class GNUCashBook:
         self.df_splits = pandas.DataFrame()
         self.df_prices = pandas.DataFrame()
 
-        self.book_name = None
+        # self.book_name = None
 
         self.root_account_guid = None
 
