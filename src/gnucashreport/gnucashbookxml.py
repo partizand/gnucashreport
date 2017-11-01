@@ -41,49 +41,49 @@ class GNUCashBookXML(GNUCashBook):
     #     # df.set_index(fields[0], inplace=True)
     #     return df
 
-    def _create_dfs(self):
-        # Accounts
+    # def _create_dfs(self):
+    #     # Accounts
+    #
+    #     fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
+    #               cols.COMMODITY_GUID, "commodity_scu",
+    #               cols.PARENT_GUID, cols.DESCRIPTION, cols.HIDDEN, "notes"]
+    #     self.df_accounts = pandas.DataFrame(columns=fields)
+    #
+    #     # Transactions
+    #
+    #     fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, cols.DESCRIPTION]
+    #     self.df_transactions = pandas.DataFrame(columns=fields)
+    #
+    #     # Splits
+    #     fields = [cols.GUID, cols.TRANSACTION_GUID, cols.ACCOUNT_GUID,
+    #               "memo", "reconcile_state", cols.VALUE, cols.QUANTITY]
+    #
+    #     self.df_splits = pandas.DataFrame(columns=fields)
+    #
+    #     # commodity
+    #
+    #     fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
+    #     self.df_commodities = pandas.DataFrame(columns=fields)
+    #
+    #     # Prices
+    #     fields = [cols.GUID, cols.COMMODITY_GUID, cols.CURRENCY_GUID,
+    #               "date", "source", "type", cols.VALUE]
+    #     self.df_prices = pandas.DataFrame(columns=fields)
 
-        fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
-                  cols.COMMODITY_GUID, "commodity_scu",
-                  cols.PARENT_GUID, cols.DESCRIPTION, cols.HIDDEN, "notes"]
-        self.df_accounts = pandas.DataFrame(columns=fields)
-
-        # Transactions
-
-        fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, cols.DESCRIPTION]
-        self.df_transactions = pandas.DataFrame(columns=fields)
-
-        # Splits
-        fields = [cols.GUID, cols.TRANSACTION_GUID, cols.ACCOUNT_GUID,
-                  "memo", "reconcile_state", cols.VALUE, cols.QUANTITY]
-
-        self.df_splits = pandas.DataFrame(columns=fields)
-
-        # commodity
-
-        fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
-        self.df_commodities = pandas.DataFrame(columns=fields)
-
-        # Prices
-        fields = [cols.GUID, cols.COMMODITY_GUID, cols.CURRENCY_GUID,
-                  "date", "source", "type", cols.VALUE]
-        self.df_prices = pandas.DataFrame(columns=fields)
-
-    def _set_df_indexes(self):
-        self.df_accounts.set_index('guid', inplace=True)
-        self.df_transactions.set_index('guid', inplace=True)
-        self.df_splits.set_index('guid', inplace=True)
-        self.df_commodities.set_index('guid', inplace=True)
-        self.df_prices.set_index('guid', inplace=True)
+    # def _set_df_indexes(self):
+    #     self.df_accounts.set_index('guid', inplace=True)
+    #     self.df_transactions.set_index('guid', inplace=True)
+    #     self.df_splits.set_index('guid', inplace=True)
+    #     self.df_commodities.set_index('guid', inplace=True)
+    #     self.df_prices.set_index('guid', inplace=True)
 
     def _to_dfs(self):
 
         # Accounts
 
         fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
-                  "commodity_guid", "commodity_scu",
-                  "parent_guid", "description", "hidden", "notes"]
+                  cols.COMMODITY_GUID, "commodity_scu",
+                  cols.PARENT_GUID, cols.DESCRIPTION, "hidden", "notes"]
 
         self.df_accounts = self._object_to_dataframe(self.accounts, fields)
         self.root_account_guid = self.root_account_guid
@@ -206,37 +206,6 @@ class GNUCashBookXML(GNUCashBook):
         # self._set_df_indexes()
         # self._get_guid_rootaccount()
 
-    # <gnc:pricedb version="1">
-    #   <price>
-    #     <price:id type="guid">b9f8ca82cfe48ae412cabb76d0d57aa0</price:id>
-    #     <price:commodity>
-    #       <cmdty:space>Bond</cmdty:space>
-    #       <cmdty:id>OFZ25080</cmdty:id>
-    #     </price:commodity>
-    #     <price:currency>
-    #       <cmdty:space>ISO4217</cmdty:space>
-    #       <cmdty:id>RUB</cmdty:id>
-    #     </price:currency>
-    #     <price:time>
-    #       <ts:date>2016-11-23 00:00:00 +0300</ts:date>
-    #     </price:time>
-    #     <price:source>user:price</price:source>
-    #     <price:type>transaction</price:type>
-    #     <price:value>1001600000/1000000</price:value>
-    #   </price>
-
-    # <gnc:commodity version="2.0.0">
-    #   <cmdty:space>Bond</cmdty:space>
-    #   <cmdty:id>OFZ25080</cmdty:id>
-    #   <cmdty:name>ОФЗ ПД 25080 (19.04.2017)</cmdty:name>
-    #   <cmdty:fraction>10000</cmdty:fraction>
-    #   <cmdty:slots>
-    #     <slot>
-    #       <slot:key>user_symbol</slot:key>
-    #       <slot:value type="string">OFZ25080</slot:value>
-    #     </slot>
-    #   </cmdty:slots>
-    # </gnc:commodity>
 
     # Implemented:
     # - book:id
@@ -465,8 +434,8 @@ class GNUCashBookXML(GNUCashBook):
         currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
 
         # currency = commoditydict[(currency_space, currency_name)]
-        xml_date = tree.find(trn + "date-posted/" + ts + "date").text
-        post_date = parse_date(xml_date)
+        # xml_date = tree.find(trn + "date-posted/" + ts + "date").text
+        post_date = parse_date(tree.find(trn + "date-posted/" + ts + "date").text)
 
         date_entered = parse_date(tree.find(trn + "date-entered/" + ts + "date").text)
         description = tree.find(trn + "description").text
@@ -534,7 +503,7 @@ class GNUCashBookXML(GNUCashBook):
         #          cols.ACCOUNT_GUID: account_guid,
         #          }
         split_obj = self.Split(guid=guid,
-                      memo=memo,
+                      memo=memo_text,
                       reconcile_state=reconciled_state,
                       # reconcile_date=reconcile_date,
                       value=value,
@@ -608,7 +577,6 @@ class GNUCashBookXML(GNUCashBook):
         def __repr__(self):
             return "<Commodity {}>".format(self.guid)
 
-
     class Price(object):
         """
         A commodity is something that's stored in GNU Cash accounts.
@@ -630,7 +598,6 @@ class GNUCashBookXML(GNUCashBook):
 
         def __repr__(self):
             return "<Price {}>".format(self.guid)
-
 
     class Account(object):
         """
