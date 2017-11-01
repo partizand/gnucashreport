@@ -20,7 +20,7 @@ from gnucashreport import utils
 from gnucashreport.financial import xirr
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashbook import GNUCashBook
-import gnucashreport.gnucashbook as gnucashbook
+# import gnucashreport.gnucashbook as gnucashbook
 from gnucashreport.gnucashbookxml import GNUCashBookXML
 from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
 
@@ -124,12 +124,15 @@ class GNUCashData:
         # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
         # including the nul terminator character at the end.
         # Read sqllite signature
-        book_type= gnucashbook.get_gnucashbook_type(filename)
-        if book_type == gnucashbook.BOOKTYPE_XML:
+        print('Start opening book...')
+        book_type= GNUCashBook.get_gnucashbook_type(filename)
+        if book_type == GNUCashBook.BOOKTYPE_XML:
             self.book = GNUCashBookXML()
         else:
             self.book = GNUCashBookSQLite()
+        print('Start reading book...')
         self.book.read_book(filename)
+        print('Book is readed')
 
         self.df_accounts = self.book.df_accounts
         self.df_commodities = self.book.df_commodities
@@ -139,7 +142,8 @@ class GNUCashData:
 
         self.root_account_guid = self.book.root_account_guid
 
-        self._after_read()
+        # TODO Нужно вернуть назад
+        # self._after_read()
 
         # with open(filename, "rb") as f:
         #     bytes = f.read(16)
@@ -496,8 +500,8 @@ class GNUCashData:
         if default is None: # Установка текущего значения если default не установлен
             # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
             account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
-            if (account_type == self.CASH) or (account_type == self.EQUITY) or \
-               (account_type == self.INCOME) or (account_type == self.EXPENSE):
+            if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
+               (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
                 current = False
             else:
                 current = True
@@ -1944,8 +1948,8 @@ class GNUCashData:
         """
         if account_guid == self.root_account_guid:
             return 'root'
-        fullname = self.df_accounts.ix[account_guid][cols.SHORTNAME]
-        parent_guid = self.df_accounts.ix[account_guid]['parent_guid']
+        fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
+        parent_guid = self.df_accounts.loc[account_guid][cols.PARENT_GUID]
         if parent_guid in self.df_accounts.index:
             if parent_guid == self.root_account_guid:
                 return fullname

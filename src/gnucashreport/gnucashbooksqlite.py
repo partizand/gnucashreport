@@ -2,11 +2,9 @@ import pandas
 
 from gnucashreport.gnucashbook import GNUCashBook
 import gnucashreport.cols as cols
-
+# from gnucashreport.gnucashbook import G
 
 class GNUCashBookSQLite(GNUCashBook):
-
-
 
     def read_book(self, filename):
 

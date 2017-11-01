@@ -2,29 +2,10 @@ import pandas
 
 import abc
 
-from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
-from gnucashreport.gnucashbookxml import GNUCashBookXML
+import time
+
 import gnucashreport.cols as cols
 
-
-BOOKTYPE_XML = 'xml'
-BOOKTYPE_SQLITE = 'sqlite'
-
-
-def get_gnucashbook_type(filename):
-    """
-    Detect type of gnucash file
-    sqlite or xml
-    return BOOKTYPE_XML or BOOKTYPE_SQLITE
-    :param filename:
-    :return:
-    """
-    with open(filename, "rb") as f:
-        bytes = f.read(16)
-    if bytes == b'SQLite format 3\x00':
-        return BOOKTYPE_SQLITE
-    else:
-        return BOOKTYPE_XML
 
 class GNUCashBook:
     """
@@ -35,6 +16,10 @@ class GNUCashBook:
     """
 
     __metaclass__ = abc.ABCMeta
+
+    # book types
+    BOOKTYPE_XML = 'xml'
+    BOOKTYPE_SQLITE = 'sqlite'
 
     # GnuCash account types
     CASH = 'CASH'
@@ -56,7 +41,7 @@ class GNUCashBook:
     STOCK_XIRR_TYPES = [STOCK, MUTUAL]
     INCEXP_XIRR_TYPES = [INCOME, EXPENSE]
 
-    def __init__(self):
+    def __init__(self, timeing=False):
 
         # self.book = None
 
@@ -70,6 +55,20 @@ class GNUCashBook:
 
         self.root_account_guid = None
 
+        self.timeing = timeing
+        self._startTime = None
+
+    def _start_timing(self, message=None):
+        if self.timeing:
+            self._startTime = time.time()
+        if message:
+            print(message)
+
+    def _end_timing(self, message=''):
+        if self.timeing:
+            print("{}: {:.3f} sec".format(message, time.time() - self._startTime))
+
+
     @abc.abstractmethod
     def read_book(self, filename):
         """
@@ -79,30 +78,24 @@ class GNUCashBook:
         :param open_if_lock: only for sqlite
         :return:
         """
-        # Detect version - sql or xml
 
-        # Every valid SQLite database file begins with the following 16 bytes (in hex):
-        #  53 51 4c 69 74 65 20 66 6f 72 6d 61 74 20 33 00.
-        # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
-        # including the nul terminator character at the end.
-        # Read sqllite signature
-        # with open(filename, "rb") as f:
-        #     bytes = f.read(16)
-        # if bytes == b'SQLite format 3\x00':
-        #     self.book = GNUCashBookSQLite()
-        #     # self.open_book_sql(sqlite_file=filename, readonly=readonly, open_if_lock=open_if_lock)
-        # else:
-        #     self.book = GNUCashBookXML()
-        #
-        # self.book.read_book(filename)
-
-        # self.df_accounts = self.book.df_accounts
-        # self.df_commodities = self.book.df_commodities
-        # self.df_prices = self.book.df_prices
-        # self.df_transactions = self.book.df_transactions
-        # self.df_splits = self.book.df_splits
         return
 
+    @staticmethod
+    def get_gnucashbook_type(filename):
+        """
+        Detect type of gnucash file
+        sqlite or xml
+        return BOOKTYPE_XML or BOOKTYPE_SQLITE
+        :param filename:
+        :return:
+        """
+        with open(filename, "rb") as f:
+            bytes = f.read(16)
+        if bytes == b'SQLite format 3\x00':
+            return GNUCashBook.BOOKTYPE_SQLITE
+        else:
+            return GNUCashBook.BOOKTYPE_XML
 
     def _get_guid_rootaccount(self):
         """

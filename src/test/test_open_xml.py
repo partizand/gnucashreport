@@ -3,7 +3,7 @@ import unittest
 from test.baseopentest import BaseOpenTest
 
 
-@unittest.skip('Skip open xml test')
+# @unittest.skip('Skip open xml test')
 class SQLOpenTest(unittest.TestCase, BaseOpenTest):
     """
     Тестирование чтения данных из xml
@@ -20,7 +20,7 @@ class SQLOpenTest(unittest.TestCase, BaseOpenTest):
     @classmethod
     def setUpClass(cls):
         cls.set_locale()
-        cls.rep._read_book_xml(cls.bookfile_xml)
+        cls.rep.open_book_file(cls.bookfile_xml)
 
 if __name__ == '__main__':
     unittest.main()

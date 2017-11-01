@@ -6,6 +6,7 @@ import pandas
 from pandas.util.testing import assert_frame_equal
 
 from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.gnucashbook import GNUCashBook
 
 
 class BaseTest(object):
@@ -211,7 +212,7 @@ class BaseTest(object):
         if not glevel:
             glevel = 0
         df = cls.rep.balance_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                       account_types=[GNUCashData.LIABILITY],  period=cls.test_period, glevel=glevel)
+                                       account_types=[GNUCashBook.LIABILITY],  period=cls.test_period, glevel=glevel)
         return df
 
     @classmethod
@@ -223,7 +224,7 @@ class BaseTest(object):
         if not glevel:
             glevel = cls.test_glevel
         df = cls.rep.turnover_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                         account_type=GNUCashData.EXPENSE,
+                                         account_type=GNUCashBook.EXPENSE,
                                          glevel=glevel)
         return df
 
@@ -236,7 +237,7 @@ class BaseTest(object):
         if not glevel:
             glevel = cls.test_glevel
         df = cls.rep.turnover_by_period(from_date=cls.test_from_date, to_date=cls.test_to_date,
-                                         account_type=GNUCashData.INCOME,
+                                         account_type=GNUCashBook.INCOME,
                                          glevel=glevel)
         return df
 

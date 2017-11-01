@@ -70,20 +70,34 @@ class GNUCashBookXML(GNUCashBook):
                   "date", "source", "type", cols.VALUE]
         self.df_prices = pandas.DataFrame(columns=fields)
 
+    def _set_df_indexes(self):
+        self.df_accounts.set_index('guid', inplace=True)
+        self.df_transactions.set_index('guid', inplace=True)
+        self.df_splits.set_index('guid', inplace=True)
+        self.df_commodities.set_index('guid', inplace=True)
+        self.df_prices.set_index('guid', inplace=True)
 
     def read_book(self, filename):
         """
         Read a GNU Cash xml file
+
+        Parse a GNU Cash file and return a dictionary object.
         :param filename:
         :return:
         """
-        """Parse a GNU Cash file and return a dictionary object."""
+        self._start_timing('Start book reading')
         try:
+
             # try opening with gzip decompression
             self.parse(gzip.open(filename, "rb"))
         except IOError:
             # try opening without decompression
-            self.parse(open(filename, "rb"))
+            # f = open(filename, "rb")
+            # self.parse(f)
+            self.parse(filename)
+        self._end_timing('Book readed')
+
+
 
     # Implemented:
     # - gnc:book
@@ -101,6 +115,7 @@ class GNUCashBookXML(GNUCashBook):
             raise ValueError("File stream was not a valid GNU Cash v2 XML file")
         self._create_dfs()  # Create dataframes with fields
         self._book_from_tree(root.find("{http://www.gnucash.org/XML/gnc}book"))
+        self._set_df_indexes()
         self._get_guid_rootaccount()
 
     # <gnc:pricedb version="1">
@@ -353,8 +368,8 @@ class GNUCashBookXML(GNUCashBook):
 
         if 'notes' in slots.keys():
             account["notes"] = slots['notes']
-        # else:
-        #     notes = None
+        else:
+            account["notes"] = ''
 
         # hidden = slots['hidden']
         # {'reconcile-info': {'include-children': 0, 'last-date': 1324151999, 'last-interval': {'days': 7, 'months': 0}},
@@ -683,7 +698,7 @@ if __name__ == "__main__":
     book_xml = GNUCashBookXML()
     filename = "c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash"
     book_xml.read_book(filename)
-    print(book_xml.df_splits)
+    print(book_xml.df_accounts.hidden[23])
 
 
 
