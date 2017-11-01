@@ -85,7 +85,8 @@ class GNUCashBookXML(GNUCashBook):
         :param filename:
         :return:
         """
-        self._start_timing('Start book reading')
+
+        # self._start_timing('Start book reading')
         try:
 
             # try opening with gzip decompression
@@ -95,7 +96,7 @@ class GNUCashBookXML(GNUCashBook):
             # f = open(filename, "rb")
             # self.parse(f)
             self.parse(filename)
-        self._end_timing('Book readed')
+        # self._end_timing('Book readed')
 
 
 
@@ -192,23 +193,29 @@ class GNUCashBookXML(GNUCashBook):
 
         # prices = []
 
+        self._start_timing('Reading prices')
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}pricedb/price'):
             # price = self._price_from_tree(child)
             self._price_from_tree(child)
             # self.prices.append(price)
+        self._end_timing('read prices')
 
+        self._start_timing()
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}account'):
             self._account_from_tree(child)
             # self.accounts.append(acc)
+        self._end_timing('read accounts')
 
         # ret_dict['accounts'] = accounts
 
         # transactions = []
         # splits = []
+        self._start_timing()
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}'
                                   'transaction'):
             self._transaction_from_tree(child)
             # self.transactions.append(transaction)
+        self._end_timing('read transactions')
 
     # Implemented:
     # - cmdty:id
@@ -695,7 +702,7 @@ class GNUCashBookXML(GNUCashBook):
 
 
 if __name__ == "__main__":
-    book_xml = GNUCashBookXML()
+    book_xml = GNUCashBookXML(timeing=True)
     filename = "c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash"
     book_xml.read_book(filename)
     print(book_xml.df_accounts.hidden[23])

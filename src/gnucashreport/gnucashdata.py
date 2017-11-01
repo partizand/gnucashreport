@@ -75,7 +75,7 @@ class GNUCashData:
 
     dir_excel = "v:/tables"
 
-    def __init__(self):
+    def __init__(self, timing=False):
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
         self.df_commodities = pandas.DataFrame()
@@ -90,6 +90,8 @@ class GNUCashData:
 
         self.book = None
         self.root_account_guid = None
+
+        self.timeing = timing
 
 
     @staticmethod
@@ -124,15 +126,15 @@ class GNUCashData:
         # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
         # including the nul terminator character at the end.
         # Read sqllite signature
-        print('Start opening book...')
+        # print('Start opening book...')
         book_type= GNUCashBook.get_gnucashbook_type(filename)
         if book_type == GNUCashBook.BOOKTYPE_XML:
-            self.book = GNUCashBookXML()
+            self.book = GNUCashBookXML(timeing=self.timeing)
         else:
             self.book = GNUCashBookSQLite()
-        print('Start reading book...')
+        # print('Start reading book...')
         self.book.read_book(filename)
-        print('Book is readed')
+        # print('Book is readed')
 
         self.df_accounts = self.book.df_accounts
         self.df_commodities = self.book.df_commodities

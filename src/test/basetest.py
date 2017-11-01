@@ -29,7 +29,7 @@ class BaseTest(object):
     test_level2_suffix = '-2'
     # end test info--------------------------------------------
 
-    rep = GNUCashData()
+    rep = GNUCashData(timing=True)
 
     test_name = 'abstract_test'
 
