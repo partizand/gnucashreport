@@ -1036,10 +1036,10 @@ class GNUCashData:
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=asset_guid)
             return
         elif len(df_stocks) > 1:
-            # Error, unknown multi transaction for xirr
+            # Error, unknown stock transaction for xirr
             tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
             tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
-            print('Unknown multi transaction for xirr calculate. Transaction info:\n'
+            print('Unknown stock transaction for xirr calculate. Transaction info: '
                   'guid={tr_guid}. Date={tr_date}. Descr={tr_descr}'.format(tr_guid=tr_guid, tr_date=tr_date, tr_descr=tr_descr))
             return
         elif (len(df_assets) == 2) and (len(df_incexps) == 1):
@@ -1061,8 +1061,15 @@ class GNUCashData:
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             return
         else:
-            # Неясность
-            print("Unknown multi transaction type for xirr. Transaction_guid {tr_guid}".format(tr_guid=tr_guid))
+            # Error, unknown stock transaction for xirr
+            #print("Unknown multi transaction for xirr calculate. Transaction_guid {tr_guid}".format(tr_guid=tr_guid))
+
+            tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
+            tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
+            print('Unknown multi transaction for xirr calculate. Transaction info: '
+                  'guid={tr_guid}. Date={tr_date}. Descr={tr_descr}'.format(tr_guid=tr_guid, tr_date=tr_date,
+                                                                            tr_descr=tr_descr))
+
             return
 
     def _set_xirr_to_splits(self, tr_guid: str, df: pandas.DataFrame, xirr_account: str=None):
