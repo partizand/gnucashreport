@@ -1000,12 +1000,6 @@ class GNUCashData:
         df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
         df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
 
-        # Тест. Для анализа кредитов для подсчета доходности
-        # TODO Это надо убрать
-        if any(df_assets[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
-            self.df_splits.loc[tr_guid, 'tr_type'] = 'liab'
-
-
         # df_assets = df_assets[df_assets[cols.XIRR_ENABLE]]
         # есть ли счета для xirr
         if not any(df_assets[cols.XIRR_ENABLE]):
