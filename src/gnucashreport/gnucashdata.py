@@ -1036,7 +1036,11 @@ class GNUCashData:
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=asset_guid)
             return
         elif len(df_stocks) > 1:
-            print('Transaction with multi stock accounts. Xirr rule not set. Transaction_guid {tr_guid}'.format(tr_guid=tr_guid))
+            # Error, unknown multi transaction for xirr
+            tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
+            tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
+            print('Unknown multi transaction for xirr calculate. Transaction info:\n'
+                  'guid={tr_guid}. Date={tr_date}. Descr={tr_descr}'.format(tr_guid=tr_guid, tr_date=tr_date, tr_descr=tr_descr))
             return
         elif (len(df_assets) == 2) and (len(df_incexps) == 1):
             # Тест. Добавление признака такой транзакции
