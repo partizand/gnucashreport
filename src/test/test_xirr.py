@@ -99,16 +99,16 @@ class XIRRTest(unittest.TestCase):
             checking_yield_expense = xirr_yield.iloc[0][cols.YIELD_EXPENSE]
             checking_yield_capital = xirr_yield.iloc[0][cols.YIELD_CAPITAL]
 
-            self.assertEquals(etalon_yield_total, checking_yield_total,
+            self.assertEqual(etalon_yield_total, checking_yield_total,
                               'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_TOTAL))
-            self.assertEquals(etalon_yield_income, checking_yield_income,
+            self.assertEqual(etalon_yield_income, checking_yield_income,
                               'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_INCOME))
-            self.assertEquals(etalon_yield_expense, checking_yield_expense,
+            self.assertEqual(etalon_yield_expense, checking_yield_expense,
                               'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_EXPENSE))
-            self.assertEquals(etalon_yield_capital, checking_yield_capital,
+            self.assertEqual(etalon_yield_capital, checking_yield_capital,
                               'testing {gain} in account {shortname}'.
                               format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_CAPITAL))
 

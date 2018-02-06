@@ -1528,7 +1528,7 @@ class GNUCashData:
 
         # Группировка по месяцу
         sel_df.set_index(cols.POST_DATE, inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), cols.FULLNAME, cols.COMMODITY_GUID]).value.sum().reset_index()
+        sel_df = sel_df.groupby([pandas.Grouper(freq=period), cols.FULLNAME, cols.COMMODITY_GUID]).value.sum().reset_index()
 
 
 
@@ -1922,8 +1922,8 @@ class GNUCashData:
         """
         if account_guid == self.root_account_guid:
             return 'root'
-        fullname = self.df_accounts.ix[account_guid][cols.SHORTNAME]
-        parent_guid = self.df_accounts.ix[account_guid]['parent_guid']
+        fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
+        parent_guid = self.df_accounts.loc[account_guid]['parent_guid']
         if parent_guid in self.df_accounts.index:
             if parent_guid == self.root_account_guid:
                 return fullname
