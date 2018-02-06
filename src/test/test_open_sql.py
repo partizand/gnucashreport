@@ -2,7 +2,7 @@ import unittest
 
 from test.baseopentest import BaseOpenTest
 
-@unittest.skip('Skip open sql test')
+#@unittest.skip('Skip open sql test')
 class SQLOpenTest(unittest.TestCase, BaseOpenTest):
     """
     Тестирование чтения данных из sql
