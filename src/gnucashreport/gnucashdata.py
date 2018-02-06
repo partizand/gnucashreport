@@ -129,7 +129,7 @@ class GNUCashData:
         # print('Start opening book...')
         book_type= GNUCashBook.get_gnucashbook_type(filename)
         if book_type == GNUCashBook.BOOKTYPE_XML:
-            self.book = GNUCashBookXML(timeing=self.timeing)
+            self.book = GNUCashBookXML()
         else:
             self.book = GNUCashBookSQLite()
         # print('Start reading book...')

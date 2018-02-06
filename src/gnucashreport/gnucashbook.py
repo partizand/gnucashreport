@@ -41,7 +41,7 @@ class GNUCashBook:
     STOCK_XIRR_TYPES = [STOCK, MUTUAL]
     INCEXP_XIRR_TYPES = [INCOME, EXPENSE]
 
-    def __init__(self, timeing=False):
+    def __init__(self):
 
         # self.book = None
 
@@ -55,19 +55,7 @@ class GNUCashBook:
 
         self.root_account_guid = None
 
-        self.timeing = timeing
         self._startTime = None
-
-    def _start_timing(self, message=None):
-        if self.timeing:
-            self._startTime = time.time()
-        if message:
-            print(message)
-
-    def _end_timing(self, message=''):
-        if self.timeing:
-            print("{}: {:.3f} sec".format(message, time.time() - self._startTime))
-
 
     @abc.abstractmethod
     def read_book(self, filename):

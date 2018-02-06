@@ -16,8 +16,8 @@ class GNUCashBookXML(GNUCashBook):
     Reads contents of GNUCash xml file into dataframes
     """
 
-    def __init__(self, timeing=False):
-        super(GNUCashBookXML, self).__init__(timeing=timeing)
+    def __init__(self):
+        super(GNUCashBookXML, self).__init__()
         self.commodities = []
         self.prices = []
         self.accounts = []
@@ -34,48 +34,6 @@ class GNUCashBookXML(GNUCashBook):
         num, denum = numstring.split("/")
         return decimal.Decimal(num) / decimal.Decimal(denum)
 
-
-
-    # def _create_df(self, fields):
-    #     df = pandas.DataFrame(columns=fields)
-    #     # df.set_index(fields[0], inplace=True)
-    #     return df
-
-    # def _create_dfs(self):
-    #     # Accounts
-    #
-    #     fields = [cols.GUID, cols.SHORTNAME, cols.ACCOUNT_TYPE,
-    #               cols.COMMODITY_GUID, "commodity_scu",
-    #               cols.PARENT_GUID, cols.DESCRIPTION, cols.HIDDEN, "notes"]
-    #     self.df_accounts = pandas.DataFrame(columns=fields)
-    #
-    #     # Transactions
-    #
-    #     fields = [cols.GUID, cols.CURRENCY_GUID, cols.POST_DATE, cols.DESCRIPTION]
-    #     self.df_transactions = pandas.DataFrame(columns=fields)
-    #
-    #     # Splits
-    #     fields = [cols.GUID, cols.TRANSACTION_GUID, cols.ACCOUNT_GUID,
-    #               "memo", "reconcile_state", cols.VALUE, cols.QUANTITY]
-    #
-    #     self.df_splits = pandas.DataFrame(columns=fields)
-    #
-    #     # commodity
-    #
-    #     fields = [cols.GUID, cols.MNEMONIC, cols.NAMESPACE]
-    #     self.df_commodities = pandas.DataFrame(columns=fields)
-    #
-    #     # Prices
-    #     fields = [cols.GUID, cols.COMMODITY_GUID, cols.CURRENCY_GUID,
-    #               "date", "source", "type", cols.VALUE]
-    #     self.df_prices = pandas.DataFrame(columns=fields)
-
-    # def _set_df_indexes(self):
-    #     self.df_accounts.set_index('guid', inplace=True)
-    #     self.df_transactions.set_index('guid', inplace=True)
-    #     self.df_splits.set_index('guid', inplace=True)
-    #     self.df_commodities.set_index('guid', inplace=True)
-    #     self.df_prices.set_index('guid', inplace=True)
 
     def _to_dfs(self):
 
@@ -244,34 +202,19 @@ class GNUCashBookXML(GNUCashBook):
             # self.commodities.append(comm)
 
 
-
-        # Prices
-
-        # prices = []
-
-        self._start_timing('Reading prices')
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}pricedb/price'):
             # price = self._price_from_tree(child)
             self._price_from_tree(child)
             # self.prices.append(price)
-        self._end_timing('read prices')
 
-        self._start_timing()
+
+
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}account'):
             self._account_from_tree(child)
-            # self.accounts.append(acc)
-        self._end_timing('read accounts')
 
-        # ret_dict['accounts'] = accounts
-
-        # transactions = []
-        # splits = []
-        self._start_timing()
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}'
                                   'transaction'):
             self._transaction_from_tree(child)
-            # self.transactions.append(transaction)
-        self._end_timing('read transactions')
 
     # Implemented:
     # - cmdty:id
@@ -673,7 +616,7 @@ class GNUCashBookXML(GNUCashBook):
 
 
 if __name__ == "__main__":
-    book_xml = GNUCashBookXML(timeing=True)
+    book_xml = GNUCashBookXML()
     filename = "c:/Temp/andrey/prog/gnucashreport/src/test/data/xirr-test.gnucash"
     book_xml.read_book(filename)
     print(book_xml.df_accounts.hidden[23])
