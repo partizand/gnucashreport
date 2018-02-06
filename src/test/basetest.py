@@ -142,11 +142,11 @@ class BaseTest(object):
 
     @classmethod
     def open_sql(cls):
-        cls.rep.open_book_sql(BaseTest.bookfile_sql, open_if_lock=True)
+        cls.rep.open_book_file(BaseTest.bookfile_sql)
 
     @classmethod
     def open_xml(cls):
-        cls.rep._open_book_xml(BaseTest.bookfile_xml)
+        cls.rep.open_book_file(BaseTest.bookfile_xml)
 
     @classmethod
     def open_pickle(cls):

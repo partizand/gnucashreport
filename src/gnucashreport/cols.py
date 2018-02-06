@@ -5,6 +5,7 @@ Column names in dataframes
 ACCOUNT_TYPE = 'account_type'
 ACCOUNT_GUID = 'account_guid'
 POST_DATE = 'post_date'
+ENTER_DATE = 'enter_date'
 FULLNAME = 'fullname'
 SHORTNAME = 'name'
 TRANSACTION_GUID = 'transaction_guid'

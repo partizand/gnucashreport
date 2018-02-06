@@ -145,7 +145,7 @@ class GNUCashData:
         self.root_account_guid = self.book.root_account_guid
 
         # TODO Нужно вернуть назад
-        # self._after_read()
+        self._after_read()
 
         # with open(filename, "rb") as f:
         #     bytes = f.read(16)
@@ -601,8 +601,8 @@ class GNUCashData:
         :param margins:
         :return: pivot DataFrame
         """
-        assets_and_liability = copy(GNUCashData.ALL_ASSET_TYPES)
-        assets_and_liability.append(GNUCashData.LIABILITY)
+        assets_and_liability = copy(GNUCashBook.ALL_ASSET_TYPES)
+        assets_and_liability.append(GNUCashBook.LIABILITY)
 
         # Группировка по периоду
         group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
