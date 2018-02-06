@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-from .gcreport import GCReport
+# from .gcreport import GCReport
 
 __version__ = '0.2.1'
 __author__ = "Partizand"

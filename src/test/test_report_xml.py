@@ -9,6 +9,7 @@ class XMLReportTest(unittest.TestCase, BaseReportTest):
 
     @classmethod
     def setUpClass(cls):
+        cls.set_locale()
         cls.open_xml()
 
 if __name__ == '__main__':

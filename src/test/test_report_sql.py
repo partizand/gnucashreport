@@ -9,6 +9,7 @@ class SQLReportTest(unittest.TestCase, BaseReportTest):
 
     @classmethod
     def setUpClass(cls):
+        cls.set_locale()
         cls.open_sql()
 
 if __name__ == '__main__':

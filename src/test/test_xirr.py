@@ -46,7 +46,7 @@ class XIRRTest(unittest.TestCase):
 
         base_path = os.path.dirname(os.path.realpath(__file__))
         base_path = os.path.join(base_path, GNUCASH_TESTBASE)
-        cls.gcrep.open_book_file(base_path, open_if_lock=True)
+        cls.gcrep.open_book_file(base_path)
         cls.get_testaccounts()
 
     @classmethod
