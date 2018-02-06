@@ -770,7 +770,11 @@ class GNUCashData:
 
         # Если типы счетов не заданы, все типы для xirr
         if not account_types:
-            account_types = [self.BANK, self.ASSET, self.STOCK, self.MUTUAL, self.LIABILITY]
+            account_types = [GNUCashBook.BANK,
+                             GNUCashBook.ASSET,
+                             GNUCashBook.STOCK,
+                             GNUCashBook.MUTUAL,
+                             GNUCashBook.LIABILITY]
 
         # Теперь в root_guid счет с которого нужно начинать
         # Нужно посчитать его доходность и доходности его потомков
@@ -837,20 +841,20 @@ class GNUCashData:
         yield_total = self._xirr_by_dataframe(df_xirr)
 
         # Доходность денежного потока
-        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.INCOME])):
+        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([GNUCashBook.INCOME])):
             yield_income = Decimal(0)
         else:
             # Доходность без денежного потока
-            df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.INCOME]
+            df_without_income = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != GNUCashBook.INCOME]
             without_income_yeld = self._xirr_by_dataframe(df_without_income)
             yield_income = yield_total - without_income_yeld
 
         # Стоимость расходов
-        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([self.EXPENSE])):
+        if not any(df_xirr[cols.ACCOUNT_TYPE].isin([GNUCashBook.EXPENSE])):
             yield_expense = Decimal(0)
         else:
             # Доходность без расходов
-            df_without_expense = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != self.EXPENSE]
+            df_without_expense = df_xirr[df_xirr[cols.ACCOUNT_TYPE] != GNUCashBook.EXPENSE]
             yield_without_expense = self._xirr_by_dataframe(df_without_expense)
             yield_expense = yield_without_expense - yield_total
 
