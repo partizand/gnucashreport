@@ -1076,6 +1076,10 @@ class GNUCashData:
             # Тут нужно определить счет на который пойдут прибыли или убытки
             # И добавить все расходы/доходы у которых xirr_enable=true
             asset_guid = df_stocks.iloc[0][cols.ACCOUNT_GUID]
+            self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=asset_guid)
+            return
+        elif len(df_stocks) > 1:
+            # Error, unknown stock transaction for xirr
             tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
             tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
             print('Unknown stock transaction for xirr calculate. Transaction info: '
