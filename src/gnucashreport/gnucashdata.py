@@ -677,7 +677,7 @@ class GNUCashData:
 
         # Переименовать колонки для отображения
         if rename_col:
-            df.rename_axis({cols.YIELD_TOTAL: _('Total'),
+            df.rename({cols.YIELD_TOTAL: _('Total'),
                             cols.YIELD_INCOME: _('Cashflow'),
                             cols.YIELD_CAPITAL: _('Capital'),
                             cols.YIELD_EXPENSE: _('Expense'),
