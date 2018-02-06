@@ -1,7 +1,7 @@
 import xlsxwriter.workbook
 import xlsxwriter.worksheet
 # from gnucashreport import utils
-
+from gnucashreport.gnucashbook import GNUCashBook
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashdata import GNUCashData
 # import gnucashreport.const as const
@@ -170,7 +170,7 @@ class FormatIncome(_FormatBalance):
                                                 'num_format': MONEY_FORMAT})
         self.margins = Margins()
         self.margins.set_for_turnover()
-        self.account_types = GNUCashData.INCOME
+        self.account_types = GNUCashBook.INCOME
 
 class FormatExpense(_FormatBalance):
 
@@ -189,7 +189,7 @@ class FormatExpense(_FormatBalance):
                                                 'num_format': MONEY_FORMAT})
         self.margins = Margins()
         self.margins.set_for_turnover()
-        self.account_types = GNUCashData.EXPENSE
+        self.account_types = GNUCashBook.EXPENSE
 
 class FormatProfit(_FormatBalance):
 
@@ -229,7 +229,7 @@ class FormatAssets(_FormatBalance):
                                                 'num_format': MONEY_FORMAT})
         self.margins = Margins()
         self.margins.set_for_balances()
-        self.account_types = GNUCashData.ALL_ASSET_TYPES
+        self.account_types = GNUCashBook.ALL_ASSET_TYPES
 
 class FormatLoans(_FormatBalance):
 
@@ -250,7 +250,7 @@ class FormatLoans(_FormatBalance):
         self.margins = Margins()
         self.margins.set_for_balances()
         self.margins.total_row = False
-        self.account_types = [GNUCashData.LIABILITY]
+        self.account_types = [GNUCashBook.LIABILITY]
 
 
 class FormatEquity(_FormatBalance):

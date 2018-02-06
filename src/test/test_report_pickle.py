@@ -2,7 +2,7 @@ import unittest
 
 from test.basereporttest import BaseReportTest
 
-
+@unittest.skip('Skip report pickle test')
 class PickleReportTest(unittest.TestCase, BaseReportTest):
 
     @classmethod

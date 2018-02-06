@@ -710,7 +710,7 @@ class GNUCashData:
 
         # Переименовать колонки для отображения
         if rename_col:
-            df.rename_axis({cols.YIELD_TOTAL: _('Total'),
+            df.rename({cols.YIELD_TOTAL: _('Total'),
                             cols.YIELD_INCOME: _('Cashflow'),
                             cols.YIELD_CAPITAL: _('Capital'),
                             cols.YIELD_EXPENSE: _('Expense'),
@@ -1560,7 +1560,7 @@ class GNUCashData:
 
         # Группировка по месяцу
         sel_df.set_index(cols.POST_DATE, inplace=True)
-        sel_df = sel_df.groupby([pandas.TimeGrouper(period), cols.FULLNAME, cols.COMMODITY_GUID]).value.sum().reset_index()
+        sel_df = sel_df.groupby([pandas.Grouper(freq=period), cols.FULLNAME, cols.COMMODITY_GUID]).value.sum().reset_index()
 
 
 
