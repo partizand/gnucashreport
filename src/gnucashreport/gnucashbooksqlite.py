@@ -20,7 +20,9 @@ class GNUCashBookSQLite(GNUCashBook):
         self.df_commodities.set_index(cols.GUID, inplace=True)
 
         self.df_prices = pandas.read_sql_table('prices', uri)
-        self.df_prices[cols.VALUE] = (self.df_prices['value_num'] / self.df_prices['value_denom']).astype(Decimal, copy=False)
+        #self.df_prices[cols.VALUE] = (self.df_prices['value_num'] / self.df_prices['value_denom']).astype(Decimal, copy=False)
+        self.df_prices[cols.VALUE] = self.df_prices.apply(lambda row: Decimal((row['value_num'] / row['value_denom'])),
+                                                          axis=1)
         # Convert sqlite date strings to date
         self.df_prices['date'] = pandas.to_datetime(self.df_prices['date'])
 
@@ -35,10 +37,11 @@ class GNUCashBookSQLite(GNUCashBook):
 
         self.df_splits = pandas.read_sql_table('splits', uri)
         #self.df_splits[cols.VALUE] = (self.df_splits['value_num'] / self.df_splits['value_denom']).astype(Decimal, copy=False)
-
         self.df_splits[cols.VALUE] = self.df_splits.apply(lambda row: Decimal((row['value_num'] / row['value_denom'])), axis=1)
 
-        self.df_splits[cols.QUANTITY] = (self.df_splits['quantity_num'] / self.df_splits['quantity_denom']).astype(Decimal, copy=False)
+        #self.df_splits[cols.QUANTITY] = (self.df_splits['quantity_num'] / self.df_splits['quantity_denom']).astype(Decimal, copy=False)
+        self.df_splits[cols.QUANTITY] = self.df_splits.apply(lambda row: Decimal((row['quantity_num'] / row['quantity_denom'])),
+                                                          axis=1)
         # rename column to standard name
         self.df_splits.rename(columns={'tx_guid': cols.TRANSACTION_GUID}, inplace=True)
 

@@ -1620,10 +1620,6 @@ class GNUCashData:
         # Пересчет в валюту представления
         # dataframe_to_excel(df, 'df_error')
 
-        # TODO Тестовый вывод, нужно убрать
-        print(type(df[col_value][0]))
-        print(type(df[col_rate][0]))
-
         df[col_value_currency] = (df[col_value] * df[col_rate]).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
 
