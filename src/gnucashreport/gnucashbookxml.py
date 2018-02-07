@@ -22,12 +22,12 @@ class GNUCashBookXML(GNUCashBook):
 
     def __init__(self):
         super(GNUCashBookXML, self).__init__()
-        self.commodities = []
-        self.prices = []
-        self.accounts = []
-        self.transactions = []
+        # self.commodities = []
+        # self.prices = []
+        # self.accounts = []
+        # self.transactions = []
         self.splits = []
-        self.root_account_guid = None
+        # self.root_account_guid = None
 
     @staticmethod
     def get_commodity_guid(space, name):
@@ -39,7 +39,7 @@ class GNUCashBookXML(GNUCashBook):
         return decimal.Decimal(num) / decimal.Decimal(denum)
 
 
-    def _to_dfs(self):
+    # def _to_dfs(self):
 
         # Accounts
 
@@ -60,71 +60,54 @@ class GNUCashBookXML(GNUCashBook):
         #           "memo", "reconcile_state", cols.VALUE, cols.QUANTITY]
         # self.df_splits = self._object_to_dataframe(self.splits, fields)
 
-        self.df_splits = pandas.DataFrame(self.splits)
-        self.df_splits.set_index(cols.GUID, inplace=True)
+        # self.df_splits = pandas.DataFrame(self.splits)
+        # self.df_splits.set_index(cols.GUID, inplace=True)
 
         # commodity
 
         # fields = [cols.GUID, 'namespace', "mnemonic"]
         # self.df_commodities = self._object_to_dataframe(self.commodities, fields)
-        self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
+        # self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
 
         # Prices
         # fields = [cols.GUID, cols.COMMODITY_GUID, cols.CURRENCY_GUID,
         #           "date", "source", "type", cols.VALUE]
         # self.df_prices = self._object_to_dataframe(self.prices, fields)
 
-    @staticmethod
-    def _object_to_dataframe(pieobject, fields, slot_names=None):
-        """
-        Преобразовывае объект piecash в DataFrame с заданными полями
-        :param pieobject:
-        :param fields:
-        :return:
-        """
-        # build dataframe
-        # fields_getter = [attrgetter(fld) for fld in fields]
-        fields_getter = [(fld, attrgetter(fld)) for fld in fields]
-
-        # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
-
-        # у строки есть массив slots
-        # в поле name = notes
-        # в поле value = значение
-
-
-        # Разложение цикла
-        array = []
-        for sp in pieobject:
-            line = {}
-            for field in fields:
-                line[field] = getattr(sp, field, None)
-            # for fld, fg in fields_getter:
-            #     line[fld] = fg(sp)
-            if slot_names:
-                for slot_name in slot_names:
-                    line[slot_name] = None
-                for slot in sp.slots:
-                    if slot.name in slot_names:
-                        line[slot.name] = slot.value
-
-
-            array.append(line)
-
-
-
-        # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
-        # df_obj = pandas.DataFrame(array, columns=all_fields)
-        if array:
-            df_obj = pandas.DataFrame(array)
-        else:
-            if slot_names:
-                all_fields = fields + slot_names
-            else:
-                all_fields = fields
-            df_obj = pandas.DataFrame(columns=all_fields)
-        df_obj.set_index(fields[0], inplace=True)
-        return df_obj
+    # @staticmethod
+    # def _object_to_dataframe(pieobject, fields, slot_names=None):
+    #     """
+    #     Преобразовывае объект piecash в DataFrame с заданными полями
+    #     :param pieobject:
+    #     :param fields:
+    #     :return:
+    #     """
+    #
+    #     # Разложение цикла
+    #     array = []
+    #     for sp in pieobject:
+    #         line = {}
+    #         for field in fields:
+    #             line[field] = getattr(sp, field, None)
+    #         if slot_names:
+    #             for slot_name in slot_names:
+    #                 line[slot_name] = None
+    #             for slot in sp.slots:
+    #                 if slot.name in slot_names:
+    #                     line[slot.name] = slot.value
+    #
+    #         array.append(line)
+    #
+    #     if array:
+    #         df_obj = pandas.DataFrame(array)
+    #     else:
+    #         if slot_names:
+    #             all_fields = fields + slot_names
+    #         else:
+    #             all_fields = fields
+    #         df_obj = pandas.DataFrame(columns=all_fields)
+    #     df_obj.set_index(fields[0], inplace=True)
+    #     return df_obj
 
     def read_book(self, filename):
         """
@@ -139,23 +122,14 @@ class GNUCashBookXML(GNUCashBook):
         try:
 
             # try opening with gzip decompression
-            self.parse(gzip.open(filename, "rb"))
+            self._parse_xml(gzip.open(filename, "rb"))
         except IOError:
             # try opening without decompression
             # f = open(filename, "rb")
             # self.parse(f)
-            self.parse(filename)
-        # self._end_timing('Book readed')
+            self._parse_xml(filename)
 
-
-
-    # Implemented:
-    # - gnc:book
-    #
-    # Not implemented:
-    # - gnc:count-data
-    #   - This seems to be primarily for integrity checks?
-    def parse(self, fobj):
+    def _parse_xml(self, fobj):
         """Parse GNU Cash XML data from a file object and return a Book object."""
 
         tree = ElementTree.parse(fobj)
@@ -163,25 +137,10 @@ class GNUCashBookXML(GNUCashBook):
         root = tree.getroot()
         if root.tag != 'gnc-v2':
             raise ValueError("File stream was not a valid GNU Cash v2 XML file")
-        # self._create_dfs()  # Create dataframes with fields
         self._book_from_tree(root.find("{http://www.gnucash.org/XML/gnc}book"))
-        self._to_dfs()
-        # self._set_df_indexes()
-        # self._get_guid_rootaccount()
 
 
-    # Implemented:
-    # - book:id
-    # - book:slots
-    # - gnc:commodity
-    # - gnc:account
-    # - gnc:transaction
-    #
-    # Not implemented:
-    # - gnc:schedxaction
-    # - gnc:template-transactions
-    # - gnc:count-data
-    #   - This seems to be primarily for integrity checks?
+
     def _book_from_tree(self, tree):
         """
         Parse a GNU Cash xml tree and return a dictionary object.
@@ -193,14 +152,7 @@ class GNUCashBookXML(GNUCashBook):
         :param tree:
         :return: dictionary
         """
-        # book guid
-        # guid = tree.find('{http://www.gnucash.org/XML/book}id').text
 
-        # Возвращаемый словарь
-        # ret_dict = {}
-
-        # commodities = []
-        # commoditydict = {}
         array = []
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}commodity'):
             # comm = self._commodity_from_tree(child)
@@ -238,17 +190,10 @@ class GNUCashBookXML(GNUCashBook):
         self.df_transactions = pandas.DataFrame(trans)
         self.df_transactions.set_index(cols.GUID, inplace=True)
 
-    # Implemented:
-    # - cmdty:id
-    # - cmdty:space
-    #
-    # Not implemented:
-    # - cmdty:get_quotes => unknown, empty, optional
-    # - cmdty:quote_tz => unknown, empty, optional
-    # - cmdty:source => text, optional, e.g. "currency"
-    # - cmdty:name => optional, e.g. "template"
-    # - cmdty:xcode => optional, e.g. "template"
-    # - cmdty:fraction => optional, e.g. "1"
+        self.df_splits = pandas.DataFrame(self.splits)
+        self.df_splits.set_index(cols.GUID, inplace=True)
+
+
     def _commodity_from_tree(self, tree):
 
         namespace = tree.find('{http://www.gnucash.org/XML/cmdty}space').text
@@ -399,15 +344,6 @@ class GNUCashBookXML(GNUCashBook):
 
         return account
 
-    # Implemented:
-    # - trn:id
-    # - trn:currency
-    # - trn:date-posted
-    # - trn:date-entered
-    # - trn:description
-    # - trn:splits / trn:split
-    # - trn:slots
-
     def _transaction_from_tree(self, tree):
         trn = '{http://www.gnucash.org/XML/trn}'
         cmdty = '{http://www.gnucash.org/XML/cmdty}'
@@ -541,126 +477,116 @@ class GNUCashBookXML(GNUCashBook):
                 raise RuntimeError("Unknown slot type {}".format(type_))
         return slots
 
-    # @staticmethod
-    # def _parse_number(numstring):
-    #     num, denum = numstring.split("/")
-    #     return decimal.Decimal(num) / decimal.Decimal(denum)
+
+    # class Commodity(object):
+    #     """
+    #     A commodity is something that's stored in GNU Cash accounts.
+    #
+    #     Consists of a name (or id) and a space (namespace).
+    #     """
+    #
+    #     def __init__(self, guid, mnemonic, namespace):
+    #         self.guid = guid
+    #         self.mnemonic = mnemonic
+    #         # self.name = name
+    #         self.namespace = namespace
+    #
+    #
+    #
+    #     def __str__(self):
+    #         return self.mnemonic
+    #
+    #     def __repr__(self):
+    #         return "<Commodity {}>".format(self.guid)
+    #
+    # class Price(object):
+    #     """
+    #     A commodity is something that's stored in GNU Cash accounts.
+    #
+    #     Consists of a name (or id) and a space (namespace).
+    #     """
+    #
+    #     def __init__(self, guid, commodity_guid, currency_guid, date, source, price_type, value):
+    #         self.guid = guid
+    #         self.commodity_guid = commodity_guid
+    #         self.currency_guid = currency_guid
+    #         self.date = date
+    #         self.source = source
+    #         self.type = price_type
+    #         self.value = value
+    #
+    #     def __str__(self):
+    #         return self.guid
+    #
+    #     def __repr__(self):
+    #         return "<Price {}>".format(self.guid)
+    #
+    # class Account(object):
+    #     """
+    #     An account is part of a tree structure of accounts and contains splits.
+    #     """
+    #
+    #     def __init__(self, name, guid, account_type, hidden, parent_guid=None,
+    #                  commodity_guid=None, commodity_scu=None,
+    #                  description=None, notes=None):
+    #         self.name = name
+    #         self.guid = guid
+    #         self.account_type = account_type
+    #         self.description = description
+    #         self.parent_guid = parent_guid
+    #         self.commodity_guid = commodity_guid
+    #         self.commodity_scu = commodity_scu
+    #         self.hidden = hidden
+    #         self.notes = notes
+    #
+    #
+    #     def __repr__(self):
+    #         return "<Account {}>".format(self.guid)
 
 
-    class Commodity(object):
-        """
-        A commodity is something that's stored in GNU Cash accounts.
+    # class Transaction(object):
+    #     """
+    #     A transaction is a balanced group of splits.
+    #     """
+    #
+    #     def __init__(self, guid=None, currency_guid=None,
+    #                  post_date=None, date_entered=None, description=None):
+    #         self.guid = guid
+    #         self.currency_guid = currency_guid
+    #         self.post_date = post_date
+    #         self.date_entered = date_entered
+    #         self.description = description
+    #
+    #     def __repr__(self):
+    #         return u"<Transaction {}>".format(self.guid)
+    #
+    #     def __lt__(self, other):
+    #         if isinstance(other, self.Transaction):
+    #             return self.date < other.date
+    #         else:
+    #             False
+    #
 
-        Consists of a name (or id) and a space (namespace).
-        """
-
-        def __init__(self, guid, mnemonic, namespace):
-            self.guid = guid
-            self.mnemonic = mnemonic
-            # self.name = name
-            self.namespace = namespace
-
-
-
-        def __str__(self):
-            return self.mnemonic
-
-        def __repr__(self):
-            return "<Commodity {}>".format(self.guid)
-
-    class Price(object):
-        """
-        A commodity is something that's stored in GNU Cash accounts.
-
-        Consists of a name (or id) and a space (namespace).
-        """
-
-        def __init__(self, guid, commodity_guid, currency_guid, date, source, price_type, value):
-            self.guid = guid
-            self.commodity_guid = commodity_guid
-            self.currency_guid = currency_guid
-            self.date = date
-            self.source = source
-            self.type = price_type
-            self.value = value
-
-        def __str__(self):
-            return self.guid
-
-        def __repr__(self):
-            return "<Price {}>".format(self.guid)
-
-    class Account(object):
-        """
-        An account is part of a tree structure of accounts and contains splits.
-        """
-
-        def __init__(self, name, guid, account_type, hidden, parent_guid=None,
-                     commodity_guid=None, commodity_scu=None,
-                     description=None, notes=None):
-            self.name = name
-            self.guid = guid
-            self.account_type = account_type
-            self.description = description
-            self.parent_guid = parent_guid
-            self.commodity_guid = commodity_guid
-            self.commodity_scu = commodity_scu
-            self.hidden = hidden
-            self.notes = notes
-
-
-        def __repr__(self):
-            return "<Account {}>".format(self.guid)
-
-
-    class Transaction(object):
-        """
-        A transaction is a balanced group of splits.
-        """
-
-        def __init__(self, guid=None, currency_guid=None,
-                     post_date=None, date_entered=None, description=None):
-            self.guid = guid
-            self.currency_guid = currency_guid
-            self.post_date = post_date
-            self.date_entered = date_entered
-            self.description = description
-            # self.splits = splits or []
-            # self.slots = slots or {}
-
-        def __repr__(self):
-            return u"<Transaction {}>".format(self.guid)
-
-        def __lt__(self, other):
-            # For sorted() only
-            if isinstance(other, self.Transaction):
-                return self.date < other.date
-            else:
-                False
-
-
-    class Split(object):
-        """
-        A split is one entry in a transaction.
-        """
-
-        def __init__(self, guid=None, memo=None,
-                     reconcile_state=None, reconcile_date=None, value=None,
-                     quantity=None, account_guid=None, transaction_guid=None,
-                     ):
-            self.guid = guid
-            self.reconcile_state = reconcile_state
-            self.reconcile_date = reconcile_date
-            self.value = value
-            self.quantity = quantity
-            self.account_guid = account_guid
-            # self.transaction = transaction
-            self.transaction_guid = transaction_guid
-            self.memo = memo
-            # self.slots = slots
-
-        def __repr__(self):
-            return "<Split {}>".format(self.guid)
+    # class Split(object):
+    #     """
+    #     A split is one entry in a transaction.
+    #     """
+    #
+    #     def __init__(self, guid=None, memo=None,
+    #                  reconcile_state=None, reconcile_date=None, value=None,
+    #                  quantity=None, account_guid=None, transaction_guid=None,
+    #                  ):
+    #         self.guid = guid
+    #         self.reconcile_state = reconcile_state
+    #         self.reconcile_date = reconcile_date
+    #         self.value = value
+    #         self.quantity = quantity
+    #         self.account_guid = account_guid
+    #         self.transaction_guid = transaction_guid
+    #         self.memo = memo
+    #
+    #     def __repr__(self):
+    #         return "<Split {}>".format(self.guid)
 
 
 if __name__ == "__main__":
