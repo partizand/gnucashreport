@@ -268,9 +268,9 @@ class GNUCashBook:
         commodity_name = tree.find(pr + "commodity/" + cmdty + "id").text
         commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
 
-        xml_date = tree.find(pr + "time/" + ts + "date").text
+        # xml_date = tree.find(pr + "time/" + ts + "date").text
 
-        # date = parse_date(tree.find(pr + "time/" + ts + "date").text)
+        date = parse_date(tree.find(pr + "time/" + ts + "date").text)
 
         # price["date"] = pandas.to_datetime(tree.find(pr + "time/" + ts + "date").text)
         # pd_date = pandas.to_datetime(pd_date.date())
@@ -286,7 +286,7 @@ class GNUCashBook:
         price = {cols.GUID: guid,
                  cols.COMMODITY_GUID: commodity_guid,
                  cols.CURRENCY_GUID: currency_guid,
-                 'date': pandas.to_datetime(xml_date),
+                 'date': date,
                  'source': source,
                  'type': price_type,
                  cols.VALUE: value
@@ -378,8 +378,8 @@ class GNUCashBook:
         currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
 
         # currency = commoditydict[(currency_space, currency_name)]
-        xml_date = tree.find(trn + "date-posted/" + ts + "date").text
-        # post_date = parse_date(tree.find(trn + "date-posted/" + ts + "date").text)
+        # xml_date = tree.find(trn + "date-posted/" + ts + "date").text
+        post_date = parse_date(tree.find(trn + "date-posted/" + ts + "date").text)
 
         date_entered = parse_date(tree.find(trn + "date-entered/" + ts + "date").text)
         description = tree.find(trn + "description").text
@@ -390,7 +390,7 @@ class GNUCashBook:
         #                           description=description)
         transaction = {cols.GUID: guid,
                        cols.CURRENCY_GUID: currency_guid,
-                       cols.POST_DATE: pandas.to_datetime(xml_date),
+                       cols.POST_DATE: post_date,
                        cols.DESCRIPTION: description,
                        }
         # self.transactions.append(transaction_obj)
