@@ -127,13 +127,14 @@ class GNUCashData:
         # including the nul terminator character at the end.
         # Read sqllite signature
         # print('Start opening book...')
-        book_type= GNUCashBook.get_gnucashbook_type(filename)
-        if book_type == GNUCashBook.BOOKTYPE_XML:
-            self.book = GNUCashBookXML()
-        else:
-            self.book = GNUCashBookSQLite()
+        # book_type= GNUCashBook.get_gnucashbook_type(filename)
+        # if book_type == GNUCashBook.BOOKTYPE_XML:
+        #     self.book = GNUCashBookXML()
+        # else:
+        #     self.book = GNUCashBookSQLite()
+        self.book = GNUCashBook()
         # print('Start reading book...')
-        self.book.read_book(filename)
+        self.book.open_file(filename)
         # print('Book is readed')
 
         self.df_accounts = self.book.df_accounts
