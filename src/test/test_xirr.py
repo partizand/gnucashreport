@@ -20,7 +20,7 @@ CAPITAL = 'capital'
 TO_DATE = 'todate'
 FROM_DATE = 'fromdate'
 
-GNUCASH_TESTBASE = 'data/xirr-test.gnucash'
+GNUCASH_TESTBASE = 'data/xirr-test-sql.gnucash'
 
 class XIRRTest(unittest.TestCase):
     """
@@ -57,7 +57,8 @@ class XIRRTest(unittest.TestCase):
         """
 
         only_test = None
-        df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
+        # df_test = cls.gcrep.df_accounts[~cls.gcrep.df_accounts[cols.DESCRIPTION].isnull()]
+        df_test = cls.gcrep.df_accounts[cls.gcrep.df_accounts[cols.DESCRIPTION]!='']
         for index, row in df_test.iterrows():
             if 'skip' not in row[cols.DESCRIPTION]:
                 entries = parse_string_to_dict(row[cols.DESCRIPTION])

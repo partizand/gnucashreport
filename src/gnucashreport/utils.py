@@ -298,5 +298,8 @@ def decimal_from_string(str_decimal:str):
     :param str_decimal: 
     :return: 
     """
+    # if str_decimal and str_decimal != '':
     dec = Decimal(str_decimal.replace(',', '.'))
+    # else:
+    #     dec = Decimal(0)
     return dec

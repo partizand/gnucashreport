@@ -317,7 +317,7 @@ class GNUCashBook:
         if descr is not None:
             description = descr.text
         else:
-            description = None
+            description = ''
 
         slots = self._slots_from_tree(tree.find(act + 'slots'))
 
