@@ -41,7 +41,7 @@ class GNUCashData:
 
     """
 
-    time_debug = True
+    #time_debug = True
 
     # # GnuCash account types
     # CASH = 'CASH'
@@ -144,7 +144,7 @@ class GNUCashData:
 
         self.root_account_guid = self.book.root_account_guid
 
-        # TODO Нужно вернуть назад
+
         self._after_read()
 
         # with open(filename, "rb") as f:
