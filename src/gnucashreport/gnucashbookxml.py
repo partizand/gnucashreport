@@ -111,9 +111,8 @@ class GNUCashBookXML(GNUCashBook):
 
     def read_book(self, filename):
         """
-        Read a GNU Cash xml file
+        Read a GNU Cash xml file into DataFrames objects
 
-        Parse a GNU Cash file and return a dictionary object.
         :param filename:
         :return:
         """
@@ -130,29 +129,15 @@ class GNUCashBookXML(GNUCashBook):
             self._parse_xml(filename)
 
     def _parse_xml(self, fobj):
-        """Parse GNU Cash XML data from a file object and return a Book object."""
+        """Parse GNU Cash XML data from a file object into pandas DataFrame objects"""
 
-        tree = ElementTree.parse(fobj)
+        root_tree = ElementTree.parse(fobj)
 
-        root = tree.getroot()
+        root = root_tree.getroot()
         if root.tag != 'gnc-v2':
             raise ValueError("File stream was not a valid GNU Cash v2 XML file")
-        self._book_from_tree(root.find("{http://www.gnucash.org/XML/gnc}book"))
-
-
-
-    def _book_from_tree(self, tree):
-        """
-        Parse a GNU Cash xml tree and return a dictionary object.
-        Dictionary contains keys:
-        commodities, prices, accounts, transactions, splits
-        Example:
-        ret = _book_from_tree(tree)
-        all_accounts = ret['accounts']
-        :param tree:
-        :return: dictionary
-        """
-
+        tree = root.find("{http://www.gnucash.org/XML/gnc}book")
+        # self._book_from_tree(root.find("{http://www.gnucash.org/XML/gnc}book"))
         array = []
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}commodity'):
             # comm = self._commodity_from_tree(child)
@@ -162,7 +147,6 @@ class GNUCashBookXML(GNUCashBook):
                 array.append(line)
         self.df_commodities = pandas.DataFrame(array)
         self.df_commodities.set_index(cols.GUID, inplace=True)
-            # self.commodities.append(comm)
 
         array = []
         for child in tree.findall('{http://www.gnucash.org/XML/gnc}pricedb/price'):
@@ -192,6 +176,57 @@ class GNUCashBookXML(GNUCashBook):
 
         self.df_splits = pandas.DataFrame(self.splits)
         self.df_splits.set_index(cols.GUID, inplace=True)
+
+    # def _book_from_tree(self, tree):
+    #     """
+    #     Parse a GNU Cash xml tree and return a dictionary object.
+    #     Dictionary contains keys:
+    #     commodities, prices, accounts, transactions, splits
+    #     Example:
+    #     ret = _book_from_tree(tree)
+    #     all_accounts = ret['accounts']
+    #     :param tree:
+    #     :return: dictionary
+    #     """
+    #
+    #     array = []
+    #     for child in tree.findall('{http://www.gnucash.org/XML/gnc}commodity'):
+    #         # comm = self._commodity_from_tree(child)
+    #         # self._commodity_from_tree(child)
+    #         line = self._commodity_from_tree(child)
+    #         if line:
+    #             array.append(line)
+    #     self.df_commodities = pandas.DataFrame(array)
+    #     self.df_commodities.set_index(cols.GUID, inplace=True)
+    #
+    #     array = []
+    #     for child in tree.findall('{http://www.gnucash.org/XML/gnc}pricedb/price'):
+    #         # price = self._price_from_tree(child)
+    #         line = self._price_from_tree(child)
+    #         if line:
+    #             array.append(line)
+    #     self.df_prices = pandas.DataFrame(array)
+    #     self.df_prices.set_index(cols.GUID, inplace=True)
+    #
+    #     array = []
+    #     for child in tree.findall('{http://www.gnucash.org/XML/gnc}account'):
+    #         line = self._account_from_tree(child)
+    #         if line:
+    #             array.append(line)
+    #     self.df_accounts = pandas.DataFrame(array)
+    #     self.df_accounts.set_index(cols.GUID, inplace=True)
+    #
+    #     trans = []
+    #     for child in tree.findall('{http://www.gnucash.org/XML/gnc}'
+    #                               'transaction'):
+    #         line = self._transaction_from_tree(child)
+    #         if line:
+    #             trans.append(line)
+    #     self.df_transactions = pandas.DataFrame(trans)
+    #     self.df_transactions.set_index(cols.GUID, inplace=True)
+    #
+    #     self.df_splits = pandas.DataFrame(self.splits)
+    #     self.df_splits.set_index(cols.GUID, inplace=True)
 
 
     def _commodity_from_tree(self, tree):

@@ -55,7 +55,7 @@ class GNUCashBook:
 
         self.root_account_guid = None
 
-        self._startTime = None
+        # self._startTime = None
 
     @abc.abstractmethod
     def read_book(self, filename):
