@@ -26,7 +26,7 @@ class ReportSet:
         """
 
         :param name:
-        :return:Report: Report object
+        :return:ReportSheet: Report object
         """
         if name is None:
             return self.last_report
@@ -34,10 +34,23 @@ class ReportSet:
             return self.reports[name]
 
 
-class Report:
+class ReportSheet:
+    """
+    Some reports in one sheet or file
+    """
     def __init__(self, name):
         self.name = name
-        self.dfs = []
+        self.reports = []
 
-    def add_df(self, df):
-        self.dfs.append(df)
+    def add_report(self, df, rep_type=None, rep_param=None):
+        report = Report(df, rep_type=rep_type, rep_param=rep_param)
+        self.reports.append(report)
+
+class Report:
+    """
+    One report with format info
+    """
+    def __init__(self, df, rep_type=None, rep_param=None):
+        self.df = df
+        self.rep_type = rep_type
+        self.rep_param = rep_param
