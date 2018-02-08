@@ -18,6 +18,8 @@ class BaseTest(object):
     bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
     bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
     dir_testdata = 'v:/test_data'
+    GNUCASH_TESTBASE_XML = 'data/xirr-test.gnucash'
+    GNUCASH_TESTBASE_SQL = 'data/xirr-test-sql.gnucash'
     # end folder options---------------------------------------
     test_from_date = date(2016, 1, 1)
     test_to_date = date(2016, 12, 31)
@@ -29,7 +31,7 @@ class BaseTest(object):
     test_level2_suffix = '-2'
     # end test info--------------------------------------------
 
-    rep = GNUCashData()
+    # rep = GNUCashData()
 
     test_name = 'abstract_test'
 
@@ -140,9 +142,9 @@ class BaseTest(object):
         cls.rep._read_book_xml(BaseTest.bookfile_xml)  # Вроде по тестам перезапись данных и все ок
         cls._save_db_to_pickle(folder=cls.dir_testdata, suffix='-xml')
 
-    @classmethod
-    def open_sql(cls):
-        cls.rep.open_book_file(BaseTest.bookfile_sql)
+    # @classmethod
+    # def open_sql(cls):
+    #     cls.rep.open_book_file(BaseTest.bookfile_sql)
 
     @classmethod
     def open_xml(cls):

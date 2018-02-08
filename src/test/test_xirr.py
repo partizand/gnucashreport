@@ -11,6 +11,8 @@ import gnucashreport.cols as cols
 # from gnucashreport.utils import dataframe_to_excel
 from gnucashreport.utils import *
 
+from test.basetest import BaseTest
+
 from test.baseopentest import BaseOpenTest
 
 TOTAL = 'total'
@@ -20,7 +22,7 @@ CAPITAL = 'capital'
 TO_DATE = 'todate'
 FROM_DATE = 'fromdate'
 
-GNUCASH_TESTBASE = 'data/xirr-test-sql.gnucash'
+# GNUCASH_TESTBASE = 'data/xirr-test-sql.gnucash'
 
 class XIRRTest(unittest.TestCase):
     """
@@ -45,7 +47,7 @@ class XIRRTest(unittest.TestCase):
     def setUpClass(cls):
 
         base_path = os.path.dirname(os.path.realpath(__file__))
-        base_path = os.path.join(base_path, GNUCASH_TESTBASE)
+        base_path = os.path.join(base_path, BaseTest.GNUCASH_TESTBASE_XML)
         cls.gcrep.open_book_file(base_path)
         cls.get_testaccounts()
 

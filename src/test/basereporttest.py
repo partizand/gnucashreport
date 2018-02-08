@@ -11,6 +11,8 @@ class BaseReportTest(BaseTest):
     All testing data on external resource because it is real data
     """
 
+    rep = GNUCashData()
+
     def test_assets(self):
         df = self.get_assets()
         self.pickle_control(self.pickle_assets, df, 'Assets')
