@@ -2,7 +2,7 @@ import unittest
 
 import os
 
-from test.baseopentest import BaseOpenTest
+from test.test_gnucashbook import BaseOpenTest
 
 # @unittest.skip('Skip open sql test')
 from test.testinfo import TestInfo

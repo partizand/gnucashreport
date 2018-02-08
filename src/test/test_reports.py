@@ -55,8 +55,6 @@ class ReportTest(unittest.TestCase):
         gcrep_xml.open_book_file(cls.BOOKFILE_XML)
         gcrep_sql.open_book_file(cls.BOOKFILE_SQL)
 
-
-
         cls.test_array = [('xml', gcrep_xml), ('sql', gcrep_sql)]
 
     #--------------------

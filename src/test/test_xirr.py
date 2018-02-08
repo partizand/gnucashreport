@@ -14,7 +14,7 @@ from gnucashreport.utils import *
 
 from test.basetest import BaseTest
 
-from test.baseopentest import BaseOpenTest
+from test.test_gnucashbook import BaseOpenTest
 from test.testinfo import TestInfo
 
 TOTAL = 'total'

@@ -92,6 +92,7 @@ class GNUCashBook:
         #self.df_prices[cols.VALUE] = (self.df_prices['value_num'] / self.df_prices['value_denom']).astype(Decimal, copy=False)
         self.df_prices[cols.VALUE] = self.df_prices.apply(lambda row: ((decimal.Decimal(row['value_num']) / decimal.Decimal(row['value_denom']))),
                                                           axis=1)
+        self.df_prices.set_index(cols.GUID, inplace=True)
         # Convert sqlite date strings to date
         # date stores in UTC on start day of local tz!.
         # if my tz = UTC+3 and date in price i set 2017-12-31, then in table stores 2017-12-30 21-00 - it is begin my date in UTC
@@ -127,6 +128,7 @@ class GNUCashBook:
                                                           axis=1)
         # rename column to standard name
         self.df_splits.rename(columns={'tx_guid': cols.TRANSACTION_GUID}, inplace=True)
+        self.df_splits.set_index(cols.GUID, inplace=True)
 
         # Read accounts notes from slots
         sql_text = """

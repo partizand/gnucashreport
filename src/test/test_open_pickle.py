@@ -1,6 +1,6 @@
 import unittest
 
-from test.baseopentest import BaseOpenTest
+from test.test_gnucashbook import BaseOpenTest
 
 @unittest.skip('Skip open pickle test')
 class PickleOpenTest(unittest.TestCase, BaseOpenTest):
