@@ -1,5 +1,8 @@
 from datetime import date
 
+import os
+
+
 class TestInfo:
 
     # Данные для генерации тестовых данных и тестирования
@@ -9,6 +12,7 @@ class TestInfo:
     DIR_TESTDATA = 'v:/test_data'
     GNUCASH_TESTBASE_XML = 'data/xirr-test.gnucash'
     GNUCASH_TESTBASE_SQL = 'data/xirr-test-sql.gnucash'
+
     # end folder options---------------------------------------
     TEST_FROM_DATE = date(2016, 1, 1)
     TEST_TO_DATE = date(2016, 12, 31)
@@ -31,11 +35,11 @@ class TestInfo:
     # pickle_tr = 'transactions.pkl'
     # pickle_commodities = 'commodities.pkl'
 
-    pickle_prices = GNUCashData.pickle_prices  # 'prices.pkl'
-    pickle_splits = GNUCashData.pickle_splits  # 'splits.pkl'
-    pickle_accounts = GNUCashData.pickle_accounts  # 'accounts.pkl'
-    pickle_tr = GNUCashData.pickle_tr  # 'transactions.pkl'
-    pickle_commodities = GNUCashData.pickle_commodities  # 'commodities.pkl'
+    # pickle_prices = GNUCashData.pickle_prices  # 'prices.pkl'
+    # pickle_splits = GNUCashData.pickle_splits  # 'splits.pkl'
+    # pickle_accounts = GNUCashData.pickle_accounts  # 'accounts.pkl'
+    # pickle_tr = GNUCashData.pickle_tr  # 'transactions.pkl'
+    # pickle_commodities = GNUCashData.pickle_commodities  # 'commodities.pkl'
 
     PICKLE_ASSETS = 'assets.pkl'
     PICKLE_LOANS = 'loans.pkl'
@@ -44,3 +48,12 @@ class TestInfo:
     PICKLE_PROFIT = 'profit.pkl'
     PICKLE_EQUITY = 'equity.pkl'
     PICKLE_INFLATION = 'inflation.pkl'
+
+    @classmethod
+    def get_abs_filename(cls, filename):
+        if os.path.isabs(filename):
+            return filename
+        else:
+            base_path = os.path.dirname(os.path.realpath(__file__))
+            base_path = os.path.join(base_path, filename)
+            return base_path
