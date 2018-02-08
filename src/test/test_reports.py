@@ -1,0 +1,272 @@
+import datetime
+import unittest
+
+import os
+import pandas
+
+from gnucashreport.gnucashbook import GNUCashBook
+from gnucashreport.gnucashdata import GNUCashData
+
+from pandas.util.testing import assert_frame_equal
+
+from test.testinfo import TestInfo
+
+
+class ReportTest(unittest.TestCase):
+    """
+    Тестирование построения отчетов по данным
+    All testing data on external resource because it is real data
+    """
+
+    # Данные для генерации тестовых данных и тестирования
+    # Test info, change before generate test data!
+    BOOKFILE_SQL = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
+    BOOKFILE_XML = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
+    DIR_TESTDATA = 'v:/test_data'
+
+
+    # end folder options---------------------------------------
+    TEST_FROM_DATE = datetime.date(2016, 1, 1)
+    TEST_TO_DATE = datetime.date(2016, 12, 31)
+    TEST_FROM_DATE_Y = datetime.date(2009, 1, 1)
+    TEST_TO_DATE_Y = datetime.date(2016, 12, 31)
+    TEST_PERIOD = 'M'
+    TEST_GLEVEL = 1
+    TEST_GLEVEL2 = [0, 1]
+    TEST_LEVEL2_SUFFIX = '-2'
+
+    PICKLE_ASSETS = 'assets.pkl'
+    PICKLE_LOANS = 'loans.pkl'
+    PICKLE_EXPENSE = 'expense.pkl'
+    PICKLE_INCOME = 'income.pkl'
+    PICKLE_PROFIT = 'profit.pkl'
+    PICKLE_EQUITY = 'equity.pkl'
+    PICKLE_INFLATION = 'inflation.pkl'
+
+    # rep = GNUCashData()
+
+    @classmethod
+    def setUpClass(cls):
+        gcrep_xml = GNUCashData()
+        gcrep_sql = GNUCashData()
+        base_path = os.path.dirname(os.path.realpath(__file__))
+        xml_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_XML)
+        sql_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_SQL)
+        gcrep_xml.open_book_file(cls.BOOKFILE_XML)
+        gcrep_sql.open_book_file(cls.BOOKFILE_SQL)
+
+
+
+        cls.test_array = [('xml', gcrep_xml), ('sql', gcrep_sql)]
+
+    #--------------------
+    # base functions
+
+
+    @staticmethod
+    def _add_suffix(filename, suffix):
+        """
+        Adds suffix to filename
+        :param filename:
+        :param suffix:
+        :return:
+        """
+        if not suffix:
+            return filename
+        return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
+
+
+    @classmethod
+    def get_assets(cls, rep, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = TestInfo.TEST_GLEVEL
+        df = rep.balance_by_period(from_date=TestInfo.TEST_FROM_DATE, to_date=cls.TEST_TO_DATE,
+                                       period=cls.TEST_PERIOD, glevel=glevel)
+        return df
+
+    @classmethod
+    def get_loans(cls, rep, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = 0
+        df = rep.balance_by_period(from_date=cls.TEST_FROM_DATE, to_date=cls.TEST_TO_DATE,
+                                       account_types=[GNUCashBook.LIABILITY], period=cls.TEST_PERIOD, glevel=glevel)
+        return df
+
+    @classmethod
+    def get_expense(cls, rep, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = cls.TEST_GLEVEL
+        df = rep.turnover_by_period(from_date=cls.TEST_FROM_DATE, to_date=cls.TEST_TO_DATE,
+                                        account_type=GNUCashBook.EXPENSE,
+                                        glevel=glevel)
+        return df
+
+    @classmethod
+    def get_income(cls, rep, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = cls.TEST_GLEVEL
+        df = rep.turnover_by_period(from_date=cls.TEST_FROM_DATE, to_date=cls.TEST_TO_DATE,
+                                        account_type=GNUCashBook.INCOME,
+                                        glevel=glevel)
+        return df
+
+    @classmethod
+    def get_profit(cls, rep, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = cls.TEST_GLEVEL
+        df = rep.profit_by_period(from_date=cls.TEST_FROM_DATE, to_date=cls.TEST_TO_DATE,
+                                      glevel=glevel)
+        return df
+
+    @classmethod
+    def get_equity(cls, rep, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = cls.TEST_GLEVEL
+        df = rep.equity_by_period(from_date=cls.TEST_FROM_DATE, to_date=cls.TEST_TO_DATE,
+                                      glevel=glevel)
+        return df
+
+    @classmethod
+    def get_inflation(cls, rep, cumulative=False, glevel=None):
+        """
+        Get assets dataframe for testing or saving
+        :return:
+        """
+        if not glevel:
+            glevel = cls.TEST_GLEVEL
+        df = rep.inflation_by_period(from_date=cls.TEST_FROM_DATE_Y, to_date=cls.TEST_TO_DATE_Y, period='A',
+                                         glevel=glevel, cumulative=cumulative)
+        return df
+
+    def pickle_control(self, pickle_file, df_to_test, test_name=None):
+        """
+        Сверка dataframe c эталонным Pickle файлом
+        :param pickle_file:
+        :param df_to_test:
+        :param test_name:
+        :return:
+        """
+        filename = os.path.join(self.DIR_TESTDATA, pickle_file)
+        df_etalon = pandas.read_pickle(filename)
+        assert_frame_equal(df_to_test, df_etalon, check_like=True, obj=test_name)
+        self.assertEqual(len(df_to_test), len(df_etalon), 'length of dataframe')
+
+
+    #---------------------
+
+    def test_assets(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_assets(rep)
+                self.pickle_control(self.PICKLE_ASSETS, df, 'Assets')
+
+    def test_assets_multi(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_assets(rep, glevel=self.TEST_GLEVEL2)
+                filename = self._add_suffix(self.PICKLE_ASSETS, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Assets multiindex')
+
+    def test_loans(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_loans(rep)
+                self.pickle_control(self.PICKLE_LOANS, df, 'Loans')
+
+    def test_loans_multi(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_loans(rep, glevel=self.TEST_GLEVEL2)
+                filename = self._add_suffix(self.PICKLE_LOANS, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Loans multiindex')
+
+    def test_expense(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_expense(rep)
+                self.pickle_control(self.PICKLE_EXPENSE, df, 'Expenses')
+
+    def test_expense_multi(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_expense(rep, glevel=self.TEST_GLEVEL2)
+                filename = self._add_suffix(self.PICKLE_EXPENSE, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Expenses multiindex')
+
+    def test_income(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_income(rep)
+                self.pickle_control(self.PICKLE_INCOME, df, 'Income')
+
+    def test_income_multi(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_income(rep, glevel=self.TEST_GLEVEL2)
+                filename = self._add_suffix(self.PICKLE_INCOME, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Income multiindex')
+
+    def test_profit(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_profit(rep)
+                self.pickle_control(self.PICKLE_PROFIT, df, 'Profit')
+
+    def test_profit_multi(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_profit(rep, glevel=self.TEST_GLEVEL2)
+                filename = self._add_suffix(self.PICKLE_PROFIT, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Profit multiindex')
+
+    def test_equity(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_equity(rep)
+                self.pickle_control(self.PICKLE_EQUITY, df, 'Equity')
+
+    def test_equity_multi(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_equity(rep, glevel=self.TEST_GLEVEL2)
+                filename = self._add_suffix(self.PICKLE_EQUITY, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Equity multiindex')
+
+    def test_inflation_annual(self):
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_inflation(rep, cumulative=False)
+                self.pickle_control(self.PICKLE_INFLATION, df, 'Inflation')
+
+    def test_inflation_cumulative(self):
+        # Inflation cumulative
+        for test_name, rep in self.test_array:
+            with self.subTest(test_name):
+                df = self.get_inflation(rep, cumulative=True)
+                filename = self._add_suffix(self.PICKLE_INFLATION, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(filename, df, 'Inflation cumulative')
+

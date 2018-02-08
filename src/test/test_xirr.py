@@ -1,7 +1,7 @@
 import unittest
 
 import os
-from ddt import ddt, data, unpack, mk_test_name
+# from ddt import ddt, data, unpack, mk_test_name
 
 from decimal import Decimal
 
@@ -76,7 +76,7 @@ def get_testaccounts(gcrep):
 
 
 
-@ddt
+# @ddt
 class XIRRTest(unittest.TestCase):
     """
     Тестирование правильности расчета доходности

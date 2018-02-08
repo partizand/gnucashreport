@@ -103,18 +103,6 @@ class BaseTest(object):
         dataframe.to_pickle(fullfilename)
 
 
-    @staticmethod
-    def _add_suffix(filename, suffix):
-        """
-        Adds suffix to filename
-        :param filename:
-        :param suffix:
-        :return:
-        """
-        if not suffix:
-            return filename
-        return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
-
 
     def pickle_control(self, pickle_file, df_to_test, test_name=None):
         """
