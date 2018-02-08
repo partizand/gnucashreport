@@ -5,6 +5,8 @@ import time
 import pandas
 from decimal import Decimal
 
+from dateutil import parser, tz
+
 import re
 
 from gnucashreport import formatreport
@@ -19,6 +21,15 @@ from gnucashreport.margins import Margins
 from gnucashreport.utils import dataframe_to_excel
 from gnucashreport.xlsxreport import XLSXReport
 
+
+#--------------------------------
+# tz test
+dt = datetime.datetime.now()
+tzinfo=tz.tzlocal()
+a = tzinfo.utcoffset(dt)
+new_dt = dt + a
+
+#-------------------------------
 
 
 bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'

@@ -1,3 +1,4 @@
+import datetime
 import decimal
 import gzip
 
@@ -7,7 +8,7 @@ import abc
 
 import time
 
-from dateutil.parser import parse as parse_date
+from dateutil.parser import tz, parse as parse_date
 from xml.etree import ElementTree
 
 import gnucashreport.cols as cols
@@ -89,7 +90,21 @@ class GNUCashBook:
         self.df_prices[cols.VALUE] = self.df_prices.apply(lambda row: ((decimal.Decimal(row['value_num']) / decimal.Decimal(row['value_denom']))),
                                                           axis=1)
         # Convert sqlite date strings to date
-        self.df_prices['date'] = pandas.to_datetime(self.df_prices['date'])
+        # date stores in UTC on start day of local tz!.
+        # if my tz = UTC+3 and date in price i set 2017-12-31, then in table stores 2017-12-30 21-00 - it is begin my date in UTC
+        # I think it is bug (in xml stores all ok, it will be 2017-12-31 10-59)
+        # And in transactions dates stores right - 2017-12-31 10-59
+        # Only in sqlite and price date column has this bug (GnuCash 2.6.18)
+
+        # new_date = date + offset
+
+        dt = datetime.datetime.now()
+        tzinfo = tz.tzlocal()
+        offset = tzinfo.utcoffset(dt)
+        # new_dt = dt + a
+
+        self.df_prices['date'] = self.df_prices['date'].apply(lambda x: (parse_date(x) + offset ))
+        # self.df_prices['date'] = pandas.to_datetime(self.df_prices['date'])
 
         # Transactions
         self.df_transactions = pandas.read_sql_table('transactions', uri)
@@ -270,7 +285,7 @@ class GNUCashBook:
 
         # xml_date = tree.find(pr + "time/" + ts + "date").text
 
-        date = parse_date(tree.find(pr + "time/" + ts + "date").text)
+        date = parse_date(tree.find(pr + "time/" + ts + "date").text,)
 
         # price["date"] = pandas.to_datetime(tree.find(pr + "time/" + ts + "date").text)
         # pd_date = pandas.to_datetime(pd_date.date())
