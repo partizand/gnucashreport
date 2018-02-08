@@ -73,6 +73,9 @@ class GNUCashBook:
         else:
             self._open_xml(filename)
 
+        # self.filename = filename
+
+
 
     def _open_sqlite(self, filename):
 
