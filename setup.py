@@ -61,7 +61,7 @@ setup(name='gnucashreport',
 
       test_suite='test',
 
-      install_requires=['numpy', 'pandas', 'piecash', 'xlsxwriter'],
+      install_requires=['numpy', 'pandas', 'xlsxwriter', 'python-dateutil'],
       #                   'appdirs'
       #                   ],
 
