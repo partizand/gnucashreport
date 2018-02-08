@@ -4,6 +4,9 @@ from test.baseopentest import BaseOpenTest
 
 
 # @unittest.skip('Skip open xml test')
+from test.testinfo import TestInfo
+
+
 class SQLOpenTest(unittest.TestCase, BaseOpenTest):
     """
     Тестирование чтения данных из xml
@@ -20,7 +23,7 @@ class SQLOpenTest(unittest.TestCase, BaseOpenTest):
     @classmethod
     def setUpClass(cls):
         cls.set_locale()
-        cls.open_xml()
+        cls.open_book(TestInfo.GNUCASH_TESTBASE_XML)
 
 if __name__ == '__main__':
     unittest.main()

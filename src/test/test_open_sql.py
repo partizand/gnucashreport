@@ -22,7 +22,7 @@ class SQLOpenTest(unittest.TestCase, BaseOpenTest):
         cls.open_book(TestInfo.GNUCASH_TESTBASE_SQL)
 
     # def test(self):
-    #     self.assertIsInstance(obj, cls)
+    #     self.assertNotEqual () assertGreater() IsInstance(obj, cls)
 
 
 if __name__ == '__main__':
