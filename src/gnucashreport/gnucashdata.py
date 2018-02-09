@@ -65,7 +65,6 @@ class GNUCashData:
 
     # Данные для генерации тестовых данных и тестирования
     dir_pickle = 'V:/test_data'
-    # dir_testdata = 'v:/test_data'
 
     pickle_prices = 'prices.pkl'
     pickle_splits = 'splits.pkl'
@@ -116,7 +115,7 @@ class GNUCashData:
         gettext.install('gnucashreport', localedir=dir_locale)
 
     # def open_book_file(self, filename, readonly=True, open_if_lock=False,):
-    def open_book_file(self, filename,):
+    def open_book_file(self, filename, pickle=False):
         """
         Open GnuCash database file. Autodetect type: sqlite or xml
         :param filename:
@@ -137,9 +136,15 @@ class GNUCashData:
         #     self.book = GNUCashBookXML()
         # else:
         #     self.book = GNUCashBookSQLite()
+
+
+
         self.book = GNUCashBook()
         # print('Start reading book...')
-        self.book.open_file(filename)
+        # if pickle:
+        #     self.book._open_pickle(folder=filename)
+        # else:
+        self.book.open_file(filename, pickle=pickle)
         # print('Book is readed')
 
         self.df_accounts = self.book.df_accounts
@@ -213,37 +218,35 @@ class GNUCashData:
         return 'gcreport {book}'.format(book=self.book)
 
 
-    def _open_book_pickle(self, folder):
-        """
-        For test purpose
-        Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
-        Loading from sql --- 6.193211078643799 seconds ---
-        Loading from pickle all --- 0.09360003471374512 seconds ---
-        Loading from pickle 2016 --- 0.031199932098388672 seconds ---
+    # def _open_book_pickle(self, folder):
+    #     """
+    #     For test purpose
+    #     Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
+    #     Loading from sql --- 6.193211078643799 seconds ---
+    #     Loading from pickle all --- 0.09360003471374512 seconds ---
+    #     Loading from pickle 2016 --- 0.031199932098388672 seconds ---
+    #
+    #     :param year: Год для загрузки, None - все данные
+    #     :param folder: Каталог с файлами базы
+    #     :return:
+    #     """
+    #
+    #     self._read_book_pickle(folder=folder)
+    #     self._after_read()
 
-        :param year: Год для загрузки, None - все данные
-        :param folder: Каталог с файлами базы
-        :return:
-        """
-
-        self._read_book_pickle(folder=folder)
-        self._after_read()
-
-    def _read_book_pickle(self, folder=None):
-        """
-        For testing
-        :param folder:
-        :return:
-        """
-        self.df_accounts = self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
-        # dataframe_to_excel(self.df_accounts, 'accounts-source')
-        self.df_commodities = self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
-        self.df_prices = self._dataframe_from_pickle(self.pickle_prices, folder=folder)
-        self.df_transactions = self._dataframe_from_pickle(self.pickle_tr, folder=folder)
-        self.df_splits = self._dataframe_from_pickle(self.pickle_splits, folder=folder)
-        self._get_guid_rootaccount()
-        # print(guid)
-        # self.root_account_guid = gnucash_book.root_account.guid
+    # def _read_book_pickle(self, folder=None):
+    #     """
+    #     For testing
+    #     :param folder:
+    #     :return:
+    #     """
+    #     self.df_accounts = self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
+    #     # dataframe_to_excel(self.df_accounts, 'accounts-source')
+    #     self.df_commodities = self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
+    #     self.df_prices = self._dataframe_from_pickle(self.pickle_prices, folder=folder)
+    #     self.df_transactions = self._dataframe_from_pickle(self.pickle_tr, folder=folder)
+    #     self.df_splits = self._dataframe_from_pickle(self.pickle_splits, folder=folder)
+    #     self._get_guid_rootaccount()
 
     # def _get_guid_rootaccount(self):
     #     """
@@ -254,18 +257,18 @@ class GNUCashData:
     #                                (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
     #     self.root_account_guid = df_root.index.values[0]
 
-    def _dataframe_from_pickle(self, filename, folder=None):
-        """
-        Get dataframe from pickle file
-        :param filename: Полное или короткое имя файла
-        :param folder: Каталог с файлом
-        :return: DataFrame
-        """
-        if not folder:
-            folder = self.dir_pickle
-        fullfilename = os.path.join(folder, filename)
-        df = pandas.read_pickle(fullfilename)
-        return df
+    # def _dataframe_from_pickle(self, filename, folder=None):
+    #     """
+    #     Get dataframe from pickle file
+    #     :param filename: Полное или короткое имя файла
+    #     :param folder: Каталог с файлом
+    #     :return: DataFrame
+    #     """
+    #     if not folder:
+    #         folder = self.dir_pickle
+    #     fullfilename = os.path.join(folder, filename)
+    #     df = pandas.read_pickle(fullfilename)
+    #     return df
 
     # def _read_book_xml(self, xml_file):
     #

@@ -29,6 +29,10 @@ class GNUCashBook:
     # BOOKTYPE_XML = 'xml'
     # BOOKTYPE_SQLITE = 'sqlite'
 
+    # _DIR_PICKLE = 'V:/test_data'
+
+
+
     # GnuCash account types
     CASH = 'CASH'
     BANK = 'BANK'
@@ -53,6 +57,13 @@ class GNUCashBook:
 
         # self.book = None
 
+        # for debbuging
+        self._PICKLE_PRICES = 'prices.pkl'
+        self._PICKLE_SPLITS = 'splits.pkl'
+        self._PICKLE_ACCOUNTS = 'accounts.pkl'
+        self._PICKLE_TR = 'transactions.pkl'
+        self._PICKLE_COMMODITIES = 'commodities.pkl'
+
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
         self.df_commodities = pandas.DataFrame()
@@ -71,7 +82,7 @@ class GNUCashBook:
 
         # self._startTime = None
 
-    def open_file(self, filename):
+    def open_file(self, filename, pickle=False):
         # Get abs filename
         # if os.path.isabs(filename):
         #     fullfilename = filename
@@ -80,19 +91,50 @@ class GNUCashBook:
         #     fullfilename = os.path.join(base_path, filename)
         fullfilename = filename
 
-        with open(fullfilename, "rb") as f:
-            bytes = f.read(16)
-        if bytes == b'SQLite format 3\x00':
-            self._open_sqlite(fullfilename)
-            self._book_type = 'sql'
+        if pickle:
+            self._open_pickle(folder=filename)
+            self._book_type = 'pickle'
         else:
-            self._open_xml(fullfilename)
-            self._book_type = 'xml'
+            with open(fullfilename, "rb") as f:
+                bytes = f.read(16)
+            if bytes == b'SQLite format 3\x00':
+                self._open_sqlite(fullfilename)
+                self._book_type = 'sql'
+            else:
+                self._open_xml(fullfilename)
+                self._book_type = 'xml'
 
+        self._get_guid_rootaccount()
         self._book_filename = os.path.basename(filename)
 
     def __repr__(self):
         return 'book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename)
+
+    def _open_pickle(self, folder):
+        """
+        For testing
+        :param folder:
+        :return:
+        """
+        self.df_accounts = self._dataframe_from_pickle(self._PICKLE_ACCOUNTS, folder=folder)
+        # dataframe_to_excel(self.df_accounts, 'accounts-source')
+        self.df_commodities = self._dataframe_from_pickle(self._PICKLE_COMMODITIES, folder=folder)
+        self.df_prices = self._dataframe_from_pickle(self._PICKLE_PRICES, folder=folder)
+        self.df_transactions = self._dataframe_from_pickle(self._PICKLE_TR, folder=folder)
+        self.df_splits = self._dataframe_from_pickle(self._PICKLE_SPLITS, folder=folder)
+        # self._get_guid_rootaccount()
+
+    def _dataframe_from_pickle(self, filename, folder):
+        """
+        Get dataframe from pickle file
+        :param filename: Полное или короткое имя файла
+        :param folder: Каталог с файлом
+        :return: DataFrame
+        """
+
+        fullfilename = os.path.join(folder, filename)
+        df = pandas.read_pickle(fullfilename)
+        return df
 
     def _open_sqlite(self, filename):
 
@@ -160,7 +202,7 @@ class GNUCashBook:
         # set index
         self.df_accounts.set_index(cols.GUID, inplace=True)
 
-        self._get_guid_rootaccount()
+        # self._get_guid_rootaccount()
 
 
     # @staticmethod
