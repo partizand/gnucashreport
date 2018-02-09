@@ -115,7 +115,7 @@ class GNUCashData:
         gettext.install('gnucashreport', localedir=dir_locale)
 
     # def open_book_file(self, filename, readonly=True, open_if_lock=False,):
-    def open_book_file(self, filename, pickle=False):
+    def open_book_file(self, filename):
         """
         Open GnuCash database file. Autodetect type: sqlite or xml
         :param filename:
@@ -144,7 +144,7 @@ class GNUCashData:
         # if pickle:
         #     self.book._open_pickle(folder=filename)
         # else:
-        self.book.open_file(filename, pickle=pickle)
+        self.book.open_file(filename)
         # print('Book is readed')
 
         self.df_accounts = self.book.df_accounts
@@ -419,41 +419,41 @@ class GNUCashData:
         :return:
         """
 
-        #  Get fullname of accounts
-        self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
-
-        self.df_accounts[cols.XIRR_ENABLE] = None
-        self._fill_xirr_enable()
-
-        # Add commodity mnemonic to accounts
-        mems = self.df_commodities[cols.MNEMONIC].to_frame()
-
-        # А после этой не пропадает
-        self.df_accounts = self.df_accounts.merge(mems, how='left', left_on=cols.COMMODITY_GUID, right_index=True)
-
-        # Convert datetme to date in transactions (skip time)
-        self.df_transactions[cols.POST_DATE] = self.df_transactions[cols.POST_DATE].apply(
-            lambda x: pandas.to_datetime(x.date()))
-
-        # Merge prices with commodities
-        self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on=cols.COMMODITY_GUID,
-                                      right_index=True)
-        # Convert datetme to date in prices (skip time)
-        self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
-
-        # merge splits and accounts
-        df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on=cols.ACCOUNT_GUID,
-                                     right_index=True)
-        df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
-        # merge splits and accounts with transactions
-        self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on=cols.TRANSACTION_GUID,
-                                      right_index=True)
-
-        # Оставляем только одну цену за день в df_prices
-        # Установка нового индекса
-        self.df_prices.set_index([cols.COMMODITY_GUID, 'date'], inplace=True)
-        # отсечение повторов по индексу
-        self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
+        # #  Get fullname of accounts
+        # self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
+        #
+        # self.df_accounts[cols.XIRR_ENABLE] = None
+        # self._fill_xirr_enable()
+        #
+        # # Add commodity mnemonic to accounts
+        # mems = self.df_commodities[cols.MNEMONIC].to_frame()
+        #
+        # # А после этой не пропадает
+        # self.df_accounts = self.df_accounts.merge(mems, how='left', left_on=cols.COMMODITY_GUID, right_index=True)
+        #
+        # # Convert datetme to date in transactions (skip time)
+        # self.df_transactions[cols.POST_DATE] = self.df_transactions[cols.POST_DATE].apply(
+        #     lambda x: pandas.to_datetime(x.date()))
+        #
+        # # Merge prices with commodities
+        # self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on=cols.COMMODITY_GUID,
+        #                               right_index=True)
+        # # Convert datetme to date in prices (skip time)
+        # self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
+        #
+        # # merge splits and accounts
+        # df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on=cols.ACCOUNT_GUID,
+        #                              right_index=True)
+        # df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
+        # # merge splits and accounts with transactions
+        # self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on=cols.TRANSACTION_GUID,
+        #                               right_index=True)
+        #
+        # # Оставляем только одну цену за день в df_prices
+        # # Установка нового индекса
+        # self.df_prices.set_index([cols.COMMODITY_GUID, 'date'], inplace=True)
+        # # отсечение повторов по индексу
+        # self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
 
         # Минимальная и максимальная даты в базе
         self.min_date = self.df_splits[cols.POST_DATE].min().date()
@@ -476,49 +476,45 @@ class GNUCashData:
         # Подсчет значений для xirr
         self._add_xirr_info()
 
-    def _fill_xirr_enable(self, account_guid=None, default=None):
-        """
-        Заполнение колонки xirr_enable в df_accounts
-        :return: 
-        """
-        # MARKER_NO_INVEST - False
-        # Нет или MARKER_INVEST - True
-        # Cash или Equity или Income или Expense - false
-
-
-
-
-        if not account_guid:
-            account_guid = self.root_account_guid
-        # acc_name = self.df_accounts.loc[account_guid, cols.SHORTNAME]  # For test
-        inheritance = default
-        if default is None: # Установка текущего значения если default не установлен
-            # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
-            account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
-            if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
-               (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
-                current = False
-            else:
-                current = True
-        else:
-            current = default
-        # Перекрытие значениями из Notes если они есть
-        notes = self.df_accounts.loc[account_guid, cols.NOTES]
-        if notes:
-            if MARKER_NO_INVEST in notes:
-                current = False
-                inheritance = current
-            if MARKER_INVEST in notes:
-                current = True
-                inheritance = current
-
-        # Установка значения для текущего счета
-        # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
-        self.df_accounts.loc[account_guid, cols.XIRR_ENABLE] = current
-        # Установка значения для дочерних счетов
-        child_accounts = self._get_child_accounts(account_guid, recurse=False)
-        for child_account in child_accounts:
-            self._fill_xirr_enable(child_account, default=inheritance)
+    # def _fill_xirr_enable(self, account_guid=None, default=None):
+    #     """
+    #     Заполнение колонки xirr_enable в df_accounts
+    #     :return:
+    #     """
+    #     # MARKER_NO_INVEST - False
+    #     # Нет или MARKER_INVEST - True
+    #     # Cash или Equity или Income или Expense - false
+    #
+    #     if not account_guid:
+    #         account_guid = self.root_account_guid
+    #     inheritance = default
+    #     if default is None: # Установка текущего значения если default не установлен
+    #         # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
+    #         account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
+    #         if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
+    #            (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
+    #             current = False
+    #         else:
+    #             current = True
+    #     else:
+    #         current = default
+    #     # Перекрытие значениями из Notes если они есть
+    #     notes = self.df_accounts.loc[account_guid, cols.NOTES]
+    #     if notes:
+    #         if MARKER_NO_INVEST in notes:
+    #             current = False
+    #             inheritance = current
+    #         if MARKER_INVEST in notes:
+    #             current = True
+    #             inheritance = current
+    #
+    #     # Установка значения для текущего счета
+    #     # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
+    #     self.df_accounts.loc[account_guid, cols.XIRR_ENABLE] = current
+    #     # Установка значения для дочерних счетов
+    #     child_accounts = self._get_child_accounts(account_guid, recurse=False)
+    #     for child_account in child_accounts:
+    #         self._fill_xirr_enable(child_account, default=inheritance)
 
     def _add_margins(self, dataframe, margins=None):
         """
@@ -892,34 +888,34 @@ class GNUCashData:
         return a_yield
 
 
-    def _get_child_accounts(self, account_guid, account_types=None, xirr_enable=None, recurse=True):
-        """
-        Возвращает список счетов потомков
-        recurse=True - Список всех потомков
-        recurse=False - Только потомки первого уровня
-        :param account_guid: 
-        :return: 
-        """
-        # df = self.df_accounts.copy()
-        # speed optimization
-        df = self.df_accounts
-        # Фильтрация по типам счетов
-        if account_types:
-            df = df[(df[cols.ACCOUNT_TYPE]).isin(account_types)]
-        # Фильтрация по xirr_enable
-        if xirr_enable:
-            df = df[df[cols.XIRR_ENABLE] == xirr_enable]
-
-        df = df[df[cols.PARENT_GUID] == account_guid]
-        childs = df.index.tolist()
-
-        if recurse:
-            sub_childs = []
-            for child_account in childs:
-                sub_childs += self._get_child_accounts(child_account)
-            childs += sub_childs
-
-        return childs
+    # def _get_child_accounts(self, account_guid, account_types=None, xirr_enable=None, recurse=True):
+    #     """
+    #     Возвращает список счетов потомков
+    #     recurse=True - Список всех потомков
+    #     recurse=False - Только потомки первого уровня
+    #     :param account_guid:
+    #     :return:
+    #     """
+    #     # df = self.df_accounts.copy()
+    #     # speed optimization
+    #     df = self.df_accounts
+    #     # Фильтрация по типам счетов
+    #     if account_types:
+    #         df = df[(df[cols.ACCOUNT_TYPE]).isin(account_types)]
+    #     # Фильтрация по xirr_enable
+    #     if xirr_enable:
+    #         df = df[df[cols.XIRR_ENABLE] == xirr_enable]
+    #
+    #     df = df[df[cols.PARENT_GUID] == account_guid]
+    #     childs = df.index.tolist()
+    #
+    #     if recurse:
+    #         sub_childs = []
+    #         for child_account in childs:
+    #             sub_childs += self._get_child_accounts(child_account)
+    #         childs += sub_childs
+    #
+    #     return childs
 
     def _get_account_guid(self, fullname):
         """
@@ -1951,23 +1947,23 @@ class GNUCashData:
     #     balance = sel_df[cols.QUANTITY].sum()
     #     return balance
 
-    def _get_fullname_account(self, account_guid):
-        """
-        Get fullname account by guid. Return semicolon path Expenses:Food:...
-        :param account_guid:
-        :return:
-        """
-        if account_guid == self.root_account_guid:
-            return 'root'
-        fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-        parent_guid = self.df_accounts.loc[account_guid][cols.PARENT_GUID]
-        if parent_guid in self.df_accounts.index:
-            if parent_guid == self.root_account_guid:
-                return fullname
-            else:
-                return self._get_fullname_account(parent_guid) + ':' + fullname
-        else:
-            return 'error'
+    # def _get_fullname_account(self, account_guid):
+    #     """
+    #     Get fullname account by guid. Return semicolon path Expenses:Food:...
+    #     :param account_guid:
+    #     :return:
+    #     """
+    #     if account_guid == self.root_account_guid:
+    #         return 'root'
+    #     fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
+    #     parent_guid = self.df_accounts.loc[account_guid][cols.PARENT_GUID]
+    #     if parent_guid in self.df_accounts.index:
+    #         if parent_guid == self.root_account_guid:
+    #             return fullname
+    #         else:
+    #             return self._get_fullname_account(parent_guid) + ':' + fullname
+    #     else:
+    #         return 'error'
 
     # @staticmethod
     # def _object_to_dataframe(pieobject, fields, slot_names=None):
