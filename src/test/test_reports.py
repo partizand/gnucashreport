@@ -22,7 +22,7 @@ class ReportTest(unittest.TestCase):
     # Test info, change before generate test data!
     BOOKFILE_SQL = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
     BOOKFILE_XML = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
-    DIR_TESTDATA = 'v:/test_data_report'
+    DIR_TESTDATA = 'v:/test_data'
 
 
     # end folder options---------------------------------------
@@ -57,6 +57,7 @@ class ReportTest(unittest.TestCase):
         # set fullnames
         # cls.BOOKFILE_XML = os.path.join(cls.DIR_TESTDATA, cls.BOOKFILE_XML)
         # cls.BOOKFILE_SQL = os.path.join(cls.DIR_TESTDATA, cls.BOOKFILE_SQL)
+        cls.BOOKFILE_SQL = os.path.join(cls.DIR_TESTDATA, cls.BOOKFILE_SQL)
 
         # gcrep_xml = GNUCashData()
         # gcrep_sql = GNUCashData()
@@ -109,49 +110,49 @@ class ReportTest(unittest.TestCase):
             cls._dataframe_to_pickle(df, filename=cls.PICKLE_LOANS_M, folder=cls.DIR_TESTDATA)
 
             # Expense
-            filename = cls.PICKLE_EXPENSE
+            # filename = cls.PICKLE_EXPENSE
             df = cls.get_expense(rep)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EXPENSE, folder=cls.DIR_TESTDATA)
             # Expense multi
             df = cls.get_expense(rep, glevel=cls.TEST_GLEVEL2)
-            filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EXPENSE_M, folder=cls.DIR_TESTDATA)
 
             # Income
-            filename = cls.PICKLE_INCOME
+            # filename = cls.PICKLE_INCOME
             df = cls.get_income(rep)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INCOME, folder=cls.DIR_TESTDATA)
             # Income multi
             df = cls.get_income(rep, glevel=cls.TEST_GLEVEL2)
-            filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INCOME_M, folder=cls.DIR_TESTDATA)
 
             # Profit
-            filename = cls.PICKLE_PROFIT
+            # filename = cls.PICKLE_PROFIT
             df = cls.get_profit(rep)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_PROFIT, folder=cls.DIR_TESTDATA)
             # Profit multi
             df = cls.get_profit(rep, glevel=cls.TEST_GLEVEL2)
-            filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_PROFIT_M, folder=cls.DIR_TESTDATA)
 
             # Equity
-            filename = cls.PICKLE_EQUITY
+            # filename = cls.PICKLE_EQUITY
             df = cls.get_equity(rep)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EQUITY, folder=cls.DIR_TESTDATA)
             # Equity multi
             df = cls.get_equity(rep, glevel=cls.TEST_GLEVEL2)
-            filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EQUITY_M, folder=cls.DIR_TESTDATA)
 
             # Inflation annual
-            filename = cls.PICKLE_INFLATION
+            # filename = cls.PICKLE_INFLATION
             df = cls.get_inflation(rep, cumulative=False)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INFLATION, folder=cls.DIR_TESTDATA)
             # Inflation cumulative
             df = cls.get_inflation(rep, cumulative=True)
-            filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INFLATION_CUM, folder=cls.DIR_TESTDATA)
 
         # save sql to pickle book
         # cls.rep._read_book_sql(BaseTest.bookfile_sql)  # Получаем сырые данные
