@@ -68,14 +68,14 @@ class ReportTest(unittest.TestCase):
         # gcrep_sql.open_book_file(cls.BOOKFILE_SQL)
 
         # cls.test_array = [gcrep_xml, gcrep_sql]
-        cls.test_array = cls._get_test_array()
+        cls.test_array = [GNUCashData(cls.BOOKFILE_XML), GNUCashData(cls.BOOKFILE_SQL)]
 
     #--------------------
     # base functions
 
-    @classmethod
-    def _get_test_array(cls):
-        return [GNUCashData(cls.BOOKFILE_XML), GNUCashData(cls.BOOKFILE_SQL)]
+    # @classmethod
+    # def _get_test_array(cls):
+    #     return [GNUCashData(cls.BOOKFILE_XML), GNUCashData(cls.BOOKFILE_SQL)]
 
     @classmethod
     def save_testdata(cls):
