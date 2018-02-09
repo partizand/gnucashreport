@@ -388,7 +388,7 @@ class GNUCashBook:
     #  XML Book
 
     @staticmethod
-    def get_commodity_guid(space, name):
+    def _get_commodity_guid(space, name):
         return space + ":" + name
 
     @staticmethod
@@ -470,7 +470,7 @@ class GNUCashBook:
 
         if namespace.lower() != 'template':
             mnemonic = tree.find('{http://www.gnucash.org/XML/cmdty}id').text
-            guid = self.get_commodity_guid(space=namespace, name=mnemonic)
+            guid = self._get_commodity_guid(space=namespace, name=mnemonic)
             comm = {cols.GUID: guid, cols.NAMESPACE: namespace, cols.MNEMONIC: mnemonic}
             # comm_obj = self.Commodity(guid=guid, mnemonic=mnemonic, namespace=namespace)
             # self.commodities.append(comm_obj)
@@ -495,11 +495,11 @@ class GNUCashBook:
 
         currency_space = tree.find(pr + "currency/" + cmdty + "space").text
         currency_name = tree.find(pr + "currency/" + cmdty + "id").text
-        currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
+        currency_guid = self._get_commodity_guid(space=currency_space, name=currency_name)
 
         commodity_space = tree.find(pr + "commodity/" + cmdty + "space").text
         commodity_name = tree.find(pr + "commodity/" + cmdty + "id").text
-        commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
+        commodity_guid = self._get_commodity_guid(space=commodity_space, name=commodity_name)
 
         # xml_date = tree.find(pr + "time/" + ts + "date").text
 
@@ -581,7 +581,7 @@ class GNUCashBook:
             parent_guid = tree.find(act + 'parent').text
             commodity_space = tree.find(act + 'commodity/' + cmdty + 'space').text
             commodity_name = tree.find(act + 'commodity/' + cmdty + 'id').text
-            commodity_guid = self.get_commodity_guid(space=commodity_space, name=commodity_name)
+            commodity_guid = self._get_commodity_guid(space=commodity_space, name=commodity_name)
             commodity_scu = tree.find(act + 'commodity-scu').text
 
         account = {cols.GUID: guid,
@@ -608,7 +608,7 @@ class GNUCashBook:
         # transaction[cols.GUID] = guid
         currency_space = tree.find(trn + "currency/" + cmdty + "space").text
         currency_name = tree.find(trn + "currency/" + cmdty + "id").text
-        currency_guid = self.get_commodity_guid(space=currency_space, name=currency_name)
+        currency_guid = self._get_commodity_guid(space=currency_space, name=currency_name)
 
         # currency = commoditydict[(currency_space, currency_name)]
         # xml_date = tree.find(trn + "date-posted/" + ts + "date").text
