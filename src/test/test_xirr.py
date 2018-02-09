@@ -14,7 +14,7 @@ from gnucashreport.utils import *
 
 from test.basetest import BaseTest
 
-from test.test_gnucashbook import BaseOpenTest
+# from test.test_gnucashbook import BaseOpenTest
 from test.testinfo import TestInfo
 
 TOTAL = 'total'
@@ -102,16 +102,19 @@ class XIRRTest(unittest.TestCase):
 
         gcrep_xml = gnucashreport.gnucashdata.GNUCashData()
         gcrep_sql = gnucashreport.gnucashdata.GNUCashData()
-        base_path = os.path.dirname(os.path.realpath(__file__))
-        xml_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_XML)
-        sql_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_SQL)
-        gcrep_xml.open_book_file(xml_book)
-        gcrep_sql.open_book_file(sql_book)
+        # base_path = os.path.dirname(os.path.realpath(__file__))
+        # xml_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_XML)
+        # sql_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_SQL)
+        # gcrep_xml.open_book_file(xml_book)
+        gcrep_xml.open_book_file(TestInfo.GNUCASH_TESTBASE_XML)
+        # gcrep_sql.open_book_file(sql_book)
+        gcrep_sql.open_book_file(TestInfo.GNUCASH_TESTBASE_SQL)
 
-        test_datas_xml = get_testaccounts(gcrep_xml)
-        test_datas_sql = get_testaccounts(gcrep_sql)
+        # test_datas_xml = get_testaccounts(gcrep_xml)
+        # test_datas_sql = get_testaccounts(gcrep_sql)
 
-        cls.test_array = [('xml', gcrep_xml, test_datas_xml),('sql', gcrep_sql, test_datas_sql)]
+        # cls.test_array = [('xml', gcrep_xml, test_datas_xml),('sql', gcrep_sql, test_datas_sql)]
+        cls.test_array = [gcrep_xml, gcrep_sql]
 
     # @classmethod
 
@@ -119,43 +122,44 @@ class XIRRTest(unittest.TestCase):
     # @unpack
 
     def test_accounts(self):
-        for test_name, gcrep, test_datas in self.test_array:
+        for gcrep in self.test_array:
+            test_datas = get_testaccounts(gcrep)
             # with self.subTest(name=test_name):
-                for test_data in test_datas:
-                    with self.subTest('{}-{}'.format(test_name, test_data[cols.SHORTNAME])):
-                        account_guid = test_data[cols.ACCOUNT_GUID]
-                        etalon_yield_total = Decimal(test_data.get(TOTAL, Decimal(0)))
-                        etalon_yield_income = Decimal(test_data.get(INCOME, Decimal(0)))
-                        etalon_yield_expense = Decimal(test_data.get(EXPENSE, Decimal(0)))
-                        etalon_yield_capital = Decimal(test_data.get(CAPITAL, etalon_yield_total-etalon_yield_income))
+            for test_data in test_datas:
+                with self.subTest('{}-{}'.format(gcrep, test_data[cols.SHORTNAME])):
+                    account_guid = test_data[cols.ACCOUNT_GUID]
+                    etalon_yield_total = Decimal(test_data.get(TOTAL, Decimal(0)))
+                    etalon_yield_income = Decimal(test_data.get(INCOME, Decimal(0)))
+                    etalon_yield_expense = Decimal(test_data.get(EXPENSE, Decimal(0)))
+                    etalon_yield_capital = Decimal(test_data.get(CAPITAL, etalon_yield_total-etalon_yield_income))
 
-                        # str_from_date = test_data.get(FROM_DATE, None)
-                        # str_to_date = test_data.get(TO_DATE, None)
+                    # str_from_date = test_data.get(FROM_DATE, None)
+                    # str_to_date = test_data.get(TO_DATE, None)
 
-                        from_date = self._date_from_str(test_data.get(FROM_DATE, None))
-                        to_date = self._date_from_str(test_data.get(TO_DATE, None))
+                    from_date = self._date_from_str(test_data.get(FROM_DATE, None))
+                    to_date = self._date_from_str(test_data.get(TO_DATE, None))
 
-                        xirr_yield = gcrep.yield_calc(account_guid=account_guid,
-                                                           from_date=from_date, to_date=to_date,
-                                                           recurse=False, rename_col=False)
-                        # if xirr_yield.empty
-                        checking_yield_total = xirr_yield.iloc[0][cols.YIELD_TOTAL]
-                        checking_yield_income = xirr_yield.iloc[0][cols.YIELD_INCOME]
-                        checking_yield_expense = xirr_yield.iloc[0][cols.YIELD_EXPENSE]
-                        checking_yield_capital = xirr_yield.iloc[0][cols.YIELD_CAPITAL]
+                    xirr_yield = gcrep.yield_calc(account_guid=account_guid,
+                                                       from_date=from_date, to_date=to_date,
+                                                       recurse=False, rename_col=False)
+                    # if xirr_yield.empty
+                    checking_yield_total = xirr_yield.iloc[0][cols.YIELD_TOTAL]
+                    checking_yield_income = xirr_yield.iloc[0][cols.YIELD_INCOME]
+                    checking_yield_expense = xirr_yield.iloc[0][cols.YIELD_EXPENSE]
+                    checking_yield_capital = xirr_yield.iloc[0][cols.YIELD_CAPITAL]
 
-                        self.assertEqual(etalon_yield_total, checking_yield_total,
-                                          'testing {gain} in account {shortname}'.
-                                          format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_TOTAL))
-                        self.assertEqual(etalon_yield_income, checking_yield_income,
-                                          'testing {gain} in account {shortname}'.
-                                          format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_INCOME))
-                        self.assertEqual(etalon_yield_expense, checking_yield_expense,
-                                          'testing {gain} in account {shortname}'.
-                                          format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_EXPENSE))
-                        self.assertEqual(etalon_yield_capital, checking_yield_capital,
-                                          'testing {gain} in account {shortname}'.
-                                          format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_CAPITAL))
+                    self.assertEqual(etalon_yield_total, checking_yield_total,
+                                      'testing {gain} in account {shortname}'.
+                                      format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_TOTAL))
+                    self.assertEqual(etalon_yield_income, checking_yield_income,
+                                      'testing {gain} in account {shortname}'.
+                                      format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_INCOME))
+                    self.assertEqual(etalon_yield_expense, checking_yield_expense,
+                                      'testing {gain} in account {shortname}'.
+                                      format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_EXPENSE))
+                    self.assertEqual(etalon_yield_capital, checking_yield_capital,
+                                      'testing {gain} in account {shortname}'.
+                                      format(shortname=test_data[cols.SHORTNAME], gain=cols.YIELD_CAPITAL))
 
     def _date_from_str(self, str_date):
         if str_date:

@@ -75,7 +75,7 @@ class GNUCashData:
 
     dir_excel = "v:/tables"
 
-    def __init__(self):
+    def __init__(self, filename=None):
         self.df_accounts = pandas.DataFrame()
         self.df_transactions = pandas.DataFrame()
         self.df_commodities = pandas.DataFrame()
@@ -90,6 +90,11 @@ class GNUCashData:
 
         self.book = None
         self.root_account_guid = None
+
+        if filename:
+            self.open_book_file(filename)
+
+
 
         # self.timeing = timing
 
@@ -205,7 +210,7 @@ class GNUCashData:
     #     self._after_read()
 
     def __repr__(self):
-        print('gcreport {book}'.format(book=self.book))
+        return 'gcreport {book}'.format(book=self.book)
 
 
     def _open_book_pickle(self, folder):

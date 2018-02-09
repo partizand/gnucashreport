@@ -49,7 +49,7 @@ class GNUCashBook:
     STOCK_XIRR_TYPES = [STOCK, MUTUAL]
     INCEXP_XIRR_TYPES = [INCOME, EXPENSE]
 
-    def __init__(self):
+    def __init__(self, filename=None):
 
         # self.book = None
 
@@ -66,15 +66,19 @@ class GNUCashBook:
         self.root_account_guid = None
         self._splits = []
 
+        if filename:
+            self.open_file(filename)
+
         # self._startTime = None
 
     def open_file(self, filename):
         # Get abs filename
-        if os.path.isabs(filename):
-            fullfilename = filename
-        else:
-            base_path = os.path.dirname(os.path.realpath(__file__))
-            fullfilename = os.path.join(base_path, filename)
+        # if os.path.isabs(filename):
+        #     fullfilename = filename
+        # else:
+        #     base_path = os.path.dirname(os.path.realpath(__file__))
+        #     fullfilename = os.path.join(base_path, filename)
+        fullfilename = filename
 
         with open(fullfilename, "rb") as f:
             bytes = f.read(16)
@@ -88,7 +92,7 @@ class GNUCashBook:
         self._book_filename = os.path.basename(filename)
 
     def __repr__(self):
-        print('book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename))
+        return 'book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename)
 
     def _open_sqlite(self, filename):
 
