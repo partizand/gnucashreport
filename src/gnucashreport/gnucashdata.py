@@ -428,8 +428,6 @@ class GNUCashData:
         # Add commodity mnemonic to accounts
         mems = self.df_commodities[cols.MNEMONIC].to_frame()
 
-        # После этой строчки пропадает root account
-        # self.df_accounts = pandas.merge(self.df_accounts, mems, left_on=cols.COMMODITY_GUID, right_index=True)
         # А после этой не пропадает
         self.df_accounts = self.df_accounts.merge(mems, how='left', left_on=cols.COMMODITY_GUID, right_index=True)
 
@@ -450,9 +448,6 @@ class GNUCashData:
         # merge splits and accounts with transactions
         self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on=cols.TRANSACTION_GUID,
                                       right_index=True)
-        # Убрать время из даты проводки
-        # self.df_splits[cols.POST_DATE] = self.df_splits[cols.POST_DATE].dt.date
-        # self.df_splits[cols.POST_DATE] = pandas.to_datetime(self.df_splits[cols.POST_DATE])
 
         # Оставляем только одну цену за день в df_prices
         # Установка нового индекса
@@ -464,37 +459,22 @@ class GNUCashData:
         self.min_date = self.df_splits[cols.POST_DATE].min().date()
         self.max_date = self.df_splits[cols.POST_DATE].max().date()
 
-        # self.min_date = date.fromtimestamp(self.min_date)
-
         # Цены за каждый день по каждому инструменту
         self.df_prices_days = self._group_prices_by_period(self.min_date, self.max_date, 'D')
 
-
         # Сворачиваем df_splits до дней
 
-        # start_time = time.time()
         # Подсчитываем нарастающий итог
-        # print('Start calculating cum sum')
         self.df_splits.sort_values(by=cols.POST_DATE, inplace=True)
-        # self.df_splits[cols.CUM_SUM] = self.df_splits.quantity.cumsum()
         self.df_splits[cols.CUM_SUM] = self.df_splits.groupby(cols.FULLNAME)[cols.QUANTITY].transform(pandas.Series.cumsum)
-        # print("Calculating cum sum --- %s seconds ---" % (time.time() - start_time))
 
         # Пересчет транзакций в валюту учета
-        # self._splits_currency_calc()
         self.df_splits = self._currency_calc(self.df_splits,
-        # self._currency_calc(self.df_splits,
                                              col_currency_guid=cols.CURRENCY_GUID,
                                              col_rate=cols.RATE_CURRENCY
                                              )
-        # self._currency_calc(self.df_splits, col_rate=cols.RATE_CURRENCY, inplace=True)
-
         # Подсчет значений для xirr
         self._add_xirr_info()
-
-        # dataframe_to_excel(self.df_splits, 'splits-2')
-
-
 
     def _fill_xirr_enable(self, account_guid=None, default=None):
         """
