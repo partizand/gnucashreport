@@ -36,19 +36,19 @@ class ReportTest(unittest.TestCase):
     TEST_LEVEL2_SUFFIX = '-2'
 
     PICKLE_ASSETS = 'assets.pkl'
-    PICKLE_ASSETS_M = 'assets-m.pkl'
+    PICKLE_ASSETS_M = 'assets-2.pkl'
     PICKLE_LOANS = 'loans.pkl'
-    PICKLE_LOANS_M = 'loans-m.pkl'
+    PICKLE_LOANS_M = 'loans-2.pkl'
     PICKLE_EXPENSE = 'expense.pkl'
-    PICKLE_EXPENSE_M = 'expense-m.pkl'
+    PICKLE_EXPENSE_M = 'expense-2.pkl'
     PICKLE_INCOME = 'income.pkl'
-    PICKLE_INCOME_M = 'income-m.pkl'
+    PICKLE_INCOME_M = 'income-2.pkl'
     PICKLE_PROFIT = 'profit.pkl'
-    PICKLE_PROFIT_M = 'profit-m.pkl'
+    PICKLE_PROFIT_M = 'profit-2.pkl'
     PICKLE_EQUITY = 'equity.pkl'
-    PICKLE_EQUITY_M = 'equity-m.pkl'
+    PICKLE_EQUITY_M = 'equity-2.pkl'
     PICKLE_INFLATION = 'inflation.pkl'
-    PICKLE_INFLATION_CUM = 'inflation-cum.pkl'
+    PICKLE_INFLATION_M = 'inflation-2.pkl'
 
     # rep = GNUCashData()
 
@@ -88,71 +88,71 @@ class ReportTest(unittest.TestCase):
 
         # cls.rep.open_book_file(TestInfo.BOOKFILE_SQL)
 
-        test_array = cls._get_test_array()
+        # test_array = cls._get_test_array()
+        rep = GNUCashData(cls.BOOKFILE_SQL)
 
         # save reports
-        for rep in test_array:
 
-            # Assets
-            df = cls.get_assets(rep)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_ASSETS, folder=cls.DIR_TESTDATA)
-            # Assets multi
-            df = cls.get_assets(rep, glevel=cls.TEST_GLEVEL2)
-            # filename = cls._add_suffix(cls.PICKLE_ASSETS, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_ASSETS_M, folder=cls.DIR_TESTDATA)
+        # Assets
+        df = cls.get_assets(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_ASSETS, folder=cls.DIR_TESTDATA)
+        # Assets multi
+        df = cls.get_assets(rep, glevel=cls.TEST_GLEVEL2)
+        # filename = cls._add_suffix(cls.PICKLE_ASSETS, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_ASSETS_M, folder=cls.DIR_TESTDATA)
 
-            # Loans
-            df = cls.get_loans(rep)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_LOANS, folder=cls.DIR_TESTDATA)
-            # Loans multi
-            df = cls.get_loans(rep, glevel=cls.TEST_GLEVEL2)
-            # filename = cls._add_suffix(cls.PICKLE_LOANS, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_LOANS_M, folder=cls.DIR_TESTDATA)
+        # Loans
+        df = cls.get_loans(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_LOANS, folder=cls.DIR_TESTDATA)
+        # Loans multi
+        df = cls.get_loans(rep, glevel=cls.TEST_GLEVEL2)
+        # filename = cls._add_suffix(cls.PICKLE_LOANS, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_LOANS_M, folder=cls.DIR_TESTDATA)
 
-            # Expense
-            # filename = cls.PICKLE_EXPENSE
-            df = cls.get_expense(rep)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EXPENSE, folder=cls.DIR_TESTDATA)
-            # Expense multi
-            df = cls.get_expense(rep, glevel=cls.TEST_GLEVEL2)
-            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EXPENSE_M, folder=cls.DIR_TESTDATA)
+        # Expense
+        # filename = cls.PICKLE_EXPENSE
+        df = cls.get_expense(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_EXPENSE, folder=cls.DIR_TESTDATA)
+        # Expense multi
+        df = cls.get_expense(rep, glevel=cls.TEST_GLEVEL2)
+        # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_EXPENSE_M, folder=cls.DIR_TESTDATA)
 
-            # Income
-            # filename = cls.PICKLE_INCOME
-            df = cls.get_income(rep)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INCOME, folder=cls.DIR_TESTDATA)
-            # Income multi
-            df = cls.get_income(rep, glevel=cls.TEST_GLEVEL2)
-            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INCOME_M, folder=cls.DIR_TESTDATA)
+        # Income
+        # filename = cls.PICKLE_INCOME
+        df = cls.get_income(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_INCOME, folder=cls.DIR_TESTDATA)
+        # Income multi
+        df = cls.get_income(rep, glevel=cls.TEST_GLEVEL2)
+        # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_INCOME_M, folder=cls.DIR_TESTDATA)
 
-            # Profit
-            # filename = cls.PICKLE_PROFIT
-            df = cls.get_profit(rep)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_PROFIT, folder=cls.DIR_TESTDATA)
-            # Profit multi
-            df = cls.get_profit(rep, glevel=cls.TEST_GLEVEL2)
-            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_PROFIT_M, folder=cls.DIR_TESTDATA)
+        # Profit
+        # filename = cls.PICKLE_PROFIT
+        df = cls.get_profit(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_PROFIT, folder=cls.DIR_TESTDATA)
+        # Profit multi
+        df = cls.get_profit(rep, glevel=cls.TEST_GLEVEL2)
+        # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_PROFIT_M, folder=cls.DIR_TESTDATA)
 
-            # Equity
-            # filename = cls.PICKLE_EQUITY
-            df = cls.get_equity(rep)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EQUITY, folder=cls.DIR_TESTDATA)
-            # Equity multi
-            df = cls.get_equity(rep, glevel=cls.TEST_GLEVEL2)
-            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_EQUITY_M, folder=cls.DIR_TESTDATA)
+        # Equity
+        # filename = cls.PICKLE_EQUITY
+        df = cls.get_equity(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_EQUITY, folder=cls.DIR_TESTDATA)
+        # Equity multi
+        df = cls.get_equity(rep, glevel=cls.TEST_GLEVEL2)
+        # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_EQUITY_M, folder=cls.DIR_TESTDATA)
 
-            # Inflation annual
-            # filename = cls.PICKLE_INFLATION
-            df = cls.get_inflation(rep, cumulative=False)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INFLATION, folder=cls.DIR_TESTDATA)
-            # Inflation cumulative
-            df = cls.get_inflation(rep, cumulative=True)
-            # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
-            cls._dataframe_to_pickle(df, filename=cls.PICKLE_INFLATION_CUM, folder=cls.DIR_TESTDATA)
+        # Inflation annual
+        # filename = cls.PICKLE_INFLATION
+        df = cls.get_inflation(rep, cumulative=False)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_INFLATION, folder=cls.DIR_TESTDATA)
+        # Inflation cumulative
+        df = cls.get_inflation(rep, cumulative=True)
+        # filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_INFLATION_M, folder=cls.DIR_TESTDATA)
 
         # save sql to pickle book
         # cls.rep._read_book_sql(BaseTest.bookfile_sql)  # Получаем сырые данные
@@ -174,17 +174,17 @@ class ReportTest(unittest.TestCase):
         dataframe.to_pickle(fullfilename)
 
 
-    @staticmethod
-    def _add_suffix(filename, suffix):
-        """
-        Adds suffix to filename
-        :param filename:
-        :param suffix:
-        :return:
-        """
-        if not suffix:
-            return filename
-        return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
+    # @staticmethod
+    # def _add_suffix(filename, suffix):
+    #     """
+    #     Adds suffix to filename
+    #     :param filename:
+    #     :param suffix:
+    #     :return:
+    #     """
+    #     if not suffix:
+    #         return filename
+    #     return "{0}{2}.{1}".format(*filename.rsplit('.', 1) + [suffix])
 
 
     @classmethod
@@ -299,8 +299,8 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_assets(rep, glevel=self.TEST_GLEVEL2)
-                filename = self._add_suffix(self.PICKLE_ASSETS, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Assets multiindex')
+                # filename = self._add_suffix(self.PICKLE_ASSETS, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_ASSETS_M, df, 'Assets multiindex')
 
     def test_loans(self):
         for rep in self.test_array:
@@ -312,8 +312,8 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_loans(rep, glevel=self.TEST_GLEVEL2)
-                filename = self._add_suffix(self.PICKLE_LOANS, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Loans multiindex')
+                # filename = self._add_suffix(self.PICKLE_LOANS, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_LOANS_M, df, 'Loans multiindex')
 
     def test_expense(self):
         for rep in self.test_array:
@@ -325,8 +325,8 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_expense(rep, glevel=self.TEST_GLEVEL2)
-                filename = self._add_suffix(self.PICKLE_EXPENSE, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Expenses multiindex')
+                # filename = self._add_suffix(self.PICKLE_EXPENSE, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_EXPENSE_M, df, 'Expenses multiindex')
 
     def test_income(self):
         for rep in self.test_array:
@@ -338,8 +338,8 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_income(rep, glevel=self.TEST_GLEVEL2)
-                filename = self._add_suffix(self.PICKLE_INCOME, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Income multiindex')
+                # filename = self._add_suffix(self.PICKLE_INCOME, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_INCOME_M, df, 'Income multiindex')
 
     def test_profit(self):
         for rep in self.test_array:
@@ -351,8 +351,8 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_profit(rep, glevel=self.TEST_GLEVEL2)
-                filename = self._add_suffix(self.PICKLE_PROFIT, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Profit multiindex')
+                # filename = self._add_suffix(self.PICKLE_PROFIT, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_PROFIT_M, df, 'Profit multiindex')
 
     def test_equity(self):
         for rep in self.test_array:
@@ -364,8 +364,8 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_equity(rep, glevel=self.TEST_GLEVEL2)
-                filename = self._add_suffix(self.PICKLE_EQUITY, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Equity multiindex')
+                # filename = self._add_suffix(self.PICKLE_EQUITY, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_EQUITY_M, df, 'Equity multiindex')
 
     def test_inflation_annual(self):
         for rep in self.test_array:
@@ -378,6 +378,6 @@ class ReportTest(unittest.TestCase):
         for rep in self.test_array:
             with self.subTest(rep):
                 df = self.get_inflation(rep, cumulative=True)
-                filename = self._add_suffix(self.PICKLE_INFLATION, self.TEST_LEVEL2_SUFFIX)
-                self.pickle_control(filename, df, 'Inflation cumulative')
+                # filename = self._add_suffix(self.PICKLE_INFLATION, self.TEST_LEVEL2_SUFFIX)
+                self.pickle_control(self.PICKLE_INFLATION_M, df, 'Inflation cumulative')
 
