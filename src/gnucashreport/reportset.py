@@ -5,7 +5,7 @@ from gnucashreport.report import Report
 
 class ReportSet:
     """
-    Set of reports for formating in xlsx, html, etc
+    Set of reports objects by sheets
 
     >>> reports = ReportSet()
     >>> reports.add_sheet('Sheet1')
@@ -34,6 +34,8 @@ class ReportSet:
         # reports = [{'name': 'report1', 'df': ['df1','df2','df3']}]
         r = {'sheet1': ['report1', 'report2'], 'sheet2': ['report1', 'report2']}
 
+    def add_complex_report(self):
+
     def add_sheet(self, sheet_name):
         if sheet_name not in self.sheets:
             self.sheets[sheet_name] = []
@@ -50,7 +52,6 @@ class ReportSet:
             if not self._last_sheet_name:
                 sheet_to_add = 'Sheet1'
                 self.add_sheet(sheet_to_add)
-
 
         (self.sheets[sheet_to_add]).append(report)
 
