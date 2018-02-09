@@ -21,8 +21,8 @@ from gnucashreport.financial import xirr
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashbook import GNUCashBook
 # import gnucashreport.gnucashbook as gnucashbook
-from gnucashreport.gnucashbookxml import GNUCashBookXML
-from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
+# from gnucashreport.gnucashbookxml import GNUCashBookXML
+# from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
 
 # GNUCashBook = gnucashbook.GNUCashBook
 
