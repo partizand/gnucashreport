@@ -35,6 +35,7 @@ class ReportSet:
         r = {'sheet1': ['report1', 'report2'], 'sheet2': ['report1', 'report2']}
 
     def add_complex_report(self):
+        pass
 
     def add_sheet(self, sheet_name):
         if sheet_name not in self.sheets:
