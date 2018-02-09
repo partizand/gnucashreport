@@ -60,6 +60,100 @@ class ReportTest(unittest.TestCase):
     #--------------------
     # base functions
 
+    @classmethod
+    def save_testdata(cls):
+        """
+        Запись тестовых pickle для последующей проверки в тестах
+        :return:
+        """
+
+        # cls.open_sql()
+
+        # cls.rep.open_book_file(TestInfo.BOOKFILE_SQL)
+
+        rep = cls.test_array[0]
+
+        # save reports
+        # Assets
+        df = cls.get_assets(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_ASSETS, folder=cls.DIR_TESTDATA)
+        # Assets multi
+        df = cls.get_assets(rep, glevel=cls.TEST_GLEVEL2)
+        filename = cls._add_suffix(cls.PICKLE_ASSETS, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # Loans
+        df = cls.get_loans(rep)
+        cls._dataframe_to_pickle(df, filename=cls.PICKLE_LOANS, folder=cls.DIR_TESTDATA)
+        # Loans multi
+        df = cls.get_loans(rep, glevel=cls.TEST_GLEVEL2)
+        filename = cls._add_suffix(cls.PICKLE_LOANS, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # Expense
+        filename = cls.PICKLE_EXPENSE
+        df = cls.get_expense(rep)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+        # Expense multi
+        df = cls.get_expense(rep, glevel=cls.TEST_GLEVEL2)
+        filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # Income
+        filename = cls.PICKLE_INCOME
+        df = cls.get_income(rep)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+        # Income multi
+        df = cls.get_income(rep, glevel=cls.TEST_GLEVEL2)
+        filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # Profit
+        filename = cls.PICKLE_PROFIT
+        df = cls.get_profit(rep)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+        # Profit multi
+        df = cls.get_profit(rep, glevel=cls.TEST_GLEVEL2)
+        filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # Equity
+        filename = cls.PICKLE_EQUITY
+        df = cls.get_equity(rep)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+        # Equity multi
+        df = cls.get_equity(rep, glevel=cls.TEST_GLEVEL2)
+        filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # Inflation annual
+        filename = cls.PICKLE_INFLATION
+        df = cls.get_inflation(rep, cumulative=False)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+        # Inflation cumulative
+        df = cls.get_inflation(rep, cumulative=True)
+        filename = cls._add_suffix(filename, cls.TEST_LEVEL2_SUFFIX)
+        cls._dataframe_to_pickle(df, filename=filename, folder=cls.DIR_TESTDATA)
+
+        # save sql to pickle book
+        # cls.rep._read_book_sql(BaseTest.bookfile_sql)  # Получаем сырые данные
+        # cls._save_db_to_pickle(folder=cls.DIR_TESTDATA)
+
+        # save xml to pickle book
+        # cls.rep._read_book_xml(BaseTest.bookfile_xml)  # Вроде по тестам перезапись данных и все ок
+        # cls._save_db_to_pickle(folder=cls.DIR_TESTDATA, suffix='-xml')
+
+    @classmethod
+    def _dataframe_to_pickle(cls, dataframe, filename, folder):
+        """
+        Записаывает DataFrame в pickle файл
+        :param dataframe:
+        :param filename:
+        :return:
+        """
+        fullfilename = os.path.join(folder, filename)
+        dataframe.to_pickle(fullfilename)
+
 
     @staticmethod
     def _add_suffix(filename, suffix):

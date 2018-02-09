@@ -2,6 +2,7 @@ import datetime
 import decimal
 import gzip
 
+import os
 import pandas
 
 import abc
@@ -59,6 +60,8 @@ class GNUCashBook:
         self.df_prices = pandas.DataFrame()
 
         # self.book_name = None
+        self._book_type = None
+        self._book_filename = None
 
         self.root_account_guid = None
         self._splits = []
@@ -66,16 +69,26 @@ class GNUCashBook:
         # self._startTime = None
 
     def open_file(self, filename):
-        with open(filename, "rb") as f:
+        # Get abs filename
+        if os.path.isabs(filename):
+            fullfilename = filename
+        else:
+            base_path = os.path.dirname(os.path.realpath(__file__))
+            fullfilename = os.path.join(base_path, filename)
+
+        with open(fullfilename, "rb") as f:
             bytes = f.read(16)
         if bytes == b'SQLite format 3\x00':
-            self._open_sqlite(filename)
+            self._open_sqlite(fullfilename)
+            self._book_type = 'sql'
         else:
-            self._open_xml(filename)
+            self._open_xml(fullfilename)
+            self._book_type = 'xml'
 
-        # self.filename = filename
+        self._book_filename = os.path.basename(filename)
 
-
+    def __repr__(self):
+        print('book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename))
 
     def _open_sqlite(self, filename):
 

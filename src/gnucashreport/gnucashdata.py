@@ -204,6 +204,10 @@ class GNUCashData:
     #                            **kwargs)
     #     self._after_read()
 
+    def __repr__(self):
+        print('gcreport {book}'.format(book=self.book))
+
+
     def _open_book_pickle(self, folder):
         """
         For test purpose
