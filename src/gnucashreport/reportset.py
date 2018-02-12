@@ -3,13 +3,25 @@
 from gnucashreport.report import Report
 
 
+
+
+
+# book = book(filename)
+# reports = ReportSet()
+# reports.fill_all(book.start, book.end) # reports.fill_complex(start,end,period='auto')
+#
+# out_report= OutputReportXLSX(book)
+# out_report.fill(reports)
+#
+# out_report.write(outfile)
+
 class ReportSet:
     """
     Set of reports objects by sheets
 
     >>> reports = ReportSet()
     >>> reports.add_sheet('Sheet1')
-    >>> reports.sheets
+    >>> reports._sheets
     {'Sheet1': []}
     >>> reports.add_report('report1')
     >>> reports.sheets
@@ -26,7 +38,7 @@ class ReportSet:
     """
 
     def __init__(self):
-        self.sheets = {}
+        self._sheets = {}
         # self.reports = {}
         # self.last_report = None
         self._last_sheet_name = None
@@ -34,19 +46,22 @@ class ReportSet:
         # reports = [{'name': 'report1', 'df': ['df1','df2','df3']}]
         r = {'sheet1': ['report1', 'report2'], 'sheet2': ['report1', 'report2']}
 
-    def add_complex_report(self):
-        pass
+    def get_sheet_names(self):
+        return list(self._sheets)
+
+    def get_reports(self, sheet_name):
+        return self._sheets[sheet_name]
 
     def add_sheet(self, sheet_name):
-        if sheet_name not in self.sheets:
-            self.sheets[sheet_name] = []
+        if sheet_name not in self._sheets:
+            self._sheets[sheet_name] = []
         self._last_sheet_name = sheet_name
 
     def add_report(self, report, sheet_name=None):
 
         if sheet_name:
             sheet_to_add = sheet_name
-            if sheet_name not in self.sheets:
+            if sheet_name not in self._sheets:
                 self.add_sheet(sheet_name)
         else:
             sheet_to_add = self._last_sheet_name
@@ -54,7 +69,7 @@ class ReportSet:
                 sheet_to_add = 'Sheet1'
                 self.add_sheet(sheet_to_add)
 
-        (self.sheets[sheet_to_add]).append(report)
+        (self._sheets[sheet_to_add]).append(report)
 
 
 
