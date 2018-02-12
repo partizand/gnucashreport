@@ -104,9 +104,11 @@ class GNUCashBook:
                 self._open_xml(fullfilename)
                 self._book_type = 'xml'
 
+            #  Get fullname of accounts
+            self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
+
         self._get_guid_rootaccount()
-        #  Get fullname of accounts
-        self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
+
 
         self._book_filename = os.path.basename(filename)
 
