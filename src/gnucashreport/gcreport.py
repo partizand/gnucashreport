@@ -168,7 +168,7 @@ class GCReport(GNUCashData):
         :return:
         """
 
-        xlsxreport = XLSXReport(filename=filename, sheet_name='_Returns')
+        xlsxreport = XLSXReport(filename=filename, sheet_name=_('Returns'))
 
         self._returns_writer(xlsxreport, from_date=from_date, to_date=to_date)
 
