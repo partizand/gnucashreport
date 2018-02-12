@@ -118,6 +118,40 @@ def split_by_years(from_date: date, to_date: date):
 
     return dates
 
+def complete_years_dates (from_date: date, to_date: date):
+    """
+    Return tuple of first and last date of year from interval, which are full ended year
+    >>> complete_years_dates(date(2016,1,2), date(2016,12,30))
+
+    >>> complete_years_dates(date(2008,12,31), date(2017, 2, 15))
+    (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
+
+    :param from_date:
+    :param to_date:
+    :return:
+    """
+    # Первая дата, выравниваем год
+    from_year = from_date.year
+    if not (from_date.month == 1 and from_date.day == 1):
+        from_year += 1
+        # if from_year > date.today().year:
+        #     return None
+
+    to_year = to_date.year
+    if not (to_date.month == 12 and to_date.day == 31):
+        to_year -= 1
+
+    if from_year > to_year:
+        return None
+
+    if from_year == to_year:
+        return None
+
+    y_start_date = date(from_year, 1, 1)
+    y_end_date = date(to_year, 12, 31)
+
+    return y_start_date, y_end_date
+
 
 def complete_years(from_date: date, to_date: date):
     """

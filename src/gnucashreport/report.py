@@ -27,6 +27,7 @@ class Report(abc.ABC):
         self.period = period
         self.account_types = None
         self.glevel = glevel
+        self.chart_type = None
         # # format
         # self.report_name = rep_type
         # empty margins
@@ -36,6 +37,9 @@ class Report(abc.ABC):
     @abc.abstractmethod
     def receive_data(self, raw_report:GNUCashData):
         pass
+
+    def add_chart(self, chart_type):
+        self.chart_type = chart_type
 
     def _add_margins(self):
         """
@@ -119,8 +123,8 @@ class ReportInflation(Report):
 
 
 class ReportAssets(Report):
-    def __init__(self, from_date, to_date, period, cumulative, glevel):
-        super(ReportAssets, self).__init__(from_date, to_date, period, glevel)
+    def __init__(self, from_date, to_date, period, glevel):
+        super(ReportAssets, self).__init__(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
         # self.from_date = from_date
         # self.to_date = to_date
         # self.period = period
@@ -139,3 +143,18 @@ class ReportAssets(Report):
         self._add_margins()
 
 
+class ReportReturns(Report):
+
+    def __init__(self, from_date, to_date):
+        super(ReportReturns, self).__init__(from_date=from_date, to_date=to_date, period='A', glevel=1)
+        # self.from_date = from_date
+        # self.to_date = to_date
+        # self.period = period
+        # self.account_types = None
+
+        self.report_name = _('Return on assets (per annum)')
+
+        # self.account_types = GNUCashBook.ALL_ASSET_TYPES
+
+    def receive_data(self, raw_report:GNUCashData):
+        self.df = raw_report.yield_calc(from_date=self.from_date, to_date=self.to_date)
