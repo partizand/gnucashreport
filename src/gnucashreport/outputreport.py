@@ -1,12 +1,13 @@
-
-
+from gnucashreport.buildreport import BuildReport
 from gnucashreport.report import Report, ReportInflation
 from gnucashreport.reportset import ReportSet
 
-
-outputreportxls = OutputReportXLSX(book_file)
-outputreportxls.fill_all()
-outputreportxls.write(xls_file)
+builder = BuildReport(GnuCashData(filename))
+reportset = builder.get_reportset_all()
+output_xls = OutputXLS(reportset)
+output_xls.write(filename)
+output_hml = OutputHtml(reportset)
+output.write(folder)
 
 # Прочитать данные Book
 # Построить ReportSet по мин и макc дате из book
