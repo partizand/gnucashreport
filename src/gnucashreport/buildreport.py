@@ -54,7 +54,7 @@ class BuildReport:
         report = Report(report_name=report_name, report_type=Report.Type.RETURNS, df_data=df_data, period='', margins=None)
         return report
 
-    def get_report_income(self, from_date, to_date, period, glevel=1):
+    def get_report_income(self, from_date, to_date, period, glevel):
 
         margins = Margins()
         margins.set_for_turnover()
@@ -62,13 +62,13 @@ class BuildReport:
         report_name = _('Income')
 
         df_data = self._raw_data.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-                                                    account_type=GNUCashBook.INCOME, glevel=glevel)
+                                                    account_type=GNUCashBook.INCOME, margins=margins, glevel=glevel)
 
         report = Report(report_name=report_name, report_type=Report.Type.INCOME, df_data=df_data, period=period, margins=margins)
 
         return report
 
-    def get_report_expense(self, from_date, to_date, period, glevel=1):
+    def get_report_expense(self, from_date, to_date, period, glevel):
 
         margins = Margins()
         margins.set_for_turnover()
@@ -87,7 +87,7 @@ class BuildReport:
 
         return report
 
-    def get_report_profit(self, from_date, to_date, period, glevel=1):
+    def get_report_profit(self, from_date, to_date, period, glevel):
 
         margins = Margins()
         margins.set_for_profit()
@@ -104,7 +104,7 @@ class BuildReport:
 
         return report
 
-    def get_report_assets(self, from_date, to_date, period, glevel=1):
+    def get_report_assets(self, from_date, to_date, period, glevel):
         margins = Margins()
         margins.set_for_balances()
         report_name = _('Assets')
@@ -172,7 +172,7 @@ class BuildReport:
         report = self.get_report_assets(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
         reportset.add_report(report)
         # Loans
-        report = self.get_report_assets(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        report = self.get_report_assets(from_date=from_date, to_date=to_date, period=period, glevel=0)
         if not report.is_data_empty(): # May be add this rule to add_report function of reportset?
             reportset.add_report(report)
         # equity
