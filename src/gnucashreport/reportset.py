@@ -1,6 +1,6 @@
 # import pandas
 
-from gnucashreport.report import Report, ReportInflation, ReportReturns
+# from gnucashreport.report import Report, ReportInflation, ReportReturns
 
 from gnucashreport import utils
 
