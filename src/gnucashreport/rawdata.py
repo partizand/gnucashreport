@@ -153,7 +153,7 @@ class RawData:
         self.df_transactions = self.book.df_transactions
         self.df_splits = self.book.df_splits
 
-        # self.root_account_guid = self.book.root_account_guid
+        self.root_account_guid = self.book.root_account_guid
 
         self._after_read()
 

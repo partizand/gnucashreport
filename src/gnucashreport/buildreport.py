@@ -142,7 +142,7 @@ class BuildReport:
 
     def get_report_equity(self, from_date, to_date, period):
         margins = Margins()
-        margins.set_for_balances()
+        margins.set_for_equity()
         report_name = _('Equity')
 
         df_data = self._raw_data.equity_by_period(from_date=from_date,

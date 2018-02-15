@@ -74,7 +74,7 @@ class GNUCashBook:
         self._book_type = None
         self._book_filename = None
 
-        # self.root_account_guid = None
+        self.root_account_guid = None
         self._splits = []
 
         if filename:
@@ -108,7 +108,7 @@ class GNUCashBook:
             # self._get_guid_rootaccount()
             self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
 
-        # self._get_guid_rootaccount()
+        self._get_guid_rootaccount()
 
 
         self._book_filename = os.path.basename(filename)
@@ -231,14 +231,14 @@ class GNUCashBook:
 
         # self._get_guid_rootaccount()
 
-    # def _get_guid_rootaccount(self):
-    #     """
-    #     Get root account guid from df_accounts
-    #     :return:
-    #     """
-    #     df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
-    #                                (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
-    #     self.root_account_guid = df_root.index.values[0]
+    def _get_guid_rootaccount(self):
+        """
+        Get root account guid from df_accounts
+        :return:
+        """
+        df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
+                                   (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
+        self.root_account_guid = df_root.index.values[0]
 
     #====================================================================
     #  XML Book
