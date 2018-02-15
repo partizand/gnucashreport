@@ -149,6 +149,18 @@ class GnuCashBook_Test(unittest.TestCase):
                 pie_splits = piebook.splits
                 self.assertEqual(len(book.df_splits), len(pie_splits), 'Number splits compare with piecash')
 
+    def test_transactions_count(self):
+        for book, piebook in self.test_array:
+            with self.subTest(book):
+                pie_transactions = piebook.transactions
+                self.assertEqual(len(book.df_transactions), len(pie_transactions), 'Number transactions compare with piecash')
+
+    def test_accounts_count(self):
+        for book, piebook in self.test_array:
+            with self.subTest(book):
+                pie_accounts = piebook.accounts
+                self.assertGreaterEqual(len(book.df_accounts), len(pie_accounts), 'Number accounts compare with piecash')
+
     #----------------------------------------------------------------------------------------------------
     def dataframe_fields_control(self, df, etalon_fields, df_name):
         """
