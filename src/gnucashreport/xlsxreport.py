@@ -7,6 +7,9 @@ from decimal import Decimal
 import xlsxwriter
 from xlsxwriter.utility import xl_col_to_name
 
+from gnucashreport.formatreport import get_format_xlsx
+from gnucashreport.reportset import ReportSet
+
 
 class XLSXReport:
 
@@ -30,6 +33,17 @@ class XLSXReport:
         self._charts = []
         if sheet_name:
             self.add_sheet(sheet_name=sheet_name, start_row=start_row)
+
+    def add_reportset(self, reportset:ReportSet):
+        # Перебрать reportset и вывести отчеты
+        sheet_names = reportset.get_sheet_names()
+        for sheet_name in sheet_names:
+            reports = reportset.get_reports(sheet_name)
+            self.add_sheet(sheet_name)
+            for report in reports:
+                format_xlsx = get_format_xlsx(report, self.workbook)
+                self.add_report(report.df_data, format_xlsx, addchart=report.chart_type)
+                self.add_empty_row()
 
     def close(self):
         """
@@ -55,8 +69,6 @@ class XLSXReport:
         self._charts = []
 
     def add_report(self, report: pandas.DataFrame, format_report, start_row=None, addchart=None):
-
-
 
         chart_prop = self.add_dataframe(report, format_report, startrow=start_row, startcol=0)
 
