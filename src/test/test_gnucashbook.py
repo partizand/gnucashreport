@@ -3,7 +3,7 @@ import unittest
 import os
 
 from gnucashreport.gnucashbook import GNUCashBook
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 import gnucashreport.cols as cols
 from test.basetest import BaseTest
 

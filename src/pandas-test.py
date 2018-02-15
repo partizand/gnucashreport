@@ -8,7 +8,7 @@ from decimal import Decimal
 from datetime import datetime
 
 
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 
 line1 = [{'date': '01.01.2016', 'value': 10, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
          {'date': '02.01.2016', 'value': 50, 'account': 'Активы:Текущие:Карта', 'guid': '10'},
@@ -80,7 +80,7 @@ print(type(df.loc[0]['dec']))
 
 exit()
 
-rep = GNUCashData()
+rep = RawData()
 
 # Исходный DataFrame
 df = pandas.DataFrame(line1)
@@ -175,7 +175,7 @@ print(df_total)
 exit()
 
 # df = df.drop(['date', 'account', 'guid'], axis=1)
-df_t = GNUCashData.add_row_total(df)
+df_t = RawData.add_row_total(df)
 print(df_t)
 exit()
 

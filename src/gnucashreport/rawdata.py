@@ -34,10 +34,10 @@ MARKER_NO_INVEST = '%no_invest%'
 MARKER_INVEST = '%invest%'
 
 
-class GNUCashData:
+class RawData:
     """
     Low level DataFrame implementation of GnuCash database tables for build reports
-    Basic reports
+    function returns DataFrames with data, without totals and styling
 
     """
 

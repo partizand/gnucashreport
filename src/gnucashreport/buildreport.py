@@ -1,5 +1,5 @@
 from gnucashreport.gnucashbook import GNUCashBook
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 from gnucashreport.margins import Margins
 from gnucashreport.report import Report
 from gnucashreport import utils
@@ -8,7 +8,7 @@ from gnucashreport.reportset import ReportSet
 
 class BuildReport:
     """Build high level reports"""
-    def __init__(self, raw_data: GNUCashData):
+    def __init__(self, raw_data: RawData):
         self._raw_data = raw_data
 
     def get_report_inflation(self, from_date=None, to_date=None, period='A', glevel=1, cumulative=False):

@@ -5,7 +5,7 @@ import os
 import pandas
 
 from gnucashreport.gnucashbook import GNUCashBook
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 
 from pandas.util.testing import assert_frame_equal
 
@@ -50,7 +50,7 @@ class ReportTest(unittest.TestCase):
     PICKLE_INFLATION = 'inflation.pkl'
     PICKLE_INFLATION_M = 'inflation-2.pkl'
 
-    # rep = GNUCashData()
+    # rep = RawData()
 
     @classmethod
     def setUpClass(cls):
@@ -59,8 +59,8 @@ class ReportTest(unittest.TestCase):
         # cls.BOOKFILE_SQL = os.path.join(cls.DIR_TESTDATA, cls.BOOKFILE_SQL)
         cls.BOOKFILE_SQL = os.path.join(cls.DIR_TESTDATA, cls.BOOKFILE_SQL)
 
-        # gcrep_xml = GNUCashData()
-        # gcrep_sql = GNUCashData()
+        # gcrep_xml = RawData()
+        # gcrep_sql = RawData()
         # base_path = os.path.dirname(os.path.realpath(__file__))
         # xml_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_XML)
         # sql_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_SQL)
@@ -68,14 +68,14 @@ class ReportTest(unittest.TestCase):
         # gcrep_sql.open_book_file(cls.BOOKFILE_SQL)
 
         # cls.test_array = [gcrep_xml, gcrep_sql]
-        cls.test_array = [GNUCashData(cls.BOOKFILE_XML), GNUCashData(cls.BOOKFILE_SQL)]
+        cls.test_array = [RawData(cls.BOOKFILE_XML), RawData(cls.BOOKFILE_SQL)]
 
     #--------------------
     # base functions
 
     # @classmethod
     # def _get_test_array(cls):
-    #     return [GNUCashData(cls.BOOKFILE_XML), GNUCashData(cls.BOOKFILE_SQL)]
+    #     return [RawData(cls.BOOKFILE_XML), RawData(cls.BOOKFILE_SQL)]
 
     @classmethod
     def save_testdata(cls):
@@ -89,7 +89,7 @@ class ReportTest(unittest.TestCase):
         # cls.rep.open_book_file(TestInfo.BOOKFILE_SQL)
 
         # test_array = cls._get_test_array()
-        rep = GNUCashData(cls.BOOKFILE_SQL)
+        rep = RawData(cls.BOOKFILE_SQL)
 
         # save reports
 

@@ -3,7 +3,7 @@ import xlsxwriter.worksheet
 # from gnucashreport import utils
 from gnucashreport.gnucashbook import GNUCashBook
 from gnucashreport.margins import Margins
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 # import gnucashreport.const as const
 from gnucashreport.report import Report
 
@@ -239,7 +239,7 @@ class FormatProfit(_FormatBalance):
                                                 'num_format': MONEY_FORMAT})
         self.margins = Margins()
         self.margins.set_for_profit()
-        # self.account_types = GNUCashData.EXPENSE
+        # self.account_types = RawData.EXPENSE
 
 
 class FormatAssets(_FormatBalance):
@@ -302,6 +302,6 @@ class FormatEquity(_FormatBalance):
         self.margins = Margins()
         self.margins.set_for_balances()
         self.margins.total_row = False
-        # self.account_types = [GNUCashData.LIABILITY]
+        # self.account_types = [RawData.LIABILITY]
 
 

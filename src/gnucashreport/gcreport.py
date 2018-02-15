@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from gnucashreport import formatreport, utils
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 from gnucashreport.xlsxreport import XLSXReport
 
 
@@ -14,7 +14,7 @@ from gnucashreport.xlsxreport import XLSXReport
 # COLOR_ORANGE_LIGHT = '#FDE9D9'
 
 
-class GCReport(GNUCashData):
+class GCReport(RawData):
     """
     High level reports from GnuCash to Excel
 
@@ -50,12 +50,12 @@ class GCReport(GNUCashData):
     #
     #     # Income
     #     df_income = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-    #                                         account_type=GNUCashData.INCOME,
+    #                                         account_type=RawData.INCOME,
     #                                         glevel=glevel, margins=margins)
     #
     #     # expense
     #     df_expense = self.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
-    #                                          account_type=GNUCashData.EXPENSE,
+    #                                          account_type=RawData.EXPENSE,
     #                                          glevel=glevel, margins=margins)
     #
     #     # profit

@@ -3,7 +3,7 @@ import pandas
 # import abc
 
 from gnucashreport.gnucashbook import GNUCashBook
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 from gnucashreport.margins import Margins
 
 
@@ -73,7 +73,7 @@ class Report:
             return False
 
 #     @abc.abstractmethod
-#     def receive_data(self, raw_report:GNUCashData):
+#     def receive_data(self, raw_report:RawData):
 #         pass
 #
 #     def add_chart(self, chart_type):
@@ -154,7 +154,7 @@ class Report:
 #         else:
 #             self.report_name = _('Inflation annual')
 #
-#     def receive_data(self, raw_report:GNUCashData):
+#     def receive_data(self, raw_report:RawData):
 #         self.df = raw_report.inflation_by_period(from_date=self.from_date, to_date=self.to_date, period=self.period,
 #                                         cumulative=self.cumulative, glevel=self.glevel)
 #         self._add_margins()
@@ -171,7 +171,7 @@ class Report:
 #         self.margins.set_for_balances()
 #         self.account_types = GNUCashBook.ALL_ASSET_TYPES
 #
-#     def receive_data(self, raw_report:GNUCashData):
+#     def receive_data(self, raw_report:RawData):
 #         self.df = raw_report.balance_by_period(from_date=self.from_date,
 #                                              to_date=self.to_date,
 #                                              period=self.period,
@@ -194,5 +194,5 @@ class Report:
 #
 #         # self.account_types = GNUCashBook.ALL_ASSET_TYPES
 #
-#     def receive_data(self, raw_report:GNUCashData):
+#     def receive_data(self, raw_report:RawData):
 #         self.df = raw_report.yield_calc(from_date=self.from_date, to_date=self.to_date)

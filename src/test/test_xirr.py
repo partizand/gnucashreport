@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import datetime
 
-import gnucashreport.gnucashdata
+import gnucashreport.rawdata
 import gnucashreport.cols as cols
 # from gnucashreport.utils import dataframe_to_excel
 from gnucashreport.utils import *
@@ -62,8 +62,8 @@ def get_testaccounts(gcrep):
     return test_datas
 
 
-# gcrep_xml = gnucashreport.gnucashdata.GNUCashData()
-# gcrep_sql = gnucashreport.gnucashdata.GNUCashData()
+# gcrep_xml = gnucashreport.gnucashdata.RawData()
+# gcrep_sql = gnucashreport.gnucashdata.RawData()
 # base_path = os.path.dirname(os.path.realpath(__file__))
 # xml_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_XML)
 # sql_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_SQL)
@@ -93,15 +93,15 @@ class XIRRTest(unittest.TestCase):
     Тип доходности можно посмотреть константах сверху этого файла 
     """
 
-    # gcrep_xml = gnucashreport.gnucashdata.GNUCashData()
-    # gcrep_sql = gnucashreport.gnucashdata.GNUCashData()
+    # gcrep_xml = gnucashreport.gnucashdata.RawData()
+    # gcrep_sql = gnucashreport.gnucashdata.RawData()
     # test_datas = []
 
     @classmethod
     def setUpClass(cls):
 
-        gcrep_xml = gnucashreport.gnucashdata.GNUCashData()
-        gcrep_sql = gnucashreport.gnucashdata.GNUCashData()
+        gcrep_xml = gnucashreport.rawdata.RawData()
+        gcrep_sql = gnucashreport.rawdata.RawData()
         # base_path = os.path.dirname(os.path.realpath(__file__))
         # xml_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_XML)
         # sql_book = os.path.join(base_path, TestInfo.GNUCASH_TESTBASE_SQL)

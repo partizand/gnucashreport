@@ -5,7 +5,7 @@ from datetime import date
 import pandas
 from pandas.util.testing import assert_frame_equal
 
-from gnucashreport.gnucashdata import GNUCashData
+from gnucashreport.rawdata import RawData
 from gnucashreport.gnucashbook import GNUCashBook
 
 
@@ -31,11 +31,11 @@ class BaseTest(object):
     test_level2_suffix = '-2'
     # end test info--------------------------------------------
 
-    # rep = GNUCashData()
+    # rep = RawData()
 
     test_name = 'abstract_test'
 
-    # dir_testdata = GNUCashData.dir_testdata
+    # dir_testdata = RawData.dir_testdata
 
     # pickle_prices = 'prices.pkl'
     # pickle_splits = 'splits.pkl'
@@ -43,11 +43,11 @@ class BaseTest(object):
     # pickle_tr = 'transactions.pkl'
     # pickle_commodities = 'commodities.pkl'
 
-    pickle_prices = GNUCashData.pickle_prices  # 'prices.pkl'
-    pickle_splits = GNUCashData.pickle_splits  # 'splits.pkl'
-    pickle_accounts = GNUCashData.pickle_accounts  # 'accounts.pkl'
-    pickle_tr = GNUCashData.pickle_tr  # 'transactions.pkl'
-    pickle_commodities = GNUCashData.pickle_commodities  # 'commodities.pkl'
+    pickle_prices = RawData.pickle_prices  # 'prices.pkl'
+    pickle_splits = RawData.pickle_splits  # 'splits.pkl'
+    pickle_accounts = RawData.pickle_accounts  # 'accounts.pkl'
+    pickle_tr = RawData.pickle_tr  # 'transactions.pkl'
+    pickle_commodities = RawData.pickle_commodities  # 'commodities.pkl'
 
     pickle_assets = 'assets.pkl'
     pickle_loans = 'loans.pkl'
@@ -61,7 +61,7 @@ class BaseTest(object):
 
     @classmethod
     def set_locale(cls):
-        GNUCashData.set_locale()
+        RawData.set_locale()
 
 
     # @classmethod
