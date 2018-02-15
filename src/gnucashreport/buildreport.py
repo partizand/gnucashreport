@@ -35,7 +35,6 @@ class BuildReport:
         margins.set_for_inflation(cumulative)
 
         report = Report(report_name=report_name, report_type=report_type, df_data=df_data, period=period, margins=margins)
-
         return report
 
     def get_reportset_inflation(self, sheet_name, glevel):
@@ -228,8 +227,9 @@ class BuildReport:
             reportset.add_reportset(reportset_sheet)
 
         # ROE
+        sheet_name = _('Returns')
         report = self.get_report_return()
-        reportset.add_sheet(sheet_name=_('Returns'))
+        reportset.add_sheet(sheet_name=sheet_name)
         reportset.add_report(report)
 
         return reportset
