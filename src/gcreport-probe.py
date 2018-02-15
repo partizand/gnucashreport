@@ -1,38 +1,25 @@
-import argparse
 import datetime
-import os
-import time
-import pandas
-from decimal import Decimal
 
-from dateutil import parser, tz
-
-import re
-
-from gnucashreport import formatreport
-from gnucashreport.formatreport import _FormatBalance, FormatIncome, FormatAssets
+from gnucashreport.buildreport import BuildReport
 from gnucashreport.rawdata import RawData
-from xlsxwriter.utility import xl_rowcol_to_cell
-
-# from gnucashreport.gnucashreport import GNUCashReport
-import gnucashreport
-from gnucashreport.margins import Margins
-# from gnucashreport.xlsxreport import OpenpyxlReport
-from gnucashreport.utils import dataframe_to_excel
 from gnucashreport.xlsxreport import XLSXReport
-
-
-
 
 bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
 bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
 
 
-from_date = datetime.date(2015, 1, 1)
-
-to_date = datetime.date(2015, 12, 31)
+# from_date = datetime.date(2015, 1, 1)
+# to_date = datetime.date(2015, 12, 31)
 
 
 out_filename = 'v:/tables/ex-test.xlsx'
-gcrep = gnucashreport.GCReport()
+
+# BuildReports
+raw_data = RawData(bookfile_sql)
+builder = BuildReport(raw_data)
+reportset = builder.get_reportset_all()
+outputer_excel = XLSXReport(out_filename)
+outputer_excel.add_reportset(reportset)
+outputer_excel.close()
+
 
