@@ -67,7 +67,8 @@ class Report:
         Return true if all values in df_data is zeros
         :return: True if empty, false if has non zeros values
         """
-        if self.df_data:
+
+        if self.df_data is not None:
             return not all((self.df_data == 0).all())
         else:
             return False
