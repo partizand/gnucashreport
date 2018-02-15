@@ -74,7 +74,7 @@ class GNUCashBook:
         self._book_type = None
         self._book_filename = None
 
-        self.root_account_guid = None
+        # self.root_account_guid = None
         self._splits = []
 
         if filename:
@@ -105,9 +105,10 @@ class GNUCashBook:
                 self._book_type = 'xml'
 
             #  Get fullname of accounts
+            # self._get_guid_rootaccount()
             self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
 
-        self._get_guid_rootaccount()
+        # self._get_guid_rootaccount()
 
 
         self._book_filename = os.path.basename(filename)
@@ -121,12 +122,15 @@ class GNUCashBook:
         :param account_guid:
         :return:
         """
-        if account_guid == self.root_account_guid:
+        account_type = self.df_accounts.loc[account_guid][cols.ACCOUNT_TYPE]
+        if account_type == self.ROOT:
             return 'root'
         fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
         parent_guid = self.df_accounts.loc[account_guid][cols.PARENT_GUID]
+
         if parent_guid in self.df_accounts.index:
-            if parent_guid == self.root_account_guid:
+            parent_type = self.df_accounts.loc[parent_guid][cols.ACCOUNT_TYPE]
+            if parent_type == self.ROOT:
                 return fullname
             else:
                 return self._get_fullname_account(parent_guid) + ':' + fullname
@@ -227,14 +231,14 @@ class GNUCashBook:
 
         # self._get_guid_rootaccount()
 
-    def _get_guid_rootaccount(self):
-        """
-        Get root account guid from df_accounts
-        :return:
-        """
-        df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
-                                   (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
-        self.root_account_guid = df_root.index.values[0]
+    # def _get_guid_rootaccount(self):
+    #     """
+    #     Get root account guid from df_accounts
+    #     :return:
+    #     """
+    #     df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
+    #                                (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
+    #     self.root_account_guid = df_root.index.values[0]
 
     #====================================================================
     #  XML Book
