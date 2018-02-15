@@ -1,5 +1,7 @@
 import datetime
 
+import piecash
+
 from gnucashreport.buildreport import BuildReport
 from gnucashreport.rawdata import RawData
 from gnucashreport.xlsxreport import XLSXReport
@@ -14,6 +16,11 @@ bookfile_xml = 'v:/gnucash-base/xml/GnuCash-base.gnucash'
 
 out_filename = 'v:/tables/ex-test.xlsx'
 
+pie_book = piecash.open_book(bookfile_sql)
+
+splits = pie_book.splits
+
+exit()
 # BuildReports
 raw_data = RawData(bookfile_sql)
 builder = BuildReport(raw_data)
