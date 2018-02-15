@@ -5,6 +5,7 @@ from gnucashreport.gnucashbook import GNUCashBook
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashdata import GNUCashData
 # import gnucashreport.const as const
+from gnucashreport.report import Report
 
 COLOR_GREEN = '#92D050'
 COLOR_GREEN_DARK = '#00B050'
@@ -43,6 +44,35 @@ def _dateformat_from_period(period: str):
         if period.upper() == 'Q':
             dateformat = MONTHDATE_FORMAT # 'Q YY'  # ???
     return dateformat
+
+
+def get_format_xlsx(report:Report, workbook):
+    """
+    Returns excel format from report
+    :param report:
+    :param workbook:
+    :return: Format for excel
+    """
+    format_xlsx = None
+    if report.report_type == Report.Type.INCOME:
+        format_xlsx = FormatIncome(workbook=workbook, period=report.period)
+    elif report.report_type == Report.Type.EXPENSE:
+        format_xlsx = FormatExpense(workbook=workbook, period=report.period)
+    elif report.report_type == Report.Type.PROFIT:
+        format_xlsx = FormatProfit(workbook=workbook, period=report.period)
+    elif report.report_type == Report.Type.ASSETS:
+        format_xlsx = FormatAssets(workbook=workbook, period=report.period)
+    elif report.report_type == Report.Type.LOANS:
+        format_xlsx = FormatLoans(workbook=workbook, period=report.period)
+    elif report.report_type == Report.Type.EQUITY:
+        format_xlsx = FormatEquity(workbook=workbook, period=report.period)
+    elif report.report_type == Report.Type.RETURNS:
+        format_xlsx = FormatReturns(workbook=workbook)
+    elif report.report_type == Report.Type.INFLATION_ANNUAL:
+        format_xlsx = FormatInflation(workbook=workbook, cumulative=False)
+    elif report.report_type == Report.Type.INFLATION_CUM:
+        format_xlsx = FormatInflation(workbook=workbook, cumulative=True)
+    return format_xlsx
 
 
 class _FormatReport:
@@ -137,7 +167,7 @@ class FormatInflation(_FormatPercent):
 
 class FormatReturns(_FormatPercent):
 
-    def __init__(self, workbook: xlsxwriter.workbook, from_date, to_date):
+    def __init__(self, workbook: xlsxwriter.workbook):
         super(FormatReturns, self).__init__(workbook)
         self.format_index = self._format_bold
         self.report_name = _('Return on assets (per annum)')
