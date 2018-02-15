@@ -7,19 +7,6 @@ from decimal import Decimal
 import xlsxwriter
 from xlsxwriter.utility import xl_col_to_name
 
-# from gnucashreport import const
-from gnucashreport.margins import Margins
-# from gnucashreport.formatreport import FormatReport, FormatBalance, FormatIncome
-# from gnucashreport.tablepoints import TablePoints
-
-# from gnucashreport.utils import dateformat_from_period
-
-# COLOR_GREEN = '#92D050'
-# COLOR_GREEN_DARK = '#00B050'
-# COLOR_BLUE = '#00B0F0'
-# COLOR_YELLOW = '#FFFF00'
-# COLOR_ORANGE_LIGHT = '#FDE9D9'
-
 
 class XLSXReport:
 
