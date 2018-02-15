@@ -116,7 +116,7 @@ class GnuCashBook_Test(unittest.TestCase):
     def test_commodities_index(self):
         for book in self.test_array:
             with self.subTest(book):
-                self.assertEqual(book.df_commodities.index.name, cols.GUID,'df_commodities index is not GUID')
+                self.assertEqual(book.df_commodities.index.name, cols.GUID, 'df_commodities index is not GUID')
 
     def df_notempty(self, df, name_df):
         for book in self.test_array:
@@ -130,6 +130,12 @@ class GnuCashBook_Test(unittest.TestCase):
             with self.subTest(book):
                 self.assertIsNotNone(book.root_account_guid, 'root_account_guid is not none')
                 self.assertNotEqual(book.root_account_guid, '', 'root_account_guid is not empty')
+
+    def test_account_fullname(self):
+        for book in self.test_array:
+            with self.subTest(book):
+                df_error = book.df_accounts[book.df_accounts[cols.FULLNAME].str.contains("error")]
+                self.assertEqual(len(df_error), 0, 'Fullnames of account contains error string')
 
     def dataframe_fields_control(self, df, etalon_fields, df_name):
         """
