@@ -7,18 +7,39 @@ from gnucashreport.gnucashdata import GNUCashData
 from gnucashreport.margins import Margins
 
 
+# class ReportType:
+#     # report types
+#     INFLATION_ANNUAL = 'inflation_annual'
+#     INFLATION_CUM = 'inflation_cum'
+#     RETURNS = 'returns'
+#     INCOME = 'income'
+#     EXPENSE = 'expense'
+#     PROFIT = 'profit'
+#     ASSETS = 'assets'
+#     LOANS = 'loans'
+#     EQUITY = 'equity'
+
+# class ValueFormat:
+#     PERCENT = 'percent'
+#     CURRENCY = 'currency'
+
 class Report:
     # report types
-    # INFLATION = 'inflation'
-    # RETURNS = 'returns'
-    # INCOME = 'income'
-    # EXPENSE = 'expense'
-    # PROFIT = 'profit'
-    # ASSETS = 'assets'
-    # LOANS = 'loans'
-    # EQUITY = 'equity'
+    class Type:
+        INFLATION_ANNUAL = 'inflation_annual'
+        INFLATION_CUM = 'inflation_cum'
+        RETURNS = 'returns'
+        INCOME = 'income'
+        EXPENSE = 'expense'
+        PROFIT = 'profit'
+        ASSETS = 'assets'
+        LOANS = 'loans'
+        EQUITY = 'equity'
 
-    def __init__(self, report_name, df_data, period, margins):
+    class ChartType:
+        Line = 'line'
+
+    def __init__(self, report_name, report_type, df_data, period, margins):
         # self.rep_type = rep_type
         self.df = df_data
         # # low level report info
@@ -30,9 +51,15 @@ class Report:
         # self.chart_type = None
         # # format
         self.report_name = report_name
+        self.report_type = report_type
+        # self.value_format = value_format
         # empty margins
         self.margins = margins
+        self.chart_type = None
         # self._format()
+
+    def add_chart(self, chart_type: ChartType):
+        self.chart_type = chart_type
 
 #     @abc.abstractmethod
 #     def receive_data(self, raw_report:GNUCashData):

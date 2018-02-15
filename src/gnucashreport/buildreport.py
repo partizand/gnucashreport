@@ -7,7 +7,7 @@ from gnucashreport.reportset import ReportSet
 
 
 class BuildReport:
-
+    """Build high level reports"""
     def __init__(self, raw_data: GNUCashData):
         self._raw_data = raw_data
 
@@ -26,14 +26,15 @@ class BuildReport:
 
         if cumulative:
             report_name = _('Inflation cumulative')
+            report_type = Report.Type.INFLATION_CUM
         else:
             report_name = _('Inflation annual')
+            report_type = Report.Type.INFLATION_ANNUAL
 
         margins = Margins()
         margins.set_for_inflation(cumulative)
 
-
-        report = Report(report_name=report_name, df_data=df_data, period=period, margins=margins)
+        report = Report(report_name=report_name, report_type=report_type, df_data=df_data, period=period, margins=margins)
 
         return report
 
@@ -41,15 +42,17 @@ class BuildReport:
         reportset = ReportSet()
         reportset.add_sheet(sheet_name=sheet_name)
         report = self.get_report_inflation(glevel=glevel, cumulative=False)
+        report.add_chart(Report.ChartType.Line)
         reportset.add_report(report)
         report = self.get_report_inflation(glevel=glevel, cumulative=True)
+        report.add_chart(Report.ChartType.Line)
         reportset.add_report(report)
         return reportset
 
     def get_report_return(self, from_date=None, to_date=None):
         df_data = self._raw_data.yield_calc(from_date=from_date, to_date=to_date)
         report_name = _('Return on assets (per annum)')
-        report = Report(report_name=report_name, df_data=df_data, period='', margins=None)
+        report = Report(report_name=report_name, report_type=Report.Type.RETURNS, df_data=df_data, period='', margins=None)
         return report
 
     def get_report_income(self, from_date, to_date, period, glevel=1):
@@ -62,7 +65,94 @@ class BuildReport:
         df_data = self._raw_data.turnover_by_period(from_date=from_date, to_date=to_date, period=period,
                                                     account_type=GNUCashBook.INCOME, glevel=glevel)
 
-        report = Report(report_name=report_name, df_data=df_data, period=period, margins=margins)
+        report = Report(report_name=report_name, report_type=Report.Type.INCOME, df_data=df_data, period=period, margins=margins)
+
+        return report
+
+    def get_report_expense(self, from_date, to_date, period, glevel=1):
+
+        margins = Margins()
+        margins.set_for_turnover()
+        report_name = _('Expense')
+        account_type = GNUCashBook.EXPENSE
+
+        df_data = self._raw_data.turnover_by_period(from_date=from_date,
+                                             to_date=to_date,
+                                             period=period,
+                                             account_type=account_type,
+                                             margins=margins,
+                                             glevel=glevel)
+
+        report = Report(report_name=report_name, report_type=Report.Type.EXPENSE, df_data=df_data, period=period,
+                        margins=margins)
+
+        return report
+
+    def get_report_profit(self, from_date, to_date, period, glevel=1):
+
+        margins = Margins()
+        margins.set_for_profit()
+        report_name = _('Profit')
+
+        df_data = self._raw_data.profit_by_period(from_date=from_date,
+                                             to_date=to_date,
+                                             period=period,
+                                             margins=margins,
+                                           glevel=glevel)
+
+        report = Report(report_name=report_name, report_type=Report.Type.PROFIT, df_data=df_data, period=period,
+                        margins=margins)
+
+        return report
+
+    def get_report_assets(self, from_date, to_date, period, glevel=1):
+        margins = Margins()
+        margins.set_for_balances()
+        report_name = _('Assets')
+        account_type = GNUCashBook.ALL_ASSET_TYPES
+
+        df_data = self._raw_data.balance_by_period(from_date=from_date,
+                                             to_date=to_date,
+                                             period=period,
+                                             account_types=account_type,
+                                             margins=margins,
+                                             glevel=glevel)
+
+        report = Report(report_name=report_name, report_type=Report.Type.ASSETS, df_data=df_data, period=period,
+                        margins=margins)
+
+        return report
+
+    def get_report_loans(self, from_date, to_date, period, glevel=1):
+        margins = Margins()
+        margins.set_for_balances()
+        report_name = _('Loans')
+        account_type = [GNUCashBook.LIABILITY]
+
+        df_data = self._raw_data.balance_by_period(from_date=from_date,
+                                             to_date=to_date,
+                                             period=period,
+                                             account_types=account_type,
+                                             margins=margins,
+                                            glevel=glevel)
+
+        report = Report(report_name=report_name, report_type=Report.Type.LOANS, df_data=df_data, period=period,
+                        margins=margins)
+
+        return report
+
+    def get_report_equity(self, from_date, to_date, period):
+        margins = Margins()
+        margins.set_for_balances()
+        report_name = _('Equity')
+
+        df_data = self._raw_data.equity_by_period(from_date=from_date,
+                                             to_date=to_date,
+                                             period=period,
+                                             margins=margins)
+
+        report = Report(report_name=report_name, report_type=Report.Type.EQUITY, df_data=df_data, period=period,
+                        margins=margins)
 
         return report
 
