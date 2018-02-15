@@ -38,10 +38,11 @@ class Report:
 
     class ChartType:
         Line = 'line'
+        Column = 'column'
 
     def __init__(self, report_name, report_type, df_data, period, margins):
         # self.rep_type = rep_type
-        self.df = df_data
+        self.df_data = df_data
         # # low level report info
         # self.from_date = from_date
         # self.to_date = to_date
@@ -60,6 +61,16 @@ class Report:
 
     def add_chart(self, chart_type: ChartType):
         self.chart_type = chart_type
+
+    def is_data_empty(self):
+        """
+        Return true if all values in df_data is zeros
+        :return: True if empty, false if has non zeros values
+        """
+        if self.df_data:
+            return not all((self.df_data == 0).all())
+        else:
+            return False
 
 #     @abc.abstractmethod
 #     def receive_data(self, raw_report:GNUCashData):

@@ -160,8 +160,28 @@ class BuildReport:
         reportset = ReportSet()
 
         reportset.add_sheet(sheet_name=sheet_name)
-
+        # Income
         report = self.get_report_income(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        reportset.add_report(report)
+        # Expense
+        report = self.get_report_expense(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        reportset.add_report(report)
+        # Profit
+        report = self.get_report_profit(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        reportset.add_report(report)
+        # Assets
+        report = self.get_report_assets(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        reportset.add_report(report)
+        # Loans
+        report = self.get_report_assets(from_date=from_date, to_date=to_date, period=period, glevel=glevel)
+        if not report.is_data_empty(): # May be add this rule to add_report function of reportset?
+            reportset.add_report(report)
+        # equity
+        report = self.get_report_equity(from_date=from_date, to_date=to_date, period=period)
+        report.add_chart(Report.ChartType.Column)
+        reportset.add_report(report)
+        # Returns
+        report = self.get_report_return(from_date=from_date, to_date=to_date)
         reportset.add_report(report)
 
         return reportset
