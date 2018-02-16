@@ -22,20 +22,19 @@ class ReportSet:
 
     >>> reports = ReportSet()
     >>> reports.add_sheet('Sheet1')
-    >>> reports._sheets
-    {'Sheet1': []}
     >>> reports.add_report('report1')
-    >>> reports._sheets
-    {'Sheet1': ['report1']}
     >>> reports.add_report('report2')
     >>> reports.add_sheet('sheet2')
     >>> reports.add_report('report1')
     >>> reports.add_report('report2')
-    >>> reports._sheets
-    {'Sheet1': ['report1', 'report2'], 'sheet2': ['report1', 'report2']}
     >>> reports.add_report('report3', sheet_name='Sheet1')
-    >>> reports._sheets
-    {'Sheet1': ['report1', 'report2', 'report3'], 'sheet2': ['report1', 'report2']}
+    >>> reports.get_sheet_names()
+    ['Sheet1', 'sheet2']
+    >>> reports.get_reports('Sheet1')
+    ['report1', 'report2', 'report3']
+    >>> reports.get_reports('sheet2')
+    ['report1', 'report2']
+
     """
 
     def __init__(self):
