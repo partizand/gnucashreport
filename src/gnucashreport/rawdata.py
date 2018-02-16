@@ -1760,30 +1760,30 @@ class RawData:
 
         return group
 
-    def inflation(self, from_year=None, to_year=None, glevel=1, cumulative=False):
-        """
-        Возвращает инфляцию по годам
-        :param from_year: 
-        :param to_year: 
-        :param glevel: 
-        :param cumulative: 
-        :return: 
-        """
-        start_year, end_year = utils.complete_years(self.min_date, self.max_date)
-        if not from_year:
-            from_year = start_year
-        if not to_year:
-            to_year = end_year
-        if from_year < start_year:
-            raise RuntimeError('Start year wrong!')
-        if to_year > end_year:
-            raise RuntimeError('End year wrong!')
-
-        from_date = date(from_year, 1, 1)
-        to_date = date(to_year, 12, 31)
-
-        return self.inflation_by_period(from_date=from_date, to_date=to_date, period='A',
-                                        cumulative=cumulative, glevel=glevel)
+    # def inflation(self, from_year=None, to_year=None, glevel=1, cumulative=False):
+    #     """
+    #     Возвращает инфляцию по годам
+    #     :param from_year:
+    #     :param to_year:
+    #     :param glevel:
+    #     :param cumulative:
+    #     :return:
+    #     """
+    #     start_year, end_year = utils.complete_years(self.min_date, self.max_date)
+    #     if not from_year:
+    #         from_year = start_year
+    #     if not to_year:
+    #         to_year = end_year
+    #     if from_year < start_year:
+    #         raise RuntimeError('Start year wrong!')
+    #     if to_year > end_year:
+    #         raise RuntimeError('End year wrong!')
+    #
+    #     from_date = date(from_year, 1, 1)
+    #     to_date = date(to_year, 12, 31)
+    #
+    #     return self.inflation_by_period(from_date=from_date, to_date=to_date, period='A',
+    #                                     cumulative=cumulative, glevel=glevel)
 
 
 
@@ -1848,15 +1848,15 @@ class RawData:
             a_ser.astype('float64'))).pow(1 / distance) - 1
         return i_ser
 
-    def get_empty_dataframe(self, dataframe):
-        """
-        Возвращает такой же но пустой dataframe
-        :param dataframe:
-        :return:
-        """
-        df_new = pandas.DataFrame(data=None, index=dataframe.index, columns=dataframe.columns)
-        df_new = df_new.dropna()
-        return df_new
+    # def get_empty_dataframe(self, dataframe):
+    #     """
+    #     Возвращает такой же но пустой dataframe
+    #     :param dataframe:
+    #     :return:
+    #     """
+    #     df_new = pandas.DataFrame(data=None, index=dataframe.index, columns=dataframe.columns)
+    #     df_new = df_new.dropna()
+    #     return df_new
 
     def _group_prices_by_period(self, from_date, to_date, period='M', guids=None, col_rate=cols.RATE):
         """
