@@ -137,6 +137,11 @@ class GNUCashBook:
         if self._is_root_account(account_guid):
             return False
 
+        # CASH and EQUITY always False
+        account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
+        if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY):
+            return False
+
         # account notes contain MARKER, then marker value
         notes = self.df_accounts.loc[account_guid, cols.NOTES]
         if notes:
@@ -146,8 +151,8 @@ class GNUCashBook:
                 return True
 
         # account immediately after the root, no markers, then depending on the type account
-        # CASH, EQUITY, INCOME, EXPENSE - True
-        # others - False
+        # INCOME, EXPENSE - False
+        # others - True (except CASH and EQUITY)
         parent_guid = self.df_accounts.loc[account_guid, cols.PARENT_GUID]
         if self._is_root_account(parent_guid):
             account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
