@@ -120,8 +120,45 @@ class GNUCashBook:
 
         self._book_filename = os.path.basename(filename)
 
-    # def _after_open(self):
+    def _after_open(self):
 
+        # Add commodity mnemonic to accounts
+        mems = self.df_commodities[cols.MNEMONIC].to_frame()
+        # А после этой не пропадает
+        self.df_accounts = self.df_accounts.merge(mems, how='left', left_on=cols.COMMODITY_GUID, right_index=True)
+
+        # Convert datetme to date in transactions (skip time)
+        self.df_transactions[cols.POST_DATE] = self.df_transactions[cols.POST_DATE].apply(
+            lambda x: pandas.to_datetime(x.date()))
+
+        # Merge prices with commodities
+        self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on=cols.COMMODITY_GUID,
+                                      right_index=True)
+        # Convert datetme to date in prices (skip time)
+        self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
+
+        # merge splits and accounts
+        df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on=cols.ACCOUNT_GUID,
+                                     right_index=True)
+        df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
+        # merge splits and accounts with transactions
+        self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on=cols.TRANSACTION_GUID,
+                                      right_index=True)
+
+        # Оставляем только одну цену за день в df_prices
+        # Установка нового индекса
+        self.df_prices.set_index([cols.COMMODITY_GUID, 'date'], inplace=True)
+        # отсечение повторов по индексу
+        self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
+
+        # Минимальная и максимальная даты в базе
+        self.min_date = self.df_splits[cols.POST_DATE].min().date()
+        self.max_date = self.df_splits[cols.POST_DATE].max().date()
+
+        # Подсчитываем нарастающий итог
+        self.df_splits.sort_values(by=cols.POST_DATE, inplace=True)
+        self.df_splits[cols.CUM_SUM] = self.df_splits.groupby(cols.FULLNAME)[cols.QUANTITY].transform(
+            pandas.Series.cumsum)
 
     def __repr__(self):
         return 'book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename)
