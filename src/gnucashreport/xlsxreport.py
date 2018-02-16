@@ -8,6 +8,8 @@ import xlsxwriter
 from xlsxwriter.utility import xl_col_to_name
 
 from gnucashreport.formatreport import get_format_xlsx
+from gnucashreport.margins import Margins
+from gnucashreport.report import Report
 from gnucashreport.reportset import ReportSet
 
 
@@ -60,6 +62,20 @@ class XLSXReport:
                 format_xlsx = get_format_xlsx(report, self.workbook)
                 self._add_report(report.df_data, format_xlsx, addchart=report.chart_type)
                 self._add_empty_row()
+
+    def add_dataframe(self, dataframe, sheet_name='Sheet1'):
+
+        report = Report(report_name='', report_type='', df_data=dataframe, period='D', margins=Margins())
+
+        reportset = ReportSet()
+        reportset.add_report(report, sheet_name=sheet_name)
+        self.add_reportset(reportset)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def close(self):
         """

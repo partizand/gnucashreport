@@ -72,6 +72,9 @@ def get_format_xlsx(report:Report, workbook):
         format_xlsx = FormatInflation(workbook=workbook, cumulative=False)
     elif report.report_type == Report.Type.INFLATION_CUM:
         format_xlsx = FormatInflation(workbook=workbook, cumulative=True)
+
+    else:
+        format_xlsx = _FormatReport(workbook)
     return format_xlsx
 
 
