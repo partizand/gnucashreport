@@ -7,7 +7,7 @@ import sys
 
 import gnucashreport
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 
 def main(args=None):
@@ -20,16 +20,19 @@ def main(args=None):
     parser.add_argument('xlsx_file', help="Path to xlsx file for save reports")
     parser.add_argument('--glevel', type=int, action='append', default=1,
                         help="level number for grouping accounts. May be multiple --glevel 0 --glevel 1")
-    parser.add_argument('--open_if_lock', action='store_true', default=False,
-                        help="open the sqlite file even if it is locked by another user")
+    # parser.add_argument('--open_if_lock', action='store_true', default=False,
+    #                     help="open the sqlite file even if it is locked by another user")
 
     p_args = parser.parse_args(args)
 
-    gcrep = gnucashreport.GCReport()
     print('Opening file {} ...'.format(p_args.gnucash_file))
-    gcrep.open_book_file(p_args.gnucash_file, open_if_lock=p_args.open_if_lock)
+    raw_data = RawData(p_args.gnucash_file)
+    builder = BuildReport(raw_data)
     print('Building reports into {} ...'.format(p_args.xlsx_file))
-    gcrep.all_reports_excel(p_args.xlsx_file, glevel=p_args.glevel)
+    reportset = builder.get_reportset_all(glevel=p_args.glevel)
+    outputer_excel = XLSXReport(p_args.xlsx_file)
+    outputer_excel.add_reportset(reportset)
+    outputer_excel.close()
 
 
 if __name__ == "__main__":
