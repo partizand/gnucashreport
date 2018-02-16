@@ -11,6 +11,8 @@ import piecash
 # @unittest.skip('Skip open test')
 from test.testinfo import TestInfo
 
+MARKER_XIRR_TRUE = '%xirr_true%'
+MARKER_XIRR_FALSE = '%xirr_false%'
 
 class GnuCashBook_Test(unittest.TestCase):
     """
@@ -160,6 +162,24 @@ class GnuCashBook_Test(unittest.TestCase):
             with self.subTest(book):
                 pie_accounts = piebook.accounts
                 self.assertGreaterEqual(len(book.df_accounts), len(pie_accounts), 'Number accounts compare with piecash')
+
+    def test_account_values(self):
+        for book, piebook in self.test_array:
+            # iterate all accounts
+            for index, account in book.df_accounts.iterrows():
+                with self.subTest('{}-{}'.format(book, account[cols.FULLNAME])):
+
+                    if account[cols.ACCOUNT_TYPE] != book.ROOT:
+                        # check fullname
+                        pie_account = piebook.accounts(fullname=account[cols.FULLNAME])
+                        self.assertNotEqual(pie_account, None, 'fullname compare with piecash')
+                        # check xirr enable value
+                        notes = account[cols.NOTES]
+                        if notes:
+                            if MARKER_XIRR_FALSE in notes:
+                                self.assertEqual(account[cols.XIRR_ENABLE], False, 'xirr enable wrong value')
+                            if MARKER_XIRR_TRUE in notes:
+                                self.assertEqual(account[cols.XIRR_ENABLE], True, 'xirr enable wrong value')
 
     #----------------------------------------------------------------------------------------------------
     def dataframe_fields_control(self, df, etalon_fields, df_name):
