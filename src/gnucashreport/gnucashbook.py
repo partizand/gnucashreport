@@ -116,21 +116,65 @@ class GNUCashBook:
     def __repr__(self):
         return 'book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename)
 
+    def _get_xirr_enable(self, account_guid):
+        """
+        Returns True for account with xirr calculate, and False for account without xirr
+        :param account_guid:
+        :return: Boolean True for xirr account, False - for account without xirr
+        """
+
+        # account is ROOT, then False
+        if self._is_root_account(account_guid):
+            return False
+
+        # account notes contain MARKER, then marker value
+        notes = self.df_accounts.loc[account_guid, cols.NOTES]
+        if notes:
+            if MARKER_NO_INVEST in notes:
+                return False
+            if MARKER_INVEST in notes:
+                return True
+
+        # account immediately after the root, no markers, then depending on the type account
+        # CASH, EQUITY, INCOME, EXPENSE - True
+        # others - False
+        parent_guid = self.df_accounts.loc[account_guid, cols.PARENT_GUID]
+        if self._is_root_account(parent_guid):
+            account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
+            if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
+                    (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
+                return False
+            else:
+                return True
+
+        # other cases, the value of the parent account
+        return self._get_xirr_enable(parent_guid)
+
+    def _is_root_account(self, account_guid):
+        """
+        Returns True if account is ROOT, False - not ROOT
+        :param account_guid:
+        :return:
+        """
+        account_type = self.df_accounts.loc[account_guid][cols.ACCOUNT_TYPE]
+        if account_type == self.ROOT:
+            return True
+        else:
+            return False
+
     def _get_fullname_account(self, account_guid):
         """
         Get fullname account by guid. Return semicolon path Expenses:Food:...
         :param account_guid:
         :return:
         """
-        account_type = self.df_accounts.loc[account_guid][cols.ACCOUNT_TYPE]
-        if account_type == self.ROOT:
+        if self._is_root_account(account_guid):
             return 'root'
         fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
         parent_guid = self.df_accounts.loc[account_guid][cols.PARENT_GUID]
 
         if parent_guid in self.df_accounts.index:
-            parent_type = self.df_accounts.loc[parent_guid][cols.ACCOUNT_TYPE]
-            if parent_type == self.ROOT:
+            if self._is_root_account(parent_guid):
                 return fullname
             else:
                 return self._get_fullname_account(parent_guid) + ':' + fullname
