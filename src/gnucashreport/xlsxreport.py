@@ -12,6 +12,22 @@ from gnucashreport.reportset import ReportSet
 
 
 class XLSXReport:
+    """
+    Output Report, ReportSet and DataFrame to formatted Excel file
+
+    >>> from gnucashreport.buildreport import BuildReport
+    >>> from gnucashreport.rawdata import RawData
+    >>> bookfile_sql = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
+    >>> raw_data = RawData(bookfile_sql)
+    >>> builder = BuildReport(raw_data)
+    >>> reportset = builder.get_reportset_all(glevel=1)
+    >>> out_filename = 'v:/tables/ex-test.xlsx'
+    >>> outputer_excel = XLSXReport(out_filename)
+    >>> outputer_excel.add_reportset(reportset)
+    >>> outputer_excel.close()
+
+    """
+
 
     default_dir_reports = 'V:/tables'
 
