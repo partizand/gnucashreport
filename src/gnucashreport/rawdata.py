@@ -93,8 +93,7 @@ class RawData:
         if filename:
             self.open_book_file(filename)
 
-
-
+        self._xirr_info_added = False
         # self.timeing = timing
 
 
@@ -473,7 +472,7 @@ class RawData:
                                              col_rate=cols.RATE_CURRENCY
                                              )
         # Подсчет значений для xirr
-        self._add_xirr_info()
+        # self._add_xirr_info()
 
     def _fill_xirr_enable(self, account_guid=None, default=None):
         """
@@ -676,6 +675,8 @@ class RawData:
         :param recurse: calculate children accounts returns too
         :return: dataframe
         """
+
+        self._add_xirr_info()
 
         ar_xirr = self._xirr_child_calc_array(account_guid=account_guid, account_name=account_name,
                                               account_types=account_types,
@@ -987,6 +988,9 @@ class RawData:
 
     def _add_xirr_info(self):
 
+        if self._xirr_info_added:
+            return
+
         # Добавление столбцов для xirr в df_splits
         self.df_splits[cols.XIRR_ACCOUNT] = ''
         self.df_splits[cols.XIRR_VALUE] = ''
@@ -1009,6 +1013,8 @@ class RawData:
         self.df_splits = self.df_splits.swaplevel()
         # dataframe_to_excel(self.df_splits, 'splits-swap')
         self.df_splits.reset_index(level=1, drop=False, inplace=True)
+
+        self._xirr_info_added = True
 
     def _add_xirr_by_transaction(self, df_tr_splits: pandas.DataFrame, tr_guid: str):
         """
