@@ -474,45 +474,45 @@ class RawData:
         # Подсчет значений для xirr
         # self._add_xirr_info()
 
-    def _fill_xirr_enable(self, account_guid=None, default=None):
-        """
-        Заполнение колонки xirr_enable в df_accounts
-        :return:
-        """
-        # MARKER_NO_INVEST - False
-        # Нет или MARKER_INVEST - True
-        # Cash или Equity или Income или Expense - false
-
-        if not account_guid:
-            account_guid = self.root_account_guid
-        inheritance = default
-        if default is None: # Установка текущего значения если default не установлен
-            # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
-            account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
-            if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
-               (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
-                current = False
-            else:
-                current = True
-        else:
-            current = default
-        # Перекрытие значениями из Notes если они есть
-        notes = self.df_accounts.loc[account_guid, cols.NOTES]
-        if notes:
-            if MARKER_NO_INVEST in notes:
-                current = False
-                inheritance = current
-            if MARKER_INVEST in notes:
-                current = True
-                inheritance = current
-
-        # Установка значения для текущего счета
-        # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
-        self.df_accounts.loc[account_guid, cols.XIRR_ENABLE] = current
-        # Установка значения для дочерних счетов
-        child_accounts = self._get_child_accounts(account_guid, recurse=False)
-        for child_account in child_accounts:
-            self._fill_xirr_enable(child_account, default=inheritance)
+    # def _fill_xirr_enable(self, account_guid=None, default=None):
+    #     """
+    #     Заполнение колонки xirr_enable в df_accounts
+    #     :return:
+    #     """
+    #     # MARKER_NO_INVEST - False
+    #     # Нет или MARKER_INVEST - True
+    #     # Cash или Equity или Income или Expense - false
+    #
+    #     if not account_guid:
+    #         account_guid = self.root_account_guid
+    #     inheritance = default
+    #     if default is None: # Установка текущего значения если default не установлен
+    #         # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
+    #         account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
+    #         if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
+    #            (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
+    #             current = False
+    #         else:
+    #             current = True
+    #     else:
+    #         current = default
+    #     # Перекрытие значениями из Notes если они есть
+    #     notes = self.df_accounts.loc[account_guid, cols.NOTES]
+    #     if notes:
+    #         if MARKER_NO_INVEST in notes:
+    #             current = False
+    #             inheritance = current
+    #         if MARKER_INVEST in notes:
+    #             current = True
+    #             inheritance = current
+    #
+    #     # Установка значения для текущего счета
+    #     # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
+    #     self.df_accounts.loc[account_guid, cols.XIRR_ENABLE] = current
+    #     # Установка значения для дочерних счетов
+    #     child_accounts = self._get_child_accounts(account_guid, recurse=False)
+    #     for child_account in child_accounts:
+    #         self._fill_xirr_enable(child_account, default=inheritance)
 
     def _add_margins(self, dataframe, margins=None):
         """

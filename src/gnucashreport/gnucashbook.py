@@ -113,6 +113,8 @@ class GNUCashBook:
             # Add xirr enable column
             self.df_accounts[cols.XIRR_ENABLE] = self.df_accounts.index.map(self._get_xirr_enable)
 
+            self._after_open()
+
 
 
         self._get_guid_rootaccount()
