@@ -14,6 +14,10 @@ from xml.etree import ElementTree
 
 import gnucashreport.cols as cols
 
+# Признак, что счет не участвует в расчете доходности
+MARKER_NO_INVEST = '%no_invest%'
+# Признак, что счет участвует в расчете доходности
+MARKER_INVEST = '%invest%'
 
 class GNUCashBook:
     """
@@ -105,13 +109,19 @@ class GNUCashBook:
                 self._book_type = 'xml'
 
             #  Get fullname of accounts
-            # self._get_guid_rootaccount()
             self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
+            # Add xirr enable column
+            self.df_accounts[cols.XIRR_ENABLE] = self.df_accounts.index.map(self._get_xirr_enable)
+
+
 
         self._get_guid_rootaccount()
 
 
         self._book_filename = os.path.basename(filename)
+
+    # def _after_open(self):
+
 
     def __repr__(self):
         return 'book {book_type} <{filename}>'.format(book_type=self._book_type, filename=self._book_filename)

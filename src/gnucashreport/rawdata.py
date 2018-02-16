@@ -421,8 +421,8 @@ class RawData:
         # #  Get fullname of accounts
         # self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
         #
-        self.df_accounts[cols.XIRR_ENABLE] = None
-        self._fill_xirr_enable()
+        # self.df_accounts[cols.XIRR_ENABLE] = None
+        # self._fill_xirr_enable()
 
         # Add commodity mnemonic to accounts
         mems = self.df_commodities[cols.MNEMONIC].to_frame()
