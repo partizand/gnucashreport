@@ -115,10 +115,10 @@ class GnuCashBook_Test(unittest.TestCase):
             with self.subTest(book):
                 self.assertEqual(book.df_transactions.index.name, cols.GUID,'df_transactions index is not GUID')
 
-    def test_prices_index(self):
-        for book, piebook in self.test_array:
-            with self.subTest(book):
-                self.assertEqual(book.df_prices.index.name, cols.GUID, 'df_prices index is not GUID')
+    # def test_prices_index(self):
+    #     for book, piebook in self.test_array:
+    #         with self.subTest(book):
+    #             self.assertEqual(book.df_prices.index.name, cols.GUID, 'df_prices index is not GUID')
 
     def test_commodities_index(self):
         for book, piebook in self.test_array:
