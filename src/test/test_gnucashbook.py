@@ -7,6 +7,7 @@ import decimal
 
 import piecash
 
+from pandas.api.types import is_datetime64_any_dtype
 
 # @unittest.skip('Skip open test')
 from test.testinfo import TestInfo
@@ -162,6 +163,12 @@ class GnuCashBook_Test(unittest.TestCase):
             with self.subTest(book):
                 pie_accounts = piebook.accounts
                 self.assertGreaterEqual(len(book.df_accounts), len(pie_accounts), 'Number accounts compare with piecash')
+
+    def test_transaction_dates(self):
+        for book, piebook in self.test_array:
+            with self.subTest(book):
+                self.assertTrue(is_datetime64_any_dtype(book.df_transactions[cols.POST_DATE].dtype), 'Post_date in transaction is date type')
+
 
     def test_account_values(self):
         for book, piebook in self.test_array:

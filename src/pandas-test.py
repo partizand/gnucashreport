@@ -76,8 +76,14 @@ dict2 = {'guid': 2, 'col1':pd_date, 'col2':value, 'dec':decimal.Decimal('0.1')}
 df = df.append(dict1, ignore_index=True)
 df = df.append(dict2, ignore_index=True)
 df['col3'] = df['col2'].astype(Decimal)
-print(type(df.loc[0]['dec']))
-
+# print(type(df.loc[0]['dec']))
+print(type(df['col1'].dtype))
+# if (df['col1'].dtype) == numpy.date .startswith('datetime'):
+#     print('checked')
+if pandas.api.types.is_datetime64_any_dtype(df['col1'].dtype):
+    print('checked')
+else:
+    print('not checked')
 exit()
 
 rep = RawData()
