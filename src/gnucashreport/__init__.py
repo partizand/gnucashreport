@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 # from .gcreport import GCReport
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __author__ = "Partizand"
 __license__ = "GPL3"
 
