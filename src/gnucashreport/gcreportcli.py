@@ -9,6 +9,7 @@ import gnucashreport
 
 from gnucashreport.buildreport import BuildReport
 from gnucashreport.rawdata import RawData
+from gnucashreport.xlsxreport import XLSXReport
 
 __version__ = '0.2.1'
 

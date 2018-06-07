@@ -19,4 +19,4 @@ class CliProg_Test(unittest.TestCase):
         gnucash_file = 'v:/gnucash-base/sqlite/GnuCash-base.gnucash'
         xlsx_file = 'v:/tables/ex-test.xlsx'
         build_cli_report(gnucash_file, xlsx_file, 1)
-        print('end build')
+        # print('end build')

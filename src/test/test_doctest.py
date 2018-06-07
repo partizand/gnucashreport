@@ -16,7 +16,7 @@ import gnucashreport.reportset
 def load_tests(*args, **kwargs):
     test_all_doctests = unittest.TestSuite()
     # test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.gcreport))
-    test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.xlsxreport))
+    # test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.xlsxreport))
     test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.financial))
     test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.utils))
     test_all_doctests.addTest(doctest.DocTestSuite(gnucashreport.reportset))
