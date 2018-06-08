@@ -5,10 +5,6 @@ import gzip
 import os
 import pandas
 
-import abc
-
-import time
-
 from dateutil.parser import parse as parse_date
 from dateutil import tz
 from xml.etree import ElementTree
