@@ -1210,7 +1210,7 @@ class RawData:
         """
         df_splits = self._get_splits_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
         df_balances = self._get_balances_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
-        df_all = pandas.concat([df_splits, df_balances], ignore_index=True)
+        df_all = pandas.concat([df_splits, df_balances], ignore_index=True, sort=True)
         return df_all
 
     def _get_balances_for_xirr(self, account_guids, from_date=None, to_date=None):
@@ -1238,7 +1238,7 @@ class RawData:
             # Начальный баланс - это потрачено
             start_balances[cols.VALUE_CURRENCY] = start_balances[cols.VALUE_CURRENCY] * (-1)
 
-            df_itog_balances = pandas.concat([start_balances, df_itog_balances], ignore_index=True)
+            df_itog_balances = pandas.concat([start_balances, df_itog_balances], ignore_index=True, sort=True)
 
         # Задать xirr_value и xirr_account
         df_itog_balances[cols.XIRR_VALUE] = df_itog_balances[cols.VALUE_CURRENCY]
