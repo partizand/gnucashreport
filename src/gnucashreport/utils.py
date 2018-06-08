@@ -119,7 +119,7 @@ def split_by_years(from_date, to_date):
 
     return dates
 
-def complete_years_dates (from_date: date, to_date: date):
+def complete_years_dates (from_date: datetime.datetime, to_date: datetime.datetime):
     """
     Return tuple of first and last date of year from interval, which are full ended year
     >>> complete_years_dates(datetime.datetime(2016,1,2), datetime.datetime(2016,12,30))
