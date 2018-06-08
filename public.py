@@ -7,7 +7,7 @@ import subprocess
 import re
 
 # Public to test pypi
-test_public = True
+test_public = False
 suf_test = ['-r', 'pypitest']
 # sdist command
 cmd_sdist = ['python', 'setup.py', 'sdist', 'bdist_wheel', '--universal']
