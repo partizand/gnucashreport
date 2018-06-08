@@ -6,7 +6,8 @@ import re
 
 from decimal import Decimal
 
-from datetime import date
+# from datetime import date
+import datetime
 
 # from gnucashreport import const
 
@@ -85,11 +86,11 @@ def shift_account_name(account_name: str, root_account=None, delimiter=':', fill
     return str_fill + str_end
 
 
-def split_by_years(from_date: date, to_date: date):
+def split_by_years(from_date, to_date):
     """
     Splits two dates interval on array of intervals by years
 
-    >>> split_by_years(date(2014,1,2), date(2017, 1, 20))
+    >>> split_by_years(datetime.datetime(2014,1,2), datetime.datetime(2017, 1, 20))
     [[datetime.date(2014, 2, 1), datetime.date(2014, 12, 31)], \
 [datetime.date(2015, 1, 1), datetime.date(2015, 12, 31)], \
 [datetime.date(2016, 1, 1), datetime.date(2016, 12, 31)]]
@@ -103,8 +104,8 @@ def split_by_years(from_date: date, to_date: date):
     cur_year = from_date.year
     not_end_cycle = True
     while not_end_cycle:
-        first_date = date(cur_year, 1, 1)
-        end_date = date(cur_year, 12, 31)
+        first_date = datetime.datetime(cur_year, 1, 1)
+        end_date = datetime.datetime(cur_year, 12, 31)
         if first_date < from_date:
             first_date = from_date
         if end_date > to_date:
@@ -121,9 +122,9 @@ def split_by_years(from_date: date, to_date: date):
 def complete_years_dates (from_date: date, to_date: date):
     """
     Return tuple of first and last date of year from interval, which are full ended year
-    >>> complete_years_dates(date(2016,1,2), date(2016,12,30))
+    >>> complete_years_dates(datetime.datetime(2016,1,2), datetime.datetime(2016,12,30))
 
-    >>> complete_years_dates(date(2008,12,31), date(2017, 2, 15))
+    >>> complete_years_dates(datetime.datetime(2008,12,31), datetime.datetime(2017, 2, 15))
     (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
 
     :param from_date:
@@ -147,18 +148,18 @@ def complete_years_dates (from_date: date, to_date: date):
     if from_year == to_year:
         return None
 
-    y_start_date = date(from_year, 1, 1)
-    y_end_date = date(to_year, 12, 31)
+    y_start_date = datetime.datetime(from_year, 1, 1)
+    y_end_date = datetime.datetime(to_year, 12, 31)
 
     return y_start_date, y_end_date
 
 
-def complete_years(from_date: date, to_date: date):
+def complete_years(from_date, to_date):
     """
     Return tuple of first and last year from interval, which are full ended
-    >>> complete_years(date(2016,1,2), date(2016,12,30))
+    >>> complete_years(datetime.datetime(2016,1,2), datetime.datetime(2016,12,30))
 
-    >>> complete_years(date(2008,12,31), date(2017, 2, 15))
+    >>> complete_years(datetime.datetime(2008,12,31), datetime.datetime(2017, 2, 15))
     (2009, 2016)
 
     :param from_date:
@@ -169,7 +170,7 @@ def complete_years(from_date: date, to_date: date):
     from_year = from_date.year
     if not (from_date.month == 1 and from_date.day == 1):
         from_year += 1
-        if from_year > date.today().year:
+        if from_year > datetime.datetime.today().year:
             return None
 
     to_year = to_date.year
@@ -185,16 +186,16 @@ def complete_years(from_date: date, to_date: date):
     return from_year, to_year
 
 
-def complete_month(from_date: date, to_date: date):
+def complete_month(from_date: datetime.datetime, to_date: datetime.datetime):
     """
     Return tuple of two dates, wich contain full months.
     Cut interval to start and end full months
 
-    >>> complete_month(date(2016,1,2), date(2016,12,30))
+    >>> complete_month(datetime.datetime(2016,1,2), datetime.datetime(2016,12,30))
     (datetime.date(2016, 2, 1), datetime.date(2016, 11, 30))
-    >>> complete_month(date(2008,12,31), date(2017, 2, 15))
+    >>> complete_month(datetime.datetime(2008,12,31), datetime.datetime(2017, 2, 15))
     (datetime.date(2009, 1, 1), datetime.date(2017, 1, 31))
-    >>> complete_month(date(2008,12,31), date(2017, 1, 15))
+    >>> complete_month(datetime.datetime(2008,12,31), datetime.datetime(2017, 1, 15))
     (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
 
     :param from_date:
@@ -219,19 +220,19 @@ def complete_month(from_date: date, to_date: date):
     return new_from_date, new_to_date
 
 
-def add_months(sourcedate: date, months):
+def add_months(sourcedate: datetime.datetime, months):
     """
     Add months to date
 
-    >>> add_months(date(2016,1,2), 1)
+    >>> add_months(datetime.datetime(2016,1,2), 1)
     datetime.date(2016, 2, 2)
-    >>> add_months(date(2016,12,31), 1)
+    >>> add_months(datetime.datetime(2016,12,31), 1)
     datetime.date(2017, 1, 31)
-    >>> add_months(date(2017,2,28), 1)
+    >>> add_months(datetime.datetime(2017,2,28), 1)
     datetime.date(2017, 3, 28)
-    >>> add_months(date(2017,2,28), -1)
+    >>> add_months(datetime.datetime(2017,2,28), -1)
     datetime.date(2017, 1, 28)
-    >>> add_months(date(2017,1,1), -1)
+    >>> add_months(datetime.datetime(2017,1,1), -1)
     datetime.date(2016, 12, 1)
 
     :param months:
@@ -246,7 +247,7 @@ def add_months(sourcedate: date, months):
 
     day = min(sourcedate.day, calendar.monthrange(year, month)[1])
 
-    return date(year, month, day)
+    return datetime.datetime(year, month, day)
 
 # def dateformat_from_period(period: str):
 #     """
