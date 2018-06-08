@@ -163,7 +163,7 @@ class XIRRTest(unittest.TestCase):
 
     def _date_from_str(self, str_date):
         if str_date:
-            a_date = datetime.datetime.strptime(str_date, '%d-%m-%y').date()
+            a_date = datetime.datetime.strptime(str_date, '%d-%m-%y')
             return a_date
         else:
             return None

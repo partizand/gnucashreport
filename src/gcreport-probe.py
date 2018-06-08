@@ -28,6 +28,13 @@ out_filename = 'v:/tables/ex-test.xlsx'
 # BuildReports
 raw_data = RawData(bookfile_sql)
 
+print(raw_data.df_splits[cols.POST_DATE].dtype)
+
+sel_df = raw_data.df_splits
+from_date = datetime.datetime(2016,1,1)
+df = sel_df[(sel_df[cols.POST_DATE] >= from_date)]
+
+exit()
 
 # account_guids = df_splits[cols.ACCOUNT_GUID]
 # df_accounts = raw_data.df_accounts[raw_data.df_accounts[cols.GUID] in account_guids]
