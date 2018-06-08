@@ -91,9 +91,9 @@ def split_by_years(from_date, to_date):
     Splits two dates interval on array of intervals by years
 
     >>> split_by_years(datetime.datetime(2014,1,2), datetime.datetime(2017, 1, 20))
-    [[datetime.date(2014, 2, 1), datetime.date(2014, 12, 31)], \
-[datetime.date(2015, 1, 1), datetime.date(2015, 12, 31)], \
-[datetime.date(2016, 1, 1), datetime.date(2016, 12, 31)]]
+    [[datetime.datetime(2014, 2, 1, 0, 0), datetime.datetime(2014, 12, 31, 0, 0)], \
+[datetime.datetime(2015, 1, 1, 0, 0), datetime.datetime(2015, 12, 31, 0, 0)], \
+[datetime.datetime(2016, 1, 1, 0, 0), datetime.datetime(2016, 12, 31, 0, 0)]]
 
     :param from_date:
     :param to_date:
@@ -125,7 +125,7 @@ def complete_years_dates (from_date: datetime.datetime, to_date: datetime.dateti
     >>> complete_years_dates(datetime.datetime(2016,1,2), datetime.datetime(2016,12,30))
 
     >>> complete_years_dates(datetime.datetime(2008,12,31), datetime.datetime(2017, 2, 15))
-    (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
+    (datetime.datetime(2009, 1, 1, 0, 0), datetime.datetime(2016, 12, 31, 0, 0))
 
     :param from_date:
     :param to_date:
@@ -192,11 +192,11 @@ def complete_month(from_date: datetime.datetime, to_date: datetime.datetime):
     Cut interval to start and end full months
 
     >>> complete_month(datetime.datetime(2016,1,2), datetime.datetime(2016,12,30))
-    (datetime.date(2016, 2, 1), datetime.date(2016, 11, 30))
+    (datetime.datetime(2016, 2, 1, 0, 0), datetime.datetime(2016, 11, 30, 0, 0))
     >>> complete_month(datetime.datetime(2008,12,31), datetime.datetime(2017, 2, 15))
-    (datetime.date(2009, 1, 1), datetime.date(2017, 1, 31))
+    (datetime.datetime(2009, 1, 1, 0, 0), datetime.datetime(2017, 1, 31, 0, 0))
     >>> complete_month(datetime.datetime(2008,12,31), datetime.datetime(2017, 1, 15))
-    (datetime.date(2009, 1, 1), datetime.date(2016, 12, 31))
+    (datetime.datetime(2009, 1, 1, 0, 0), datetime.datetime(2016, 12, 31, 0, 0))
 
     :param from_date:
     :param to_date:
@@ -225,15 +225,15 @@ def add_months(sourcedate: datetime.datetime, months):
     Add months to date
 
     >>> add_months(datetime.datetime(2016,1,2), 1)
-    datetime.date(2016, 2, 2)
+    datetime.datetime(2016, 2, 2, 0, 0)
     >>> add_months(datetime.datetime(2016,12,31), 1)
-    datetime.date(2017, 1, 31)
+    datetime.datetime(2017, 1, 31, 0, 0)
     >>> add_months(datetime.datetime(2017,2,28), 1)
-    datetime.date(2017, 3, 28)
+    datetime.datetime(2017, 3, 28, 0, 0)
     >>> add_months(datetime.datetime(2017,2,28), -1)
-    datetime.date(2017, 1, 28)
+    datetime.datetime(2017, 1, 28, 0, 0)
     >>> add_months(datetime.datetime(2017,1,1), -1)
-    datetime.date(2016, 12, 1)
+    datetime.datetime(2016, 12, 1, 0, 0)
 
     :param months:
     :return: datetime.date = sourcedate + months

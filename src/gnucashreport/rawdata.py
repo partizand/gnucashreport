@@ -454,8 +454,8 @@ class RawData:
         # self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
         #
         # # Минимальная и максимальная даты в базе
-        self.min_date = self.df_splits[cols.POST_DATE].min().date()
-        self.max_date = self.df_splits[cols.POST_DATE].max().date()
+        self.min_date = self.df_splits[cols.POST_DATE].min() #.date()
+        self.max_date = self.df_splits[cols.POST_DATE].max() #.date()
 
         # Цены за каждый день по каждому инструменту
         self.df_prices_days = self._group_prices_by_period(self.min_date, self.max_date, 'D')
