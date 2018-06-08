@@ -26,10 +26,10 @@ class ReportTest(unittest.TestCase):
 
 
     # end folder options---------------------------------------
-    TEST_FROM_DATE = datetime.date(2016, 1, 1)
-    TEST_TO_DATE = datetime.date(2016, 12, 31)
-    TEST_FROM_DATE_Y = datetime.date(2009, 1, 1)
-    TEST_TO_DATE_Y = datetime.date(2016, 12, 31)
+    TEST_FROM_DATE = datetime.datetime(2016, 1, 1)
+    TEST_TO_DATE = datetime.datetime(2016, 12, 31)
+    TEST_FROM_DATE_Y = datetime.datetime(2009, 1, 1)
+    TEST_TO_DATE_Y = datetime.datetime(2016, 12, 31)
     TEST_PERIOD = 'M'
     TEST_GLEVEL = 1
     TEST_GLEVEL2 = [0, 1]
