@@ -133,7 +133,7 @@ class XLSXReport:
                 # Имена индексов
                 index_names = df.index.names
                 # Установка ширины колонок индексов
-                self._worksheet.set_column(firstcol=col, lastcol=col + len(index_names) - 1,
+                self._worksheet.set_column(first_col=col, last_col=col + len(index_names) - 1,
                                            width=format_report.index_width)
                 # Добавление названий индексов на лист
                 self._append_line(index_names, row=row, col=col, cell_format=format_report.format_header)
@@ -142,17 +142,17 @@ class XLSXReport:
             # Названия полей
             columns = df.columns.tolist()
             # Установка ширины колонок полей
-            self._worksheet.set_column(firstcol=col, lastcol=col + len(columns) - 1,
+            self._worksheet.set_column(first_col=col, last_col=col + len(columns) - 1,
                                        width=format_report.column_width)
 
             # Ширина итоговых колонок
             if format_report.margins.empty_col:
-                self._worksheet.set_column(firstcol=col + len(columns) - vtotals, lastcol=col + len(columns) - vtotals,
+                self._worksheet.set_column(first_col=col + len(columns) - vtotals, last_col=col + len(columns) - vtotals,
                                            width=format_report.empty_width)
-                self._worksheet.set_column(firstcol=col + len(columns) - vtotals+1, lastcol=col + len(columns),
+                self._worksheet.set_column(first_col=col + len(columns) - vtotals+1, last_col=col + len(columns),
                                            width=format_report.total_width)
             elif vtotals > 0:
-                self._worksheet.set_column(firstcol=col + len(columns) - vtotals, lastcol=col + len(columns),
+                self._worksheet.set_column(first_col=col + len(columns) - vtotals, last_col=col + len(columns),
                                            width=format_report.total_width)
             # Добавление категорий в свойства графика
             categories = "='{sheet}'!${start_col}${start_row}:${end_col}${end_row}". \
