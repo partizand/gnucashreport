@@ -9,7 +9,8 @@ import abc
 
 import time
 
-from dateutil.parser import tz, parse as parse_date
+from dateutil.parser import parse as parse_date
+from dateutil import tz
 from xml.etree import ElementTree
 
 import gnucashreport.cols as cols
