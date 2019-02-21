@@ -12,7 +12,7 @@ from operator import attrgetter
 import math
 import pandas
 import numpy
-import piecash
+#import piecash
 from gnucashreport import utils
 
 # from gnucashreport.utils import dataframe_to_excel, shift_account_name
