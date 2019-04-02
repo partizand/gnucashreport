@@ -576,7 +576,7 @@ class RawData:
             df_ret.loc[index] = dataframe.sum()
             return df_ret
 
-    def equity_by_period(self, from_date, to_date, period='M', glevel=1, margins: Margins = None):
+    def equity_by_period(self, from_date, to_date, period='M', glevel=1, margins = None):
         """
         Получение капитала за период (активы минус пассивы)
         Возвращает DataFrame
@@ -803,7 +803,7 @@ class RawData:
         return ar_xirr
 
     # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
-    def _xirr_calc(self, account_guid, account_types, df_all_xirr: pandas.DataFrame):
+    def _xirr_calc(self, account_guid, account_types, df_all_xirr):
         """
         Возвращает итоговую доходность по указанному счету по таблице df_all_xirr
         :param account_guid: 
@@ -1396,7 +1396,7 @@ class RawData:
         return group
 
     def balance_by_period(self, from_date, to_date, period='M', account_types=GNUCashBook.ALL_ASSET_TYPES, glevel=1,
-                          margins: Margins = None, drop_null=False):
+                          margins = None, drop_null=False):
         """
         Возвращает сводный баланс по счетам за интервал дат с разбивкой по периодам
         :param from_date:
@@ -1426,7 +1426,7 @@ class RawData:
 
         return group
 
-    def turnover_by_period(self, from_date: date, to_date: date, period='M', account_type=GNUCashBook.EXPENSE, glevel=1,
+    def turnover_by_period(self, from_date, to_date, period='M', account_type=GNUCashBook.EXPENSE, glevel=1,
                            margins: Margins = None, drop_null=False):
 
         """
@@ -1564,7 +1564,7 @@ class RawData:
 
         return sel_df
 
-    def _currency_calc(self, dataframe: pandas.DataFrame,
+    def _currency_calc(self, dataframe,
                        col_value=cols.VALUE,
                        col_currency_guid=cols.COMMODITY_GUID,
                        col_rate=cols.RATE,
@@ -1832,7 +1832,7 @@ class RawData:
         return df_inf
 
     @staticmethod
-    def _percent_increase(a_ser:pandas.Series, b_ser:pandas.Series, distance=1):
+    def _percent_increase(a_ser, b_ser, distance=1):
         """
         Return percent increase between two series
         :param a_ser: First series
