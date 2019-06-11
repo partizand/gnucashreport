@@ -1016,12 +1016,15 @@ class RawData:
         Возможно можно оптимизировать быстродействие
         :param df_tr_splits: pandas.DataFrame
                             Все сплиты транзакции
-        :param transaction_guid: 
+        :param tr_guid: transaction guid
         :return: 
         """
 
+        # income and expense types
         incexp_types = [GNUCashBook.INCOME, GNUCashBook.EXPENSE]
+        # income splits
         df_incexps = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
+        # все оставшиеся splits
         df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
 
         # Тест. Для анализа кредитов для подсчета доходности
@@ -1051,7 +1054,8 @@ class RawData:
                 return
             else:
                 # Неясность
-                print("Unknown transaction type for xirr. Transaction_guid {tr_guid}".format(tr_guid=tr_guid))
+                print("Unknown transaction type for xirr.")
+                self._print_transaction_info(df_tr_splits, tr_guid)
                 return
 
         # Multi transaction
@@ -1067,10 +1071,8 @@ class RawData:
             return
         elif len(df_stocks) > 1:
             # Error, unknown stock transaction for xirr
-            tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
-            tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
-            print('Unknown stock transaction for xirr calculate. Transaction info: '
-                  'guid={tr_guid}. Date={tr_date}. Descr={tr_descr}'.format(tr_guid=tr_guid, tr_date=tr_date, tr_descr=tr_descr))
+            print('Unknown stock transaction for xirr calculate.')
+            self._print_transaction_info(df_tr_splits, tr_guid)
             return
         elif (len(df_assets) == 2) and (len(df_incexps) == 1):
             # Тест. Добавление признака такой транзакции
@@ -1094,15 +1096,25 @@ class RawData:
             # Error, unknown stock transaction for xirr
             #print("Unknown multi transaction for xirr calculate. Transaction_guid {tr_guid}".format(tr_guid=tr_guid))
 
-            tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
-            tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
-            print('Unknown multi transaction for xirr calculate. Transaction info: '
-                  'guid={tr_guid}. Date={tr_date}. Descr={tr_descr}'.format(tr_guid=tr_guid, tr_date=tr_date,
-                                                                            tr_descr=tr_descr))
-
+            print('Unknown multi transaction for xirr calculate.')
+            self._print_transaction_info(df_tr_splits, tr_guid)
             return
 
-    def _set_xirr_to_splits(self, tr_guid: str, df: pandas.DataFrame, xirr_account: str=None):
+    def _print_transaction_info(self, df_tr_splits, tr_guid):
+        """
+        Print transaction info
+        :param df_tr_splits: pandas.DataFrame
+                            Все сплиты транзакции
+        :param tr_guid: transaction guid
+        :return:
+        """
+        tr_date = df_tr_splits.iloc[0][cols.POST_DATE]
+        tr_descr = df_tr_splits.iloc[0][cols.DESCRIPTION]
+        print('Transaction info: '
+              'guid={tr_guid}. Date={tr_date}.\n Description={tr_descr}'.format(tr_guid=tr_guid, tr_date=tr_date,
+                                                                        tr_descr=tr_descr))
+
+    def _set_xirr_to_splits(self, tr_guid: str, df: pandas.DataFrame, xirr_account: str = None):
         """
         Задает значения xirr_value и xirr_account для списка splits, у которых xirr_enable = True
         :param tr_guid: 
