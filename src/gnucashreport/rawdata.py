@@ -1061,18 +1061,26 @@ class RawData:
         # Multi transaction
         # has one stock
         df_stocks = df_tr_splits[df_tr_splits[cols.ACCOUNT_TYPE].isin(GNUCashBook.STOCK_XIRR_TYPES)]
-        if len(df_stocks) == 1:
+        len_stocks = len(df_stocks) # number of stock account in transaction
+        if len_stocks > 0:  # transaction has stock accounts
+            asset_guid = df_stocks.iloc[0][cols.ACCOUNT_GUID]  # first stock account
+            if len_stocks == 2:
+                asset_guid2 = df_stocks.iloc[1][cols.ACCOUNT_GUID]  # second stock account
+                if asset_guid != asset_guid2:
+                    # unknown transaction
+                    print("Unknown stock transaction with two different stock")
+                    self._print_transaction_info(df_tr_splits, tr_guid)
+                    return
+            if len_stocks > 2:
+                # unknown transaction
+                print("Unknown transaction with more than two stocks")
+                self._print_transaction_info(df_tr_splits, tr_guid)
+                return
             # Тут нужно добавить все asset у которых xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # Тут нужно определить счет на который пойдут прибыли или убытки
             # И добавить все расходы/доходы у которых xirr_enable=true
-            asset_guid = df_stocks.iloc[0][cols.ACCOUNT_GUID]
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=asset_guid)
-            return
-        elif len(df_stocks) > 1:
-            # Error, unknown stock transaction for xirr
-            print('Unknown stock transaction for xirr calculate.')
-            self._print_transaction_info(df_tr_splits, tr_guid)
             return
         elif (len(df_assets) == 2) and (len(df_incexps) == 1):
             # Тест. Добавление признака такой транзакции
