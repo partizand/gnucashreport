@@ -1071,6 +1071,9 @@ class RawData:
                     print("Unknown stock transaction with two different stock")
                     self._print_transaction_info(df_tr_splits, tr_guid)
                     return
+                else:
+                    print("Warning! two equal stocks in one transaction. I am calculate xirr, but it is wrong")
+                    self._print_transaction_info(df_tr_splits, tr_guid)
             if len_stocks > 2:
                 # unknown transaction
                 print("Unknown transaction with more than two stocks")
