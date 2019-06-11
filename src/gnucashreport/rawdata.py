@@ -1094,8 +1094,6 @@ class RawData:
             return
         else:
             # Error, unknown stock transaction for xirr
-            #print("Unknown multi transaction for xirr calculate. Transaction_guid {tr_guid}".format(tr_guid=tr_guid))
-
             print('Unknown multi transaction for xirr calculate.')
             self._print_transaction_info(df_tr_splits, tr_guid)
             return
@@ -1116,7 +1114,10 @@ class RawData:
 
     def _set_xirr_to_splits(self, tr_guid: str, df: pandas.DataFrame, xirr_account: str = None):
         """
-        Задает значения xirr_value и xirr_account для списка splits, у которых xirr_enable = True
+        Задает значения колонок xirr_value (сумма с обратным знаком) и xirr_account (guid счета по которому идет этот оборот в xirr)
+        в таблице df_splits
+        Из строк таблицы df, у которых xirr_enable = True
+        Если xirr_account заполнен, то берется он, иначе берется счет из строки df
         :param tr_guid: 
         :param df: 
         :param xirr_account: 
