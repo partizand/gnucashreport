@@ -1751,10 +1751,15 @@ class RawData:
                                   columns=[cols.POST_DATE, cols.FULLNAME, cols.VALUE_CURRENCY]).copy()
 
         # Добавление MultiIndex по дате и названиям счетов
+        # Get dataframe where fullname split to parts (only these parts)
         s = sel_df[cols.FULLNAME].str.split(':', expand=True)
+        # change columns name type from int to string, for new version Pandas
+        s.rename(str, axis='columns', inplace=True)
+        # Get list of column name's of fullname parts
         columns = s.columns
         columns = columns.tolist()
         columns = [cols.POST_DATE] + columns
+        # Add splitted fullname columns
         sel_df = pandas.concat([sel_df, s], axis=1)
 
         sel_df.sort_values(by=columns, inplace=True)  # Сортировка по дате и счетам
@@ -1768,14 +1773,17 @@ class RawData:
         # for col in cols[1:]:
         #     sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
 
+        # set index by date and splitted fulname columns
         sel_df.set_index(columns, inplace=True)
 
         # Здесь получается очень интересная таблица, но она не так интересна как в балансах
         # self.dataframe_to_excel(sel_df, 'turnover_split')
 
         # Переворот дат из строк в колонки
+        # date index to column
         unst = sel_df.unstack(level=cols.POST_DATE, fill_value=0)
 
+        # delete column level header
         unst.columns = unst.columns.droplevel()
 
         # Группировка по нужному уровню
@@ -1849,9 +1857,7 @@ class RawData:
         # Average by period
         if not cumulative:
             i2 = len(columns) - 1
-            # df_inf[_('Total')] = (((df[cols[i2]]).astype('float64')).divide(
-            #     (df[cols[0]]).astype('float64'))).pow(1 / i2) - 1
-            df_inf[_('Total')] = self._percent_increase(df[columns[0]], df[columns[i2]], i2)
+            df_inf[('Total')] = self._percent_increase(df[columns[0]], df[columns[i2]], i2)
 
         return df_inf
 
@@ -1867,8 +1873,7 @@ class RawData:
         # if distance == 1:
         #     i_ser = ((b_ser.astype('float64')) - (a_ser.astype('float64'))).divide(a_ser.astype('float64'))
         # else:
-        i_ser = ((b_ser.astype('float64')).divide(
-            a_ser.astype('float64'))).pow(1 / distance) - 1
+        i_ser = ((b_ser.astype('float64')).divide(a_ser.astype('float64'))).pow(1 / distance) - 1
         return i_ser
 
     # def get_empty_dataframe(self, dataframe):
