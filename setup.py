@@ -26,7 +26,7 @@ def find_version(filename):
 
 version = find_version("src/gnucashreport/__init__.py")
 
-with open('README.rst', encoding='utf-8') as f:
+with open('readme.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='gnucashreport',
