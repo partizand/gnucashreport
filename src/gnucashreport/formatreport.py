@@ -103,9 +103,9 @@ class _FormatReport:
         self.show_header = True
         self.show_index = True
         self.report_name = None
-        self.index_width = 25 # Ширина колонки
-        self.column_width = 12
-        self.total_width = 15
+        self.index_width = 25  # Ширина колонки
+        self.column_width = 15
+        self.total_width = 16
         self.empty_width = 1
 
 
