@@ -3,28 +3,15 @@ import locale
 import os
 from copy import copy
 from datetime import date, datetime
-from datetime import timedelta
-# datetime.timedelta
-# import datetime
 from decimal import Decimal
-from operator import attrgetter
 
-import math
 import pandas
 import numpy
-#import piecash
 from gnucashreport import utils
-
-# from gnucashreport.utils import dataframe_to_excel, shift_account_name
 
 from gnucashreport.financial import xirr
 from gnucashreport.margins import Margins
 from gnucashreport.gnucashbook import GNUCashBook
-# import gnucashreport.gnucashbook as gnucashbook
-# from gnucashreport.gnucashbookxml import GNUCashBookXML
-# from gnucashreport.gnucashbooksqlite import GNUCashBookSQLite
-
-# GNUCashBook = gnucashbook.GNUCashBook
 
 import gnucashreport.cols as cols
 
@@ -40,8 +27,6 @@ class RawData:
     function returns DataFrames with data, without totals and styling
 
     """
-
-    #time_debug = True
 
     # # GnuCash account types
     # CASH = 'CASH'
@@ -94,7 +79,6 @@ class RawData:
             self.open_book_file(filename)
 
         self._xirr_info_added = False
-        # self.timeing = timing
 
 
     @staticmethod
@@ -122,29 +106,9 @@ class RawData:
         :param open_if_lock: only for sqlite
         :return:
         """
-        # Detect version - sql or xml
-
-        # Every valid SQLite database file begins with the following 16 bytes (in hex):
-        #  53 51 4c 69 74 65 20 66 6f 72 6d 61 74 20 33 00.
-        # This byte sequence corresponds to the UTF-8 string "SQLite format 3"
-        # including the nul terminator character at the end.
-        # Read sqllite signature
-        # print('Start opening book...')
-        # book_type= GNUCashBook.get_gnucashbook_type(filename)
-        # if book_type == GNUCashBook.BOOKTYPE_XML:
-        #     self.book = GNUCashBookXML()
-        # else:
-        #     self.book = GNUCashBookSQLite()
-
-
 
         self.book = GNUCashBook()
-        # print('Start reading book...')
-        # if pickle:
-        #     self.book._open_pickle(folder=filename)
-        # else:
         self.book.open_file(filename)
-        # print('Book is readed')
 
         self.df_accounts = self.book.df_accounts
         self.df_commodities = self.book.df_commodities
@@ -156,259 +120,11 @@ class RawData:
 
         self._after_read()
 
-        # with open(filename, "rb") as f:
-        #     bytes = f.read(16)
-        # if bytes == b'SQLite format 3\x00':
-        #     self.open_book_sql(sqlite_file=filename, readonly=readonly, open_if_lock=open_if_lock)
-        # else:
-        #     self._open_book_xml(filename)
-
-    # def _open_book_xml(self, xml_file):
-    #     """
-    #     Opens gnucash book from xml file
-    #     :param xml_file:
-    #     :return:
-    #     """
-    #     self._read_book_xml(xml_file)
-    #     self._after_read()
-    #
-    # def open_book_sql(self,
-    #                   sqlite_file=None,
-    #                   uri_conn=None,
-    #                   readonly=True,
-    #                   open_if_lock=False,
-    #                   do_backup=True,
-    #                   db_type=None,
-    #                   db_user=None,
-    #                   db_password=None,
-    #                   db_name=None,
-    #                   db_host=None,
-    #                   db_port=None,
-    #                    **kwargs):
-    #     """
-    #     Opens gnucash book from sql. See piecash help for sql details
-    #     :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
-    #     :param str uri_conn: a sqlalchemy connection string
-    #     :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
-    #     :param bool open_if_lock: open the file even if it is locked by another user
-    #         (using open_if_lock=True with readonly=False is not recommended)
-    #     :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
-    #         (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
-    #     :raises GnucashException: if the document does not exist
-    #     :raises GnucashException: if there is a lock on the file and open_if_lock is False
-    #     :return:
-    #     """
-    #     self._read_book_sql(sqlite_file=sqlite_file,
-    #                            uri_conn=uri_conn,
-    #                            readonly=readonly,
-    #                            open_if_lock=open_if_lock,
-    #                            do_backup=do_backup,
-    #                            db_type=db_type,
-    #                            db_user=db_user,
-    #                            db_password=db_password,
-    #                            db_name=db_name,
-    #                            db_host=db_host,
-    #                            db_port=db_port,
-    #                            **kwargs)
-    #     self._after_read()
 
     def __repr__(self):
         return 'gcreport {book}'.format(book=self.book)
 
 
-    # def _open_book_pickle(self, folder):
-    #     """
-    #     For test purpose
-    #     Чтение базы из pickle файлов каталога. Если указан год, грузится только этот год (для ускорения)
-    #     Loading from sql --- 6.193211078643799 seconds ---
-    #     Loading from pickle all --- 0.09360003471374512 seconds ---
-    #     Loading from pickle 2016 --- 0.031199932098388672 seconds ---
-    #
-    #     :param year: Год для загрузки, None - все данные
-    #     :param folder: Каталог с файлами базы
-    #     :return:
-    #     """
-    #
-    #     self._read_book_pickle(folder=folder)
-    #     self._after_read()
-
-    # def _read_book_pickle(self, folder=None):
-    #     """
-    #     For testing
-    #     :param folder:
-    #     :return:
-    #     """
-    #     self.df_accounts = self._dataframe_from_pickle(self.pickle_accounts, folder=folder)
-    #     # dataframe_to_excel(self.df_accounts, 'accounts-source')
-    #     self.df_commodities = self._dataframe_from_pickle(self.pickle_commodities, folder=folder)
-    #     self.df_prices = self._dataframe_from_pickle(self.pickle_prices, folder=folder)
-    #     self.df_transactions = self._dataframe_from_pickle(self.pickle_tr, folder=folder)
-    #     self.df_splits = self._dataframe_from_pickle(self.pickle_splits, folder=folder)
-    #     self._get_guid_rootaccount()
-
-    # def _get_guid_rootaccount(self):
-    #     """
-    #     Get root account guid from df_accounts
-    #     :return:
-    #     """
-    #     df_root = self.df_accounts[(self.df_accounts[cols.ACCOUNT_TYPE] == self.ROOT) &
-    #                                (self.df_accounts[cols.SHORTNAME] == 'Root Account')]
-    #     self.root_account_guid = df_root.index.values[0]
-
-    # def _dataframe_from_pickle(self, filename, folder=None):
-    #     """
-    #     Get dataframe from pickle file
-    #     :param filename: Полное или короткое имя файла
-    #     :param folder: Каталог с файлом
-    #     :return: DataFrame
-    #     """
-    #     if not folder:
-    #         folder = self.dir_pickle
-    #     fullfilename = os.path.join(folder, filename)
-    #     df = pandas.read_pickle(fullfilename)
-    #     return df
-
-    # def _read_book_xml(self, xml_file):
-    #
-    #     # read contens of the book
-    #     book = GNUCashXMLBook()
-    #     book.read_book(xml_file)
-    #
-    #     # Accounts
-    #
-    #     fields = [cols.GUID, cols.SHORTNAME, "actype",
-    #               "commodity_guid", "commodity_scu",
-    #               "parent_guid", "description", "hidden", "notes"]
-    #
-    #     self.df_accounts = self._object_to_dataframe(book.accounts, fields)
-    #     self.df_accounts.rename(columns={'actype': cols.ACCOUNT_TYPE}, inplace=True)
-    #     self.root_account_guid = book.root_account_guid
-    #
-    #     # Transactions
-    #
-    #     fields = [cols.GUID, cols.CURRENCY_GUID, "date", "description"]
-    #
-    #     self.df_transactions = self._object_to_dataframe(book.transactions, fields)
-    #     self.df_transactions.rename(columns={'date': cols.POST_DATE}, inplace=True)
-    #
-    #     # Splits
-    #     fields = [cols.GUID, "transaction_guid", "account_guid",
-    #               "memo", "reconcile_state", "value", "quantity"]
-    #
-    #     self.df_splits = self._object_to_dataframe(book.splits, fields)
-    #
-    #     # commodity
-    #
-    #     fields = [cols.GUID, "space", "mnemonic"]
-    #     self.df_commodities = self._object_to_dataframe(book.commodities, fields)
-    #     self.df_commodities.rename(columns={'space': 'namespace'}, inplace=True)
-    #     self.df_commodities = self.df_commodities[self.df_commodities['namespace'] != 'template']
-    #
-    #     # Prices
-    #     fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
-    #               "date", "source", "price_type", "value"]
-    #     self.df_prices = self._object_to_dataframe(book.prices, fields)
-    #     self.df_prices.rename(columns={'price_type': 'type'}, inplace=True)
-    #
-    # def _read_book_sql(self,
-    #                    sqlite_file=None,
-    #                    uri_conn=None,
-    #                    readonly=True,
-    #                    open_if_lock=False,
-    #                    do_backup=True,
-    #                    db_type=None,
-    #                    db_user=None,
-    #                    db_password=None,
-    #                    db_name=None,
-    #                    db_host=None,
-    #                    db_port=None,
-    #                    **kwargs):
-    #     """Open an existing GnuCash sql book, read data to DataFrames
-    #
-    #     :param str sqlite_file: a path to an sqlite3 file (only used if uri_conn is None)
-    #     :param str uri_conn: a sqlalchemy connection string
-    #     :param bool readonly: open the file as readonly (useful to play with and avoid any unwanted save)
-    #     :param bool open_if_lock: open the file even if it is locked by another user
-    #         (using open_if_lock=True with readonly=False is not recommended)
-    #     :param bool do_backup: do a backup if the file written in RW (i.e. readonly=False)
-    #         (this only works with the sqlite backend and copy the file with .{:%Y%m%d%H%M%S}.gnucash appended to it)
-    #     :raises GnucashException: if the document does not exist
-    #     :raises GnucashException: if there is a lock on the file and open_if_lock is False
-    #     :return:
-    #     """
-    #
-    #     self.book_name = os.path.basename(sqlite_file)
-    #     with piecash.open_book(sqlite_file=sqlite_file,
-    #                            uri_conn=uri_conn,
-    #                            readonly=readonly,
-    #                            open_if_lock=open_if_lock,
-    #                            do_backup=do_backup,
-    #                            db_type=db_type,
-    #                            db_user=db_user,
-    #                            db_password=db_password,
-    #                            db_name=db_name,
-    #                            db_host=db_host,
-    #                            db_port=db_port,
-    #                            **kwargs
-    #                            ) as gnucash_book:
-    #         # Read data tables in dataframes
-    #
-    #         # commodities
-    #
-    #         t_commodities = gnucash_book.session.query(piecash.Commodity).filter(
-    #             piecash.Commodity.namespace != "template").all()
-    #         fields = [cols.GUID, "namespace", "mnemonic",
-    #                   "fullname", "cusip", "fraction",
-    #                   "quote_flag", "quote_source", "quote_tz"]
-    #         self.df_commodities = self._object_to_dataframe(t_commodities, fields)
-    #
-    #         # Accounts
-    #
-    #         self.root_account_guid = gnucash_book.root_account.guid
-    #         t_accounts = gnucash_book.session.query(piecash.Account).all()
-    #         fields = [cols.GUID, cols.SHORTNAME, "type", "placeholder",
-    #                   "commodity_guid", "commodity_scu",
-    #                   "parent_guid", "description", "hidden"]
-    #         self.df_accounts = self._object_to_dataframe(t_accounts, fields, slot_names=['notes'])
-    #         # rename to real base name of field from piecash name
-    #         self.df_accounts.rename(columns={'type': cols.ACCOUNT_TYPE}, inplace=True)
-    #         # self.dataframe_to_excel(self.df_accounts, 'acc-sql')
-    #
-    #         # slots
-    #         # t_slots = gnucash_book.session.query(piecash.).all()
-    #         # fields = [cols.GUID, cols.SHORTNAME, "type", "placeholder",
-    #         #           "commodity_guid", "commodity_scu",
-    #         #           "parent_guid", "description", "hidden"]
-    #         # self.df_accounts = self._object_to_dataframe(t_accounts, fields)
-    #
-    #         # Transactions
-    #
-    #         t_transactions = gnucash_book.session.query(piecash.Transaction).all()
-    #         fields = [cols.GUID, cols.CURRENCY_GUID, "num",
-    #                   "post_date", "description"]
-    #         self.df_transactions = self._object_to_dataframe(t_transactions, fields)
-    #
-    #         # Splits
-    #
-    #         t_splits = gnucash_book.session.query(piecash.Split).all()
-    #         fields = [cols.GUID, "transaction_guid", "account_guid",
-    #                   "memo", "action", "reconcile_state",
-    #                   "value",
-    #                   "quantity", "lot_guid"]
-    #         self.df_splits = self._object_to_dataframe(t_splits, fields)
-    #
-    #         # Prices
-    #
-    #         # Get from piecash
-    #         t_prices = gnucash_book.session.query(piecash.Price).all()
-    #         # Some fields not correspond to real names in DB
-    #         fields = [cols.GUID, "commodity_guid", cols.CURRENCY_GUID,
-    #                   "date", "source", "type", "value"]
-    #         self.df_prices = self._object_to_dataframe(t_prices, fields)
-
-            # dataframe_to_excel(self.df_accounts, 'accounts-source-sql')
-
-        # BaseTest._save_db_to_pickle(BaseTest.dir_testdata)
 
 
     def _after_read(self):
@@ -417,42 +133,6 @@ class RawData:
         :return:
         """
 
-        # #  Get fullname of accounts
-        # self.df_accounts[cols.FULLNAME] = self.df_accounts.index.map(self._get_fullname_account)
-        #
-        # self.df_accounts[cols.XIRR_ENABLE] = None
-        # self._fill_xirr_enable()
-
-        # # Add commodity mnemonic to accounts
-        # mems = self.df_commodities[cols.MNEMONIC].to_frame()
-
-        # # А после этой не пропадает
-        # self.df_accounts = self.df_accounts.merge(mems, how='left', left_on=cols.COMMODITY_GUID, right_index=True)
-        #
-        # # Convert datetme to date in transactions (skip time)
-        # self.df_transactions[cols.POST_DATE] = self.df_transactions[cols.POST_DATE].apply(
-        #     lambda x: pandas.to_datetime(x.date()))
-        #
-        # # Merge prices with commodities
-        # self.df_prices = pandas.merge(self.df_prices, self.df_commodities, left_on=cols.COMMODITY_GUID,
-        #                               right_index=True)
-        # # Convert datetme to date in prices (skip time)
-        # self.df_prices['date'] = self.df_prices['date'].apply(lambda x: pandas.to_datetime(x.date()))
-        #
-        # # merge splits and accounts
-        # df_acc_splits = pandas.merge(self.df_splits, self.df_accounts, left_on=cols.ACCOUNT_GUID,
-        #                              right_index=True)
-        # df_acc_splits.rename(columns={'description': 'description_account'}, inplace=True)
-        # # merge splits and accounts with transactions
-        # self.df_splits = pandas.merge(df_acc_splits, self.df_transactions, left_on=cols.TRANSACTION_GUID,
-        #                               right_index=True)
-        #
-        # # Оставляем только одну цену за день в df_prices
-        # # Установка нового индекса
-        # self.df_prices.set_index([cols.COMMODITY_GUID, 'date'], inplace=True)
-        # # отсечение повторов по индексу
-        # self.df_prices = self.df_prices[~self.df_prices.index.duplicated(keep='last')]
-        #
         # # Минимальная и максимальная даты в базе
         self.min_date = self.df_splits[cols.POST_DATE].min() #.date()
         self.max_date = self.df_splits[cols.POST_DATE].max() #.date()
@@ -460,59 +140,12 @@ class RawData:
         # Цены за каждый день по каждому инструменту
         self.df_prices_days = self._group_prices_by_period(self.min_date, self.max_date, 'D')
 
-        # Сворачиваем df_splits до дней
-
-        # # Подсчитываем нарастающий итог
-        # self.df_splits.sort_values(by=cols.POST_DATE, inplace=True)
-        # self.df_splits[cols.CUM_SUM] = self.df_splits.groupby(cols.FULLNAME)[cols.QUANTITY].transform(pandas.Series.cumsum)
 
         # Пересчет транзакций в валюту учета
         self.df_splits = self._currency_calc(self.df_splits,
                                              col_currency_guid=cols.CURRENCY_GUID,
                                              col_rate=cols.RATE_CURRENCY
                                              )
-        # Подсчет значений для xirr
-        # self._add_xirr_info()
-
-    # def _fill_xirr_enable(self, account_guid=None, default=None):
-    #     """
-    #     Заполнение колонки xirr_enable в df_accounts
-    #     :return:
-    #     """
-    #     # MARKER_NO_INVEST - False
-    #     # Нет или MARKER_INVEST - True
-    #     # Cash или Equity или Income или Expense - false
-    #
-    #     if not account_guid:
-    #         account_guid = self.root_account_guid
-    #     inheritance = default
-    #     if default is None: # Установка текущего значения если default не установлен
-    #         # Если тип CASH или EQUITY (Income или Expense), то False, иначе True
-    #         account_type = self.df_accounts.loc[account_guid, cols.ACCOUNT_TYPE]
-    #         if (account_type == GNUCashBook.CASH) or (account_type == GNUCashBook.EQUITY) or \
-    #            (account_type == GNUCashBook.INCOME) or (account_type == GNUCashBook.EXPENSE):
-    #             current = False
-    #         else:
-    #             current = True
-    #     else:
-    #         current = default
-    #     # Перекрытие значениями из Notes если они есть
-    #     notes = self.df_accounts.loc[account_guid, cols.NOTES]
-    #     if notes:
-    #         if MARKER_NO_INVEST in notes:
-    #             current = False
-    #             inheritance = current
-    #         if MARKER_INVEST in notes:
-    #             current = True
-    #             inheritance = current
-    #
-    #     # Установка значения для текущего счета
-    #     # if account_guid != self.root_account_guid: # root почему-то не попадает в список счетов
-    #     self.df_accounts.loc[account_guid, cols.XIRR_ENABLE] = current
-    #     # Установка значения для дочерних счетов
-    #     child_accounts = self._get_child_accounts(account_guid, recurse=False)
-    #     for child_account in child_accounts:
-    #         self._fill_xirr_enable(child_account, default=inheritance)
 
     def _add_margins(self, dataframe, margins=None):
         """
@@ -551,7 +184,7 @@ class RawData:
         total_name = _('Total')
         if margins:
             total_name = margins.total_name
-        if isinstance(dataframe.index, pandas.core.index.MultiIndex):
+        if isinstance(dataframe.index, pandas.MultiIndex):
 
             df_ret = dataframe.copy()
             df_sum = pandas.DataFrame(data=dataframe.sum()).T
@@ -625,8 +258,6 @@ class RawData:
         """
 
         # Сортировка по дате
-        # if start_balance:
-        #     on_date = on_date + timedelta(days=-1)
 
         if start_balance:
             df = (self.df_splits[(self.df_splits[cols.POST_DATE] < on_date)]).copy()
@@ -712,22 +343,8 @@ class RawData:
             account_name = self.df_accounts.loc[account_guid, cols.SHORTNAME]
 
         df.sort_values(cols.FULLNAME, inplace=True)
-        # df['new_name'] = df[cols.FULLNAME].map(lambda x: fill_to_last_colon(x))
-        df[cols.FULLNAME] = df[cols.FULLNAME].apply(utils.shift_account_name, args=(account_name,)) # map(lambda val: fill_to_last_colon(val, skip_beg=account_name))
-        # df.drop(cols.FULLNAME, axis=1, inplace=True)
+        df[cols.FULLNAME] = df[cols.FULLNAME].apply(utils.shift_account_name, args=(account_name,))
         df.set_index(cols.FULLNAME, inplace=True, drop=True)
-        # df.reset_index(inplace=True, drop=True)
-
-        # Добавление MultiIndex по дате и названиям счетов
-        # s = df['fullname'].str.split(':', expand=True)
-        # cols = s.columns
-        # cols = cols.tolist()
-        # df = pandas.concat([df, s], axis=1)
-        #
-        # df.sort_values(by=cols, inplace=True)  # Сортировка по дате и счетам
-        #
-        # df.drop('fullname', axis=1, inplace=True)  # Удаление колонки fullname
-        # df.set_index(cols, inplace=True)
 
         return df
 
@@ -769,7 +386,6 @@ class RawData:
         # Нужно посчитать его доходность и доходности его потомков
 
         ar_xirr = []
-        # ALL_XIRR_TYPES = [self.BANK, self.ASSET, self.STOCK, self.MUTUAL, self.LIABILITY]
 
         # Получение списка проводок по которым считается доходность
         if df_all_xirr is None:
@@ -798,11 +414,8 @@ class RawData:
                 if sub_xirr:
                     ar_xirr += sub_xirr
 
-        # df_xirr = pandas.DataFrame(ar_xirr)
-
         return ar_xirr
 
-    # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None, df_all_xirr=None):
     def _xirr_calc(self, account_guid, account_types, df_all_xirr):
         """
         Возвращает итоговую доходность по указанному счету по таблице df_all_xirr
@@ -815,18 +428,12 @@ class RawData:
                                                xirr_enable=True, recurse=True)
         account_guids = [account_guid] + child_guids
 
-        # if df_all_xirr is None:
-        #     df_xirr = self._get_all_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
-        #
-        # else:
         df_xirr = (df_all_xirr[df_all_xirr[cols.XIRR_ACCOUNT].isin(account_guids)]).copy()
         if df_xirr.empty:
             return
 
-        # utils.dataframe_to_excel(df_xirr, 'df_xirr')
 
         # Общая доходность
-        # print('Подсчет доходности счета {acc}'.format(acc=self.df_accounts.loc[account_guid][cols.SHORTNAME]))
         yield_total = self._xirr_by_dataframe(df_xirr)
 
         # Доходность денежного потока
@@ -871,10 +478,6 @@ class RawData:
         :return: annual yield
         """
         df = pandas.DataFrame(obj, columns=[date_field, value_field])
-        # Commented by error
-        # raise TypeError("dtype '{}' not understood".format(dtype))
-        # TypeError: dtype '<class ' datetime.date'>' not understood
-        #df[date_field] = df[date_field].astype(date)
         df[date_field] = pandas.to_datetime(df[date_field]).dt.date
         tuples = [tuple(x) for x in df.to_records(index=False)]
         a_yield = xirr(tuples)
@@ -889,7 +492,6 @@ class RawData:
         :param account_guid:
         :return:
         """
-        # df = self.df_accounts.copy()
         # speed optimization
         df = self.df_accounts
         # Фильтрация по типам счетов
@@ -921,63 +523,6 @@ class RawData:
             return idx[0]
         else:
             return None
-
-
-
-    # def _xirr_calc(self, account_guid, account_types=None, from_date=None, to_date=None):
-    #     """
-    #     Возвращает доходность итоговую по указанному счету и его потомков за заданный период
-    #     :param from_date:
-    #     :param to_date:
-    #     :param accounts:
-    #     :return:
-    #     """
-    #     child_guids = self._get_child_accounts(account_guid, account_types=account_types, recurse=True)
-    #     account_guids = [account_guid] + child_guids
-    #     df_values = self._filter_for_xirr(account_guids=account_guids, from_date=from_date, to_date=to_date)
-    #     df_income = self._find_income_for_xirr(df_values, self.INCOME)
-    #     df_expense = self._find_income_for_xirr(df_values, self.EXPENSE)
-    #
-    #     # Отбор только не нулевых проводок
-    #     df_values = df_values[df_values[cols.VALUE_CURRENCY] != 0]
-    #
-    #     # df_total = pandas.concat([df_values, df_expense, df_income], ignore_index=True)
-    #     # df_total.sort_values(by=cols.POST_DATE, inplace=True)
-    #
-    #     # dataframe_to_excel(df_total, 'df_total')
-    #
-    #     # Общая доходность
-    #     yield_total = self._xirr_by_dataframe([df_values, df_income, df_expense])
-    #     # Доходность дивидендов
-    #     without_income_yeld = self._xirr_by_dataframe([df_values, df_expense])
-    #     yield_without_expense = self._xirr_by_dataframe([df_values, df_income])
-    #
-    #     yield_expense = yield_without_expense - yield_total
-    #     if df_income.empty:
-    #         yield_income = 0
-    #     else:
-    #         yield_income = yield_total - without_income_yeld
-    #
-    #     itog = {}
-    #     # itog[cols.ACCOUNT_GUID] = account_guid
-    #     itog['fullname'] = self.df_accounts.loc[account_guid]['fullname']
-    #     itog[cols.SHORTNAME] = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-    #     itog['yield_total'] = yield_total
-    #     # itog['yield_total2'] = yield_total
-    #     itog['yield_income'] = yield_income
-    #     itog['yield_expense'] = yield_expense
-    #     itog['yield_without_expense'] = yield_without_expense
-    #
-    #     # print(yield_total)
-    #     # print(yield_income)
-    #     # print(yield_expense)
-    #     # print(yield_without_expense)
-    #
-    #     return itog
-    #
-    #     # return df_total
-
-
 
     def _add_xirr_info(self):
 
@@ -1027,13 +572,6 @@ class RawData:
         # все оставшиеся splits
         df_assets = df_tr_splits[~df_tr_splits[cols.ACCOUNT_TYPE].isin(incexp_types)]
 
-        # Тест. Для анализа кредитов для подсчета доходности
-        # Это надо убрать
-        # if any(df_assets[cols.ACCOUNT_TYPE].isin([self.LIABILITY])):
-        #     self.df_splits.loc[tr_guid, 'tr_type'] = 'liab'
-
-
-        # df_assets = df_assets[df_assets[cols.XIRR_ENABLE]]
         # есть ли счета для xirr
         if not any(df_assets[cols.XIRR_ENABLE]):
             return
@@ -1099,7 +637,6 @@ class RawData:
             # Нужно добавить все строки asset с xirr_enable = True
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_assets)
             # И добавить все расходы/доходы у которых xirr_enable=true
-            # master_guid = self._get_master_asset_guid(df_assets, df_incexp=df_incexps)
             master_guid = df_assets.iloc[0][cols.ACCOUNT_GUID]
             self._set_xirr_to_splits(tr_guid=tr_guid, df=df_incexps, xirr_account=master_guid)
             return
@@ -1153,15 +690,13 @@ class RawData:
         :return: account_guid
         """
 
-        # df_asset = dataframe[~dataframe[cols.ACCOUNT_TYPE].isin(self.INCEXP_XIRR_TYPES)] # Долго
-        df_asset = df_assets[df_assets[cols.XIRR_ENABLE]] # Долго
+        df_asset = df_assets[df_assets[cols.XIRR_ENABLE]]
         # Нет счетов вообще
         if df_asset.empty:
             return None
         # Если счет один, то он и главный
         if len(df_asset) == 1:
             return df_asset.iloc[0][cols.ACCOUNT_GUID]
-
 
         # если есть тип stock, то он главный
         if any(df_asset[cols.ACCOUNT_TYPE].isin(GNUCashBook.STOCK_XIRR_TYPES)):
@@ -1185,37 +720,6 @@ class RawData:
             return None
         else:
             return df.iloc[0][cols.ACCOUNT_GUID]
-
-        # if df_incexp.empty:
-        #     return None
-        # # Тип доход или расход
-        # incexp_type = df_incexp.iloc[0][cols.ACCOUNT_TYPE]
-        # # Сортировка по возрастанию модуля суммы
-        # df_asset['value_sort'] = df_asset[cols.VALUE_CURRENCY].map(lambda x: math.fabs(x))
-        # df_asset.sort_values('value_sort', inplace=True)
-        # if incexp_type == self.EXPENSE:
-        #     # Главный счет у которого value больше по модулю
-        #     return df_asset.iloc[-1][cols.ACCOUNT_GUID]
-        # elif incexp_type == self.INCOME:
-        #     # Главный счет у которого value меньше по модулю
-        #     return df_asset.iloc[0][cols.ACCOUNT_GUID]
-        # else:
-        #     # print('Erorr analyse master guid.')
-        #     msg = "Erorr analyse master guid."
-        #     raise RuntimeError(msg)
-        #     # return None  # Ошибка
-
-
-    # def _add_tr_acc_names(self, dataframe):
-    #     """
-    #     Для тестовых целей, пишет в поле tr_acc_names все имена счетов участвующие в транзакции через запятую
-    #     Для поиска всех связанных со счетом split в excel
-    #     :param dataframe:
-    #     :return:
-    #     """
-    #     tr_acc_names = dataframe[cols.SHORTNAME].drop_duplicates().tolist()
-    #     tr_acc_names = ','.join(tr_acc_names)
-    #     self.df_splits.loc[dataframe.index.values, 'tr_acc_names'] = tr_acc_names
 
     def _get_all_for_xirr(self, account_guids, from_date=None, to_date=None):
         """
@@ -1247,7 +751,6 @@ class RawData:
 
         # Конечный баланс
         df_itog_balances = self.balance_on_date(end_date, account_guids=account_guids)
-        # dataframe_to_excel(df_itog_balances, 'end_balance')
 
         # Добавление начального баланса
         if from_date:
@@ -1316,8 +819,6 @@ class RawData:
 
         # Добавление колонки нарастающий итог по счетам
         # Будет ли нарастающий итог по порядку возрастания дат???? Нет! Нужно сначала отсортировать
-        # sel_df.sort_values(by=cols.POST_DATE, inplace=True)
-        # sel_df[cols.VALUE] = sel_df.groupby('fullname')[cols.QUANTITY].transform(pandas.Series.cumsum)
         sel_df.rename(columns={cols.CUM_SUM: cols.VALUE}, inplace=True)
 
         # здесь подразумевается, что есть только одна цена за день
@@ -1405,7 +906,6 @@ class RawData:
             sel_df = sel_df[(sel_df[cols.ACCOUNT_TYPE]).isin(GNUCashBook.ALL_ASSET_TYPES)]
 
         # Фильтрация по времени
-        # min_date, max_date = self._get_daterange()
         if from_date:
             sel_df = sel_df[(sel_df[cols.POST_DATE] >= from_date)]
 
@@ -1435,7 +935,6 @@ class RawData:
 
         group_acc = self._balance_group_by_period(from_date=from_date, to_date=to_date, period=period,
                                                   account_types=account_types, drop_null=drop_null)
-
 
         # пересчет в нужную валюту
         group = self._currency_calc(group_acc)
@@ -1480,7 +979,6 @@ class RawData:
 
         # Здесь появляются нули
         # group.fillna(Decimal(0), inplace=True)
-
 
         # Добавление итогов
         group = self._add_margins(group, margins)
@@ -1550,7 +1048,6 @@ class RawData:
         # Нужно добавить колонки если Multiindex
         if type(glevel) is int:
             glevel = [glevel]
-        # idx_len = len(dataframe.index)
         idx_len = len(glevel)
         new_indexes = [str(i) for i in range(1, idx_len)]
         if new_indexes:
@@ -1584,8 +1081,6 @@ class RawData:
         sel_df.set_index(cols.POST_DATE, inplace=True)
         sel_df = sel_df.groupby([pandas.Grouper(freq=period), cols.FULLNAME, cols.COMMODITY_GUID]).value.sum().reset_index()
 
-
-
         return sel_df
 
     def _currency_calc(self, dataframe,
@@ -1611,18 +1106,8 @@ class RawData:
         :param period:
         :return: DataFrame с добавленными колонками
         """
-        # guid1=cols.COMMODITY_GUID
-        # guid2=cols.CURRENCY_GUID
 
         df = dataframe
-        # if not inplace:
-            # df = dataframe
-        # else:
-        #     df = df.copy()
-        # Получаем список всех нужных mnemonic
-        # commodity_guids = df[guid_name].drop_duplicates().tolist()
-        # Получаем их сгруппированные цены
-        # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
 
         # Определяем цены на нужные даты
         # group_prices = self.df_prices_days
@@ -1630,7 +1115,6 @@ class RawData:
         end_date = df[cols.POST_DATE].max()
 
         prices_on_dates = self._group_prices_by_period(start_date, end_date, 'D', col_rate=col_rate)
-        # group_prices = group_prices.reset_index()
 
         # Добавление колонки курс
         if prices_on_dates.empty:
@@ -1641,60 +1125,12 @@ class RawData:
         # Заполнить пустые поля еденицей
         df[col_rate] = df[col_rate].fillna(Decimal(1))
 
-        # dataframe_to_excel(df, 'rates')
-
         # Пересчет в валюту представления
-        # dataframe_to_excel(df, 'df_error')
-
         df[col_value_currency] = (df[col_value] * df[col_rate]).apply(lambda x: round(x, 2))
         # Теперь в колонке value_currency реальная сумма в рублях
 
         # Конец пересчета в нужную валюту
         return df
-
-    # def _splits_currency_calc(self):
-    #     """
-    #     Подсчитывает сумму сплита транзакции в валюте учета.
-    #     Добавляется колонка
-    #     value_currency - сумма сплита транзакции в валюте учета
-    #     [cancelled]balance_currency - остаток по счету после транзакции в валюте учета
-    #     rate_currency - курс валюты для колонки value
-    #     [cancelled]rate_commodity - курс валюты для остатка по счету
-    #     :return: DataFrame с добавленными колонками
-    #     """
-    #
-    #     # dataframe = self.df_splits
-    #     # df = dataframe.copy()
-    #     # Получаем список всех нужных mnemonic
-    #     # commodity_guids = df[cols.COMMODITY_GUID].drop_duplicates().tolist()
-    #     # currency_guids = df[cols.CURRENCY_GUID].drop_duplicates().tolist()
-    #     # Получаем их сгруппированные цены
-    #     # group_prices = self._group_prices_by_period(from_date, to_date, period, guids=commodity_guids)
-    #     # group_prices = group_prices.reset_index()
-    #     group_prices = self.df_prices_days
-    #
-    #     # Добавление колонки курс
-    #     if group_prices.empty:
-    #         # self.df_splits['rate_commodity'] = 1
-    #         self.df_splits[cols.RATE_CURRENCY] = 1
-    #     else:
-    #         # self.df_splits = self.df_splits.merge(group_prices, left_on=[cols.COMMODITY_GUID, cols.POST_DATE], right_index=True,
-    #         #               how='left')
-    #         # self.df_splits.rename(columns={cols.RATE: 'rate_commodity'}, inplace=True)
-    #         self.df_splits = self.df_splits.merge(group_prices, left_on=[cols.CURRENCY_GUID, cols.POST_DATE], right_index=True,
-    #                       how='left')
-    #         self.df_splits.rename(columns={cols.RATE: cols.RATE_CURRENCY}, inplace=True)
-    #     # Заполнить пустые поля еденицей
-    #     self.df_splits[cols.RATE_CURRENCY] = self.df_splits[cols.RATE_CURRENCY].fillna(Decimal(1))
-    #     # self.df_splits['rate_commodity'] = self.df_splits['rate_commodity'].fillna(Decimal(1))
-    #
-    #     # Пересчет в валюту представления
-    #     self.df_splits[cols.VALUE_CURRENCY] = (self.df_splits[cols.VALUE] * self.df_splits[cols.RATE_CURRENCY]).apply(lambda x: round(x, 2))
-    #     # self.df_splits['balance_currency'] = (self.df_splits[cols.CUM_SUM] * self.df_splits['rate_commodity']).apply(lambda x: round(x, 2))
-    #     # Теперь в колонке value_currency реальная сумма в рублях
-    #     # self.df_splits_cur = df
-    #     # Конец пересчета в нужную валюту
-    #     # return df
 
     def _group_by_accounts(self, dataframe, glevel=1, drop_null=False):
         """
@@ -1744,8 +1180,6 @@ class RawData:
         :return:
         """
 
-        # import gnucashreport.cols as cols
-
         # Отбираем нужные колонки
         sel_df = pandas.DataFrame(dataframe,
                                   columns=[cols.POST_DATE, cols.FULLNAME, cols.VALUE_CURRENCY]).copy()
@@ -1769,15 +1203,9 @@ class RawData:
             # sel_df = sel_df[sel_df[cols.VALUE] != 0]  # Удаление нулевых значений
 
         sel_df.drop(cols.FULLNAME, axis=1, inplace=True)  # Удаление колонки fullname
-        # Пустые колонки не группируются, добавляю тире в пустые названия счетов.
-        # for col in cols[1:]:
-        #     sel_df[col] = sel_df[col].apply(lambda x: x if x else '-')
 
         # set index by date and splitted fulname columns
         sel_df.set_index(columns, inplace=True)
-
-        # Здесь получается очень интересная таблица, но она не так интересна как в балансах
-        # self.dataframe_to_excel(sel_df, 'turnover_split')
 
         # Переворот дат из строк в колонки
         # date index to column
@@ -1790,32 +1218,6 @@ class RawData:
         group = unst.groupby(level=glevel).sum()
 
         return group
-
-    # def inflation(self, from_year=None, to_year=None, glevel=1, cumulative=False):
-    #     """
-    #     Возвращает инфляцию по годам
-    #     :param from_year:
-    #     :param to_year:
-    #     :param glevel:
-    #     :param cumulative:
-    #     :return:
-    #     """
-    #     start_year, end_year = utils.complete_years(self.min_date, self.max_date)
-    #     if not from_year:
-    #         from_year = start_year
-    #     if not to_year:
-    #         to_year = end_year
-    #     if from_year < start_year:
-    #         raise RuntimeError('Start year wrong!')
-    #     if to_year > end_year:
-    #         raise RuntimeError('End year wrong!')
-    #
-    #     from_date = date(from_year, 1, 1)
-    #     to_date = date(to_year, 12, 31)
-    #
-    #     return self.inflation_by_period(from_date=from_date, to_date=to_date, period='A',
-    #                                     cumulative=cumulative, glevel=glevel)
-
 
 
 
@@ -1845,13 +1247,9 @@ class RawData:
 
             if not cumulative:
                 # Процент к предыдущему
-                # df_inf[cols[i]] = ((df[cols[i]]).astype('float64') - (df[cols[i-1]]).astype('float64')).
-                # divide((df[cols[i-1]]).astype('float64'))
                 df_inf[columns[i]] = self._percent_increase(df[columns[i-1]], df[columns[i]])
             else:
                 # Процент к началу
-                # df_inf[cols[i]] = (((df[cols[i]]).astype('float64')).divide(
-                #                     (df[cols[0]]).astype('float64'))).pow(1 / i) - 1
                 df_inf[columns[i]] = self._percent_increase(df[columns[0]], df[columns[i]], i)
 
         # Average by period
@@ -1870,21 +1268,8 @@ class RawData:
         :param distance: time counts between series
         :return: series: percent increase
         """
-        # if distance == 1:
-        #     i_ser = ((b_ser.astype('float64')) - (a_ser.astype('float64'))).divide(a_ser.astype('float64'))
-        # else:
         i_ser = ((b_ser.astype('float64')).divide(a_ser.astype('float64'))).pow(1 / distance) - 1
         return i_ser
-
-    # def get_empty_dataframe(self, dataframe):
-    #     """
-    #     Возвращает такой же но пустой dataframe
-    #     :param dataframe:
-    #     :return:
-    #     """
-    #     df_new = pandas.DataFrame(data=None, index=dataframe.index, columns=dataframe.columns)
-    #     df_new = df_new.dropna()
-    #     return df_new
 
     def _group_prices_by_period(self, from_date, to_date, period='M', guids=None, col_rate=cols.RATE):
         """
@@ -1922,7 +1307,6 @@ class RawData:
         # здесь подразумевается, что есть только одна цена за день
         sel_df = pandas.DataFrame(self.df_prices,
                                   columns=[cols.MNEMONIC, cols.CURRENCY_GUID, cols.VALUE])
-                                  # columns=[cols.COMMODITY_GUID, 'date', cols.MNEMONIC, cols.CURRENCY_GUID, cols.VALUE])
 
         # цикл по всем commodity_guid
         group_prices = pandas.DataFrame()
@@ -1932,7 +1316,6 @@ class RawData:
             sel_mnem = sel_df.loc[commodity_guid]
             if not sel_mnem.empty:
                 sel_mnem = sel_mnem.resample(period).ffill()
-                # sel_mnem = sel_mnem.resample(period).bfill()
 
                 sel_mnem = sel_mnem.reindex(idx, method='nearest')
                 sel_mnem.index.name = 'date'
@@ -1957,136 +1340,3 @@ class RawData:
         group_prices.rename(columns={cols.VALUE: col_rate, cols.CURRENCY_GUID: cols.PRICE_CURRENCY_GUID}, inplace=True)
         return group_prices
 
-    # def get_balance(self, account, is_guid=False, on_date=None):
-    #     """
-    #     Возвращает баланс счета на заданную дату
-    #     :param account: Полное имя счета или guid счета в зависимотси от is_guid
-    #     :param is_guid: False - account is fullname, True - account is guid
-    #     :param on_date: Дата на которую считается баланс или None для окончательного баланса
-    #     :return: Баланс в еденицах счета
-    #     """
-    #     if is_guid:
-    #         sel_df = self.df_splits[(self.df_splits[cols.ACCOUNT_GUID] == account)]
-    #     else:
-    #         sel_df = self.df_splits[(self.df_splits[cols.FULLNAME] == account)]
-    #     if not on_date is None:
-    #         sel_df = sel_df[sel_df[cols.POST_DATE] <= on_date]
-    #     balance = sel_df[cols.QUANTITY].sum()
-    #     return balance
-
-    # def _get_fullname_account(self, account_guid):
-    #     """
-    #     Get fullname account by guid. Return semicolon path Expenses:Food:...
-    #     :param account_guid:
-    #     :return:
-    #     """
-    #     if account_guid == self.root_account_guid:
-    #         return 'root'
-    #     fullname = self.df_accounts.loc[account_guid][cols.SHORTNAME]
-    #     parent_guid = self.df_accounts.loc[account_guid][cols.PARENT_GUID]
-    #     if parent_guid in self.df_accounts.index:
-    #         if parent_guid == self.root_account_guid:
-    #             return fullname
-    #         else:
-    #             return self._get_fullname_account(parent_guid) + ':' + fullname
-    #     else:
-    #         return 'error'
-
-    # @staticmethod
-    # def _object_to_dataframe(pieobject, fields, slot_names=None):
-    #     """
-    #     Преобразовывае объект piecash в DataFrame с заданными полями
-    #     :param pieobject:
-    #     :param fields:
-    #     :return:
-    #     """
-    #     # build dataframe
-    #     # fields_getter = [attrgetter(fld) for fld in fields]
-    #     fields_getter = [(fld, attrgetter(fld)) for fld in fields]
-    #
-    #     # array_old = [[fg(sp) for fg in fields_getter] for sp in pieobject]
-    #
-    #     # у строки есть массив slots
-    #     # в поле name = notes
-    #     # в поле value = значение
-    #
-    #
-    #     # Разложение цикла
-    #     array = []
-    #     for sp in pieobject:
-    #         line = {}
-    #         for field in fields:
-    #             line[field] = getattr(sp, field, None)
-    #         # for fld, fg in fields_getter:
-    #         #     line[fld] = fg(sp)
-    #         if slot_names:
-    #             for slot_name in slot_names:
-    #                 line[slot_name] = None
-    #             for slot in sp.slots:
-    #                 if slot.name in slot_names:
-    #                     line[slot.name] = slot.value
-    #
-    #
-    #         array.append(line)
-    #
-    #
-    #
-    #     # df_obj = pandas.DataFrame([[fg(sp) for fg in fields_getter] for sp in pieobject], columns=fields)
-    #     # df_obj = pandas.DataFrame(array, columns=all_fields)
-    #     if array:
-    #         df_obj = pandas.DataFrame(array)
-    #     else:
-    #         if slot_names:
-    #             all_fields = fields + slot_names
-    #         else:
-    #             all_fields = fields
-    #         df_obj = pandas.DataFrame(columns=all_fields)
-    #     df_obj.set_index(fields[0], inplace=True)
-    #     return df_obj
-
-    # def __to_excel(self, filename):
-    #     """
-    #     Запись таблиц DataFrame в фалй Excel. Для отладки
-    #     :param filename:
-    #     :return:
-    #     """
-    #
-    #     writer = pandas.ExcelWriter(filename)
-    #     self.df_accounts.to_excel(writer, "accounts")
-    #     self.df_transactions.to_excel(writer, "transactions")
-    #     self.df_commodities.to_excel(writer, "commodities")
-    #     self.df_splits.to_excel(writer, "splits")
-    #     self.df_prices.to_excel(writer, "prices")
-    #
-    #     writer.save()
-
-    # @staticmethod
-    # def _read_dataframe_from_excel(filename, sheet='Sheet1'):
-    #     """
-    #     Чтение dataframe из Excel
-    #     :param filename:
-    #     :param sheet:
-    #     :return: DataFrame
-    #     """
-    #     xls = pandas.ExcelFile(filename)
-    #     df = xls.parse(sheet)
-    #     xls.close()
-    #     return df
-
-    # def _read_from_excel(self, filename):
-    #     """
-    #     Чтение данных из Excel, вместо чтения из файла gnucash. Работает дольше sqlite
-    #     :param filename:
-    #     :return:
-    #     """
-    #
-    #     self.book_name = os.path.basename(filename)
-    #     xls = pandas.ExcelFile(filename)
-    #
-    #     self.df_accounts = xls.parse('accounts')
-    #     self.df_transactions = xls.parse('transactions')
-    #     self.df_commodities = xls.parse('commodities')
-    #     self.df_splits = xls.parse('splits')
-    #     self.df_prices = xls.parse('prices')
-    #
-    #     xls.close()
